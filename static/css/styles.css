@@ -1,0 +1,24 @@
+/* styles.css - Seu arquivo de estilos personalizados */
+
+/* Adicione seus estilos personalizados aqui */
+.mb-3 {
+    margin-top: 1rem; /* Isso adicionará um espaço de 1 unidade (normalmente 16px) acima do botão */
+}
+
+#fundo_diferente {
+    border: 2px solid #a7b0b6; /* Bordas com cor específica e espessura */
+    border-radius: 10px; /* Bordas arredondadas */
+    padding: 20px; /* Espaçamento interno */
+}
+
+.nav-item.divider {
+    border-bottom: 1px solid #ddd; /* Cor e espessura da linha */
+    margin: 5px 0; /* Espaçamento vertical */
+}
+
+.dropdown-menu {
+    margin-right: 10px; /* Ajuste este valor conforme necessário */
+    padding-right: 10px;
+    min-width: 200px; /* Ajuste este valor conforme necessário */
+}
+

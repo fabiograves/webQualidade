@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <!-- Layout da pagina de cadastro de certificados -->
+    <div class="py-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12 text-center">
+          <h1 class="">Registro de Inspeção de Recebimento</h1>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="" >
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+        <form method="POST" action="{{ url_for('registro_inspecao') }}">
+          <!-- Seus campos de input aqui... -->
+          <div class="row">
+        <div class="col-md-3">
+          <div class="form-group"><label>Fornecedor</label><input type="text" class="form-control" id="ri_fornecedor" name="ri_fornecedor"></div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group"><label>Nota Fiscal</label><input type="text" class="form-control" id="ri_nota_fiscal" name="ri_nota_fiscal"></div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group"><label>Pedido de Compra</label><input type="text" class="form-control" id="ri_pedido_compra" name="ri_pedido_compra"></div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group"><label>Item</label><input type="text" class="form-control" id="ri_item" name="ri_item"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <div class="form-group"><label>Quantidade Total</label><input type="text" class="form-control" id="ri_quantidade_total" name="ri_quantidade_total"></div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group"><label>Volume</label><input type="text" class="form-control" id="ri_volume" name="ri_volume"></div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group"><label>Desenho</label><input type="text" class="form-control" id="ri_desenho" name="ri_desenho"></div>
+        </div>
+        <div class="col-md-3"></div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <div class="row">
+            <div class="col-md-12"><label>Medidas Encontradas</label></div>
+          </div>
+          <div class="row text-center">
+            <div class="col-md-2">
+              <div class="form-group text-center"><label class="text-center">A</label><input type="text" class="form-control text-center" id="ri_medidas_a" name="ri_medidas_a"></div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group text-center"><label>B</label><input type="text" class="form-control text-center" id="ri_medidas_b" name="ri_medidas_b"></div>
+            </div>
+            <div class="col-md-2 text-center">
+              <div class="form-group" style=""><label>C</label><input type="text" class="form-control text-center" id="ri_medidas_c" name="ri_medidas_c"></div>
+            </div>
+            <div class="col-md-2 text-center">
+              <div class="form-group"><label>D</label><input type="text" class="form-control text-center" id="ri_medidas_d"  name="ri_medidas_d"></div>
+            </div>
+            <div class="col-md-2 text-center">
+              <div class="form-group"><label>P. Rosca</label><input type="text" class="form-control text-center" id="ri_medidas_prosca" name="ri_medidas_prosca"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="row">
+            <div class="col-md-12"><label class="">Tabela de Conversão</label></div>
+          </div>
+          <div class="row">
+            <div class="col-md-2 text-center">
+              <div class="form-group"><label>E</label><input type="text" class="form-control text-center" id="ri_conversao_e" name="ri_conversao_e"></div>
+            </div>
+            <div class="col-md-2 text-center">
+              <div class="form-group"><label>F</label><input type="text" class="form-control text-center" id="ri_conversao_f" name="ri_conversao_f"></div>
+            </div>
+            <div class="col-md-2 text-center">
+              <div class="form-group"><label>G</label><input type="text" class="form-control text-center" id="ri_conversao_g" name="ri_conversao_g"></div>
+            </div>
+            <div class="col-md-2 text-center">
+              <div class="form-group"><label>H</label><input type="text" class="form-control text-center" id="ri_conversao_h" name="ri_conversao_h"></div>
+            </div>
+            <div class="col-md-2"></div>
+          </div>
+        </div>
+      </div>
+      <div class="row justify-content-between">
+        <div class="col-md-2">
+          <div class="form-group"><label>Acabamento</label><input type="text" class="form-control" id="ri_acabamento" name="ri_acabamento"></div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group"><label>Dureza</label><input type="text" class="form-control" id="ri_dureza" name="ri_dureza"></div>
+        </div>
+        <div class="col-md-2">
+          <div class="row">
+            <div class="col-md-4 text-center">
+              <div class="form-group"><label>A</label><input type="text" class="form-control text-center" id="ri_a" name="ri_a"></div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="form-group"><label>C</label><input type="text" class="form-control text-center" id="ri_c" name="ri_c"></div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="form-group"><label>R</label><input type="text" class="form-control text-center" id="ri_r" name="ri_r"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group"><label>Resp. Inspeção</label><input type="text" class="form-control" id="ri_resp_inspecao" name="ri_resp_inspecao"></div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group"><label>Data</label><input type="date" class="form-control" id="ri_data" name="ri_data"></div>
+        </div>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+
+          <!-- Botão de envio -->
+          <button type="submit" class="btn btn-secondary w-100 mb-3">Registrar Inspeção</button>
+        </form>
+      </div>
+    </div>
+
+    </div>
+  </div>
+
+{% endblock %}
