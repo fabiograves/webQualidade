@@ -69,7 +69,7 @@
         <div class="col-md-3">
           <div class="form-group">
             <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="comp_quimica">
+              <input type="checkbox" class="form-check-input" id="comp_quimica" name="comp_quimica">
               <label class="form-check-label text-center" for="comp_quimica">Composição Química</label>
             </div>
           </div>
@@ -77,7 +77,7 @@
         <div class="col-md-3">
           <div class="form-group">
             <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="prop_mecanicas">
+              <input type="checkbox" class="form-check-input" id="prop_mecanicas" name="prop_mecanicas">
               <label class="form-check-label" for="prop_mecanicas">Propriedades Mecânicas</label>
             </div>
           </div>
@@ -85,7 +85,7 @@
         <div class="col-md-3">
           <div class="form-group">
             <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="tratamentos">
+              <input type="checkbox" class="form-check-input" id="tratamentos" name="tratamentos">
               <label class="form-check-label" for="tratamentos">Tratamentos</label>
             </div>
           </div>
@@ -93,7 +93,7 @@
         <div class="col-md-3">
           <div class="form-group">
             <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="analise_dimensional">
+              <input type="checkbox" class="form-check-input" id="analise_dimensional" name="analise_dimensional">
               <label class="form-check-label" for="analise_dimensional">Análise Dimensional</label>
             </div>
           </div>
@@ -112,7 +112,7 @@
     </div>
     <div class="row">
       <div class="col text-center"><label>C</label><input type="text" class="form-control" id="cc_c" name="cc_c"></div>
-      <div class="col text-center"><label>Mn</label><input type="text" class="form-control" id="cc_mn" name="cc_Mn"></div>
+      <div class="col text-center"><label>Mn</label><input type="text" class="form-control" id="cc_mn" name="cc_mn"></div>
       <div class="col text-center"><label>P</label><input type="text" class="form-control" id="cc_p" name="cc_p"></div>
       <div class="col text-center"><label>S</label><input type="text" class="form-control" id="cc_s" name="cc_s"></div>
       <div class="col text-center"><label>Si</label><input type="text" class="form-control" id="cc_si" name="cc_si"></div>
@@ -123,7 +123,7 @@
     <!-- Segunda Linha de Inputs -->
     <div class="row">
       <div class="col text-center"><label>Cu</label><input type="text" class="form-control" id="cc_cu" name="cc_cu"></div>
-      <div class="col text-center"><label>Mo</label><input type="text" class="form-control" id="cc_mo" name="cc_Mo"></div>
+      <div class="col text-center"><label>Mo</label><input type="text" class="form-control" id="cc_mo" name="cc_mo"></div>
       <div class="col text-center"><label>Co</label><input type="text" class="form-control" id="cc_co" name="cc_co"></div>
       <div class="col text-center"><label>Ti</label><input type="text" class="form-control" id="cc_ti" name="cc_ti"></div>
       <div class="col text-center"><label>Sn</label><input type="text" class="form-control" id="cc_sn" name="cc_sn"></div>
@@ -175,7 +175,7 @@
     </div>
     <div class="row">
         <div class="col">
-            <select id="selecaoTipo" class="form-control" onchange="exibirCampos()">
+            <select id="selecaoTipo" name="selecaoTipo" class="form-control" onchange="exibirCampos()">
                 <option value="">Selecione...</option>
                 <option value="parafusos">Parafusos</option>
                 <option value="porcas">Porcas</option>
@@ -237,7 +237,7 @@
         <!-- Campos para Grampos -->
         <div id="camposGrampos" style="display:none;">
             <div class="row">
-                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_grampos_altura" name="cc_grampos_altura"></div>
+                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_grampos_comprimento" name="cc_grampos_comprimento"></div>
                 <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_grampos_diametro" name="cc_grampos_diametro"></div>
             </div>
         </div>

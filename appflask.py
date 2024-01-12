@@ -65,6 +65,100 @@ def base():
     # Renderize o template 'base.html'
     return render_template('base.html')
 
+@app.route('/pesquisar_certificado', methods=['GET', 'POST'])
+def pesquisar_certificado():
+    resultados = None
+    if request.method == 'POST':
+        # Extraia os dados do formulário
+        numero_nota = request.form.get('pc_numero_nota')
+        codigo_fornecedor = request.form.get('pc_codigo_fornecedor')
+        codigo_produto = request.form.get('pc_codigo_produto')
+        corrida = request.form.get('pc_corrida')
+
+        # Busque os resultados do banco de dados
+        resultados = buscar_certificados(numero_nota, codigo_fornecedor, codigo_produto, corrida)
+
+    print("Enviando para o template:", resultados)  # Adicione esta linha para depuração
+    return render_template('pesquisar_certificado.html', resultados=resultados)
+
+
+
+def buscar_certificados(numero_nota, codigo_fornecedor, codigo_produto, corrida):
+    connection = conectar_db()
+    try:
+        resultados_agrupados = {}
+
+        with connection.cursor() as cursor:
+            # Busca por cadastro de certificados
+            sql = "SELECT * FROM cadastro_certificados WHERE cc_numero_nota = %s OR cc_cod_fornecedor = %s OR cc_cod_produto = %s OR cc_corrida = %s"
+            cursor.execute(sql, (numero_nota, codigo_fornecedor, codigo_produto, corrida))
+            cadastros = cursor.fetchall()
+
+            for cadastro in cadastros:
+                numero = cadastro['cc_numero_nota']
+                if numero not in resultados_agrupados:
+                    resultados_agrupados[numero] = {'cadastro_certificados': cadastro, 'comp_quimica': [], 'prop_mecanicas': [], 'tratamentos': []}
+
+                # Busca por composição química
+                sql = "SELECT * FROM comp_quimica WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['comp_quimica'] = cursor.fetchone()  # fetchone em vez de fetchall
+
+                # Busca por propriedades mecânicas
+                sql = "SELECT * FROM prop_mecanicas WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['prop_mecanicas'] = cursor.fetchone()
+
+                # Busca por tratamentos
+                sql = "SELECT * FROM tratamentos WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['tratamentos'] = cursor.fetchone()
+
+                # Busca analise dimensional porcas
+                sql = "SELECT * FROM ad_porcas WHERE cc_numero_nota = %s"
+                cursor.execute(sql,(numero,))
+                resultados_agrupados[numero]['ad_porcas'] = cursor.fetchone()
+
+                # Busca analise dimensional pinos
+                sql = "SELECT * FROM ad_pinos WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['ad_pinos'] = cursor.fetchone()
+
+                # Busca analise dimensional parafusos
+                sql = "SELECT * FROM ad_parafusos WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['ad_parafusos'] = cursor.fetchone()
+
+                # Busca analise dimensional grampos
+                sql = "SELECT * FROM ad_grampos WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['ad_grampos'] = cursor.fetchone()
+
+                # Busca analise dimensional arruelas
+                sql = "SELECT * FROM ad_arruelas WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['ad_arruelas'] = cursor.fetchone()
+
+                # Busca analise dimensional anel
+                sql = "SELECT * FROM ad_anel WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['ad_anel'] = cursor.fetchone()
+
+
+    except Exception as e:
+        print(f"Erro ao buscar certificados: {e}")
+        resultados_agrupados = None
+    finally:
+        connection.close()
+
+    print("Resultados encontrados:", resultados_agrupados)  # Para depuração
+    return resultados_agrupados
+
+
+@app.route('/pesquisar_registro_inspecao')
+def pesquisar_registro_inspecao():
+    return render_template('pesquisar_registro_inspecao.html')
+
 @app.route('/cadastro_certificados', methods=['GET', 'POST'])
 def cadastro_certificados():
     if not is_logged_in():
@@ -74,23 +168,40 @@ def cadastro_certificados():
 
         # Capturando os dados do formulário
         nota_fiscal = request.form.get('cc_numero_nota')
-        # Verificando se pelo menos o campo 'ri_nota_fiscal' não está em branco
+        # Verificando se pelo menos o campo 'cc_numero_nota' não está em branco
         if nota_fiscal.strip() == '':
             flash('O campo Nota Fiscal não pode estar em branco.')
             return redirect(url_for('cadastro_certificados'))
+
         descricao = request.form.get('cc_descricao')
         corrida = request.form.get('cc_corrida')
         data = request.form.get('cc_data')
         cq = request.form.get('cc_cq')
         cod_fornecedor = request.form.get('cc_cod_fornecedor')
-        qtd_pedido = request.form.get('cc_qtd_pedido')
+        qtd_pedido = request.form.get('cc_qtd_pedidos')
         cod_produto = request.form.get('cc_cod_produto')
+
+        # Montando o dicionário de dados
+        dados_certificado = {
+            'nota_fiscal': nota_fiscal,
+            'descricao': descricao,
+            'corrida': corrida,
+            'data': data,
+            'cq': cq,
+            'cod_fornecedor': cod_fornecedor,
+            'qtd_pedido': qtd_pedido,
+            'cod_produto': cod_produto
+        }
+
+        # Chamando a função para inserir os dados no banco de dados
+        inserir_cadastro_certificados(dados_certificado)
 
         # Composição Química
         comp_quimica = request.form.get('comp_quimica') == 'on'
         elementos_quimicos = {}
         if comp_quimica:
             elementos_quimicos = {
+                'nota_fiscal': nota_fiscal,
                 'c': request.form.get('cc_c'),
                 'mn': request.form.get('cc_mn'),
                 'p': request.form.get('cc_p'),
@@ -108,12 +219,14 @@ def cadastro_certificados():
                 'n': request.form.get('cc_n'),
                 'nb': request.form.get('cc_nb')
             }
+            inserir_cadastro_composicao_quimica(elementos_quimicos)
 
         # Propriedades Mecânicas
         prop_mecanicas = request.form.get('prop_mecanicas') == 'on'
         propriedades_mec = {}
         if prop_mecanicas:
             propriedades_mec = {
+                'nota_fiscal': nota_fiscal,
                 'escoamento': request.form.get('cc_escoamento'),
                 'tracao': request.form.get('cc_tracao'),
                 'reducao': request.form.get('cc_reducao'),
@@ -121,26 +234,31 @@ def cadastro_certificados():
                 'dureza': request.form.get('cc_dureza'),
                 'carga': request.form.get('cc_carga')
             }
+            inserir_cadastro_propriedades_mecanicas(propriedades_mec)
 
         # Tratamentos
         tratamentos = request.form.get('tratamentos') == 'on'
         dados_tratamentos = {}
         if tratamentos:
             dados_tratamentos = {
+                'nota_fiscal': nota_fiscal,
                 'revenimento': request.form.get('cc_revenimento'),
                 'termico': request.form.get('cc_termico'),
                 'superficial': request.form.get('cc_superficial'),
                 'macrografia': request.form.get('cc_macrografia'),
                 'observacao': request.form.get('cc_observacao')
             }
+            inserir_cadastro_tratamentos(dados_tratamentos)
 
         # Análise Dimensional
         analise_dimensional = request.form.get('analise_dimensional') == 'on'
         medidas_dimensionais = {}
         if analise_dimensional:
             tipo_analise = request.form.get('selecaoTipo')
+            print("Tipo de Análise:", tipo_analise)
             if tipo_analise == 'parafusos':
                 medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
                     'altura': request.form.get('cc_parafuso_altura'),
                     'chave': request.form.get('cc_parafuso_chave'),
                     'comprimento': request.form.get('cc_parafuso_comprimento'),
@@ -149,8 +267,11 @@ def cadastro_certificados():
                     'comprimento_rosca': request.form.get('cc_parafuso_comprimento_rosca'),
                     'diametro_ponta': request.form.get('cc_parafuso_diametro_ponta')
                 }
+                inserir_cadastro_adparafusos(medidas_dimensionais)
+
             if tipo_analise == 'porcas':
                 medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
                     'altura': request.form.get('cc_porcas_altura'),
                     'chave': request.form.get('cc_porcas_chave'),
                     'diametro': request.form.get('cc_porcas_diametro'),
@@ -158,25 +279,37 @@ def cadastro_certificados():
                     'diametro_interno': request.form.get('cc_porcas_diametro_interno'),
                     'diametro_externo': request.form.get('cc_porcas_diametro_externo')
                 }
+                inserir_cadastro_adporcas(medidas_dimensionais)
+
             if tipo_analise == 'arruelas':
                 medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
                     'altura': request.form.get('cc_arruelas_altura'),
                     'diametro_interno': request.form.get('cc_arruelas_diametro_interno'),
                     'diametro_externo': request.form.get('cc_arruelas_diametro_externo')
                 }
+                inserir_cadastro_adarruelas(medidas_dimensionais)
+
             if tipo_analise == 'anel':
                 medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
                     'altura': request.form.get('cc_anel_altura'),
                     'diametro_interno': request.form.get('cc_anel_diametro_interno'),
                     'diametro_externo': request.form.get('cc_anel_diametro_externo')
                 }
+                inserir_cadastro_adanel(medidas_dimensionais)
+
             if tipo_analise == 'grampos':
                 medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
                     'comprimento': request.form.get('cc_grampos_comprimento'),
-                    'medida_b': request.form.get('cc_grampos_diametro')
+                    'diametro': request.form.get('cc_grampos_diametro')
                 }
+                inserir_cadastro_adgrampos(medidas_dimensionais)
+
             if tipo_analise == 'pinos':
                 medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
                     'espessura': request.form.get('cc_pinos_espessura'),
                     'comprimento': request.form.get('cc_pinos_comprimento'),
                     'diametro': request.form.get('cc_pinos_diametro'),
@@ -184,14 +317,254 @@ def cadastro_certificados():
                     'diametro_interno': request.form.get('cc_pinos_diametro_interno'),
                     'diametro_externo': request.form.get('cc_pinos_diametro_externo')
                 }
-        # Aqui você pode usar os dados coletados para salvar no banco de dados ou processar de acordo com a necessidade
-        # Por exemplo, inserir no banco de dados
+                inserir_cadastro_adpinos(medidas_dimensionais)
 
         flash('Formulário enviado com sucesso!')
         return redirect(url_for('cadastro_certificados'))
 
     return render_template('cadastro_certificados.html')
 
+def inserir_cadastro_certificados(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO cadastro_certificados 
+            (cc_numero_nota, cc_descricao, cc_cod_fornecedor, cc_cod_produto, cc_corrida, cc_data, cc_cq, cc_qtd_pedidos)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['descricao'],
+                dados['cod_fornecedor'],
+                dados['cod_produto'],
+                dados['corrida'],
+                dados['data'],
+                dados['cq'],
+                dados['qtd_pedido']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
+
+def inserir_cadastro_composicao_quimica(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO comp_quimica
+            (cc_numero_nota, cc_c, cc_mn, cc_p, cc_s, cc_si, cc_ni, cc_cr, cc_b, cc_cu, cc_mo, cc_co, cc_ti, cc_sn, cc_al, cc_n, cc_nb)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['c'],
+                dados['mn'],
+                dados['p'],
+                dados['s'],
+                dados['si'],
+                dados['ni'],
+                dados['cr'],
+                dados['b'],
+                dados['cu'],
+                dados['mo'],
+                dados['co'],
+                dados['ti'],
+                dados['sn'],
+                dados['al'],
+                dados['n'],
+                dados['nb']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
+
+def inserir_cadastro_propriedades_mecanicas(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO prop_mecanicas
+            (cc_numero_nota, cc_escoamento, cc_tracao, cc_reducao, cc_alongamento, cc_dureza, cc_carga)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['escoamento'],
+                dados['tracao'],
+                dados['reducao'],
+                dados['alongamento'],
+                dados['dureza'],
+                dados['carga']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
+
+def inserir_cadastro_tratamentos(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO tratamentos
+            (cc_numero_nota, cc_revenimento, cc_termico, cc_superficial, cc_macrografia, cc_observacao)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['revenimento'],
+                dados['termico'],
+                dados['superficial'],
+                dados['macrografia'],
+                dados['observacao']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
+
+def inserir_cadastro_adparafusos(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO ad_parafusos
+            (cc_numero_nota, cc_adparafusos_altura, cc_adparafusos_chave, cc_adparafusos_comprimento, cc_adparafusos_diametro,
+            cc_adparafusos_diametro_cabeca, cc_adparafusos_comprimento_rosca, cc_adparafusos_diametro_ponta)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['altura'],
+                dados['chave'],
+                dados['comprimento'],
+                dados['diametro'],
+                dados['diametro_cabeca'],
+                dados['comprimento_rosca'],
+                dados['diametro_ponta']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
+
+def inserir_cadastro_adporcas(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO ad_porcas
+            (cc_numero_nota, cc_adporcas_altura, cc_adporcas_chave, cc_adporcas_diametro, cc_adporcas_diametro_estrutura, cc_adporcas_diametro_interno, cc_adporcas_diametro_externo)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['altura'],
+                dados['chave'],
+                dados['diametro'],
+                dados['diametro_estrutura'],
+                dados['diametro_interno'],
+                dados['diametro_externo']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
+
+def inserir_cadastro_adarruelas(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO ad_arruelas
+            (cc_numero_nota, cc_adarruelas_altura, cc_adarruelas_diametro_interno, cc_adarruelas_diametro_externo)
+            VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['altura'],
+                dados['diametro_interno'],
+                dados['diametro_externo']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
+
+def inserir_cadastro_adanel(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO ad_anel
+            (cc_numero_nota, cc_adanel_altura, cc_adanel_diametro_interno, cc_adanel_diametro_externo)
+            VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['altura'],
+                dados['diametro_interno'],
+                dados['diametro_externo']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
+
+def inserir_cadastro_adgrampos(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO ad_grampos
+            (cc_numero_nota, cc_adgrampos_comprimento, cc_adgrampos_diametro)
+            VALUES (%s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['comprimento'],
+                dados['diametro']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
+
+def inserir_cadastro_adpinos(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO ad_pinos
+            (cc_numero_nota, cc_adpinos_espessura, cc_adpinos_comprimento, cc_adpinos_diametro, cc_adpinos_diametro_cabeca, cc_adpinos_diametro_interno, cc_adpinos_diametro_externo)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['espessura'],
+                dados['comprimento'],
+                dados['diametro'],
+                dados['diametro_cabeca'],
+                dados['diametro_interno'],
+                dados['diametro_externo']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
 
 
 

@@ -22,3 +22,8 @@
     min-width: 200px; /* Ajuste este valor conforme necessário */
 }
 
+.resultados {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+}

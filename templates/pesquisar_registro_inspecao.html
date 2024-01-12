@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+  <form method="POST" action="{{ url_for('pesquisar_registro_inspecao') }}">
+    <div class="py-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h1 class="text-center">Pesquisar Registro de Inspeção</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  </form>
+{% endblock %}

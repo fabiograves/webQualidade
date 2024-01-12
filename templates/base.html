@@ -184,10 +184,10 @@
             <!-- Linha divisória -->
             <li class="nav-item divider" role="separator"></li>
             <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="#">Pesquisar Certificados</a>
+              <a class="nav-link" aria-current="page" href="{{ url_for('pesquisar_certificado') }}">Pesquisar Certificados</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="#">Pesquisar Registro de Inspeção</a>
+              <a class="nav-link" aria-current="page" href="{{ url_for('pesquisar_registro_inspecao') }}">Pesquisar Registro de Inspeção</a>
             </li>
             <!-- Linha divisória -->
             <li class="nav-item divider" role="separator"></li>
@@ -244,8 +244,8 @@
                 Pesquisa
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="#">Certificado</a></li>
-                <li><a class="dropdown-item" href="#">Registro Inspeção1</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('pesquisar_certificado') }}">Certificado</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('pesquisar_registro_inspecao') }}">Registro Inspeção</a></li>
                 <li>
                   <hr class="dropdown-divider">
                 </li>
