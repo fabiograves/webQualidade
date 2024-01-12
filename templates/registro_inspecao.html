@@ -115,6 +115,9 @@
         <div class="col-md-2">
           <div class="form-group"><label>Data</label><input type="date" class="form-control" id="ri_data" name="ri_data"></div>
         </div>
+
+
+
         {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
@@ -128,6 +131,7 @@
         {% endwith %}
       </div>
 
+
           <!-- Botão de envio -->
           <button type="submit" class="btn btn-secondary w-100 mb-3">Registrar Inspeção</button>
         </form>
@@ -136,5 +140,26 @@
 
     </div>
   </div>
+
+
+
+<script>
+    function exibirCampos() {
+        var selecao = document.getElementById("selecaoTipo").value;
+        var camposParafusos = document.getElementById("camposParafusos");
+        var camposPorcas = document.getElementById("camposPorcas");
+        var camposArruelas = document.getElementById("camposArruelas");
+        var camposAnel = document.getElementById("camposAnel");
+        var camposGrampos = document.getElementById("camposGrampos");
+        var camposPinos = document.getElementById("camposPinos");
+
+        camposParafusos.style.display = selecao == "parafusos" ? "block" : "none";
+        camposPorcas.style.display = selecao == "porcas" ? "block" : "none";
+        camposArruelas.style.display = selecao == "arruelas" ? "block" : "none";
+        camposAnel.style.display = selecao == "anel" ? "block" : "none";
+        camposGrampos.style.display = selecao == "grampos" ? "block" : "none";
+        camposPinos.style.display = selecao == "pinos" ? "block" : "none";
+    }
+  </script>
 
 {% endblock %}

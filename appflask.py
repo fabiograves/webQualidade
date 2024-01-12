@@ -168,6 +168,10 @@ def cadastro_certificados():
 
         # Capturando os dados do formulário
         nota_fiscal = request.form.get('cc_numero_nota')
+        # Verificação de existência
+        if verificar_existencia_nota(nota_fiscal):
+            flash('Número da nota já cadastrado no sistema.')
+            return redirect(url_for('cadastro_certificados'))
         # Verificando se pelo menos o campo 'cc_numero_nota' não está em branco
         if nota_fiscal.strip() == '':
             flash('O campo Nota Fiscal não pode estar em branco.')
@@ -323,6 +327,20 @@ def cadastro_certificados():
         return redirect(url_for('cadastro_certificados'))
 
     return render_template('cadastro_certificados.html')
+
+def verificar_existencia_nota(nota_fiscal):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = "SELECT COUNT(1) FROM cadastro_certificados WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (nota_fiscal,))
+            resultado = cursor.fetchone()
+            return resultado['COUNT(1)'] > 0  # Verifique o nome da coluna retornado pelo cursor.
+    except Exception as e:
+        print(f"Erro ao verificar existência da nota: {e}")
+    finally:
+        connection.close()
+    return False
 
 def inserir_cadastro_certificados(dados):
     connection = conectar_db()
