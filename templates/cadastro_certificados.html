@@ -125,7 +125,7 @@
       <div class="col text-center"><label>Cu</label><input type="text" class="form-control" id="cc_cu" name="cc_cu"></div>
       <div class="col text-center"><label>Mo</label><input type="text" class="form-control" id="cc_mo" name="cc_mo"></div>
       <div class="col text-center"><label>Co</label><input type="text" class="form-control" id="cc_co" name="cc_co"></div>
-      <div class="col text-center"><label>Ti</label><input type="text" class="form-control" id="cc_ti" name="cc_ti"></div>
+      <div class="col text-center"><label>Fe</label><input type="text" class="form-control" id="cc_fe" name="cc_fe"></div>
       <div class="col text-center"><label>Sn</label><input type="text" class="form-control" id="cc_sn" name="cc_sn"></div>
       <div class="col text-center"><label>Al</label><input type="text" class="form-control" id="cc_al" name="cc_al"></div>
       <div class="col text-center"><label>N</label><input type="text" class="form-control" id="cc_n" name="cc_n"></div>
@@ -273,8 +273,16 @@
                      </div>
                 {% endif %}
             {% endwith %}
-          <!-- Botão de envio -->
-          <button type="submit" class="btn btn-secondary w-100 mb-3">Registrar Certificado</button>
+
+            <!-- Limitar botão de acordo com privilegio -->
+            {% if session['privilegio'] != 0 %}
+            <!-- Botão de envio -->
+            <button type="submit" class="btn btn-secondary w-100 mb-3">Registrar Certificado</button>
+            {% else %}
+                <!-- Botão desabilitado se o privilégio for 0 -->
+                <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
+            {% endif %}
+
         </div>
       </div>
     </div>

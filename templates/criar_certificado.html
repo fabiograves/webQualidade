@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<form method="POST" action="{{ url_for('criar_certificado') }}">
+    <div class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="text-center">Criar Certificado</h1>
+            </div>
+        </div>
+    </div>
+    </div>
+
+<div class="">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <input type="text" placeholder="Número da nota:" class="form-control" id="criar_numero_nota" name="criar_numero_nota"
+                        value="{{ resultado['cadastro_certificados']['cc_numero_nota'] if resultado is defined and resultado['cadastro_certificados'] else '' }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                {% if session['privilegio'] != 0 %}
+                <!-- Botão de envio -->
+                <button type="submit" name="bt_procurar_nota" value="bt_procurar_nota" class="btn btn-secondary w-100 mb-3">Procurar Nota</button>
+                {% else %}
+                    <!-- Botão desabilitado se o privilégio for 0 -->
+                    <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilégio Para Criar Cadastro</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</form>
+<form method="POST" action="{{ url_for('gerar_pdf') }}">
+<div class="">
+    <div class="container">
+            <div class="row">
+                <div class="col-md-3" style="">
+                  <div class="form-group"><label>Número do Certificado</label><input type="text" class="form-control" id="criar_numero_certificado" name="criar_numero_certificado"></div>
+                </div>
+                <div class="col-md-3" style="">
+                    <div class="form-group"><label>Cliente:</label><input type="text" class="form-control" id="criar_cliente" name="criar_cliente"></div>
+                </div>
+                <div class="col-md-3" style="">
+                    <div class="form-group"><label>Pedido:</label><input type="text" class="form-control" id="criar_pedido" name="criar_pedido"></div>
+                </div>
+                <div class="col-md-3" style="">
+                    <div class="form-group"><label>Pedido ARS:</label><input type="text" class="form-control" id="criar_pedido_ars" name="criar_pedido_ars"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3" style="">
+                    <div class="form-group"><label>Número Certificado Fabricante:</label><input type="text" class="form-control" id="criar_numero_fabricante" name="criar_numero_fabricante"></div>
+                </div>
+                <div class="col-md-3" style="">
+                    <div class="form-group"><label>Descrição Material:</label><input type="text" class="form-control" id="criar_desc_material" name="criar_desc_material"
+                    value="{{ resultado['cadastro_certificados']['cc_descricao'] if resultado is defined and resultado['cadastro_certificados'] else '' }}"></div>
+                </div>
+                <div class="col-md-3" style="">
+                    <div class="form-group"><label>Quantidade:</label><input type="text" class="form-control" id="criar_quantidade" name="criar_quantidade"></div>
+                </div>
+                <div class="col-md-3" style="">
+                    <div class="form-group"><label>Material:</label><input type="text" class="form-control" id="criar_material" name="criar_material"></div>
+                </div>
+
+            </div>
+            <div class="row">
+                <div class="col-md-3" style="">
+                    <div class="form-group"><label>Data:</label><input type="text" class="form-control" id="criar_data" name="criar_data"></div>
+                </div>
+                <div class="col-md-3" style="">
+                    <div class="form-group"><label>Lote:</label><input type="text" class="form-control" id="criar_lote" name="criar_lote"></div>
+                </div>
+                <div class="col-md-3" style="">
+                    <div class="form-group"><label>Código Fornecedor:</label><input type="text" class="form-control" id="criar_codigo_fornecedor" name="criar_codigo_fornecedor" value="{{ resultado['cadastro_certificados']['cc_cod_fornecedor'] if resultado is defined and resultado['cadastro_certificados'] else '' }}"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12" style="">
+                    <!-- Limitar botão de acordo com privilegio -->
+                    {% if session['privilegio'] != 0 %}
+                    <!-- Botão de envio -->
+                    <button type="submit" name="bt_criar_certificado" value="bt_criar_certificado" class="btn btn-secondary w-100 mb-3">Criar Certificado</button>
+                    {% else %}
+                        <!-- Botão desabilitado se o privilégio for 0 -->
+                        <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio Para Criar Certificado</button>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+</div>
+
+
+</form>
+
+
+{% endblock %}

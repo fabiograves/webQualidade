@@ -116,6 +116,97 @@
           <div class="form-group"><label>Data</label><input type="date" class="form-control" id="ri_data" name="ri_data"></div>
         </div>
 
+<div id="camposExtras_analise_dimensional">
+    <div class="container" id="fundo_diferente">
+    <!-- Primeira Linha de Inputs -->
+    <div class="row mb-3">
+        <h2 class="text-center">Análise Dimensional</h2>
+    </div>
+    <div class="row">
+        <div class="col">
+            <select id="selecaoTipo" name="selecaoTipo" class="form-control" onchange="exibirCampos()">
+                <option value="">Selecione...</option>
+                <option value="parafusos">Parafusos</option>
+                <option value="porcas">Porcas</option>
+                <option value="arruelas">Arruelas</option>
+                <option value="anel">Anel</option>
+                <option value="grampos">Grampos</option>
+                <option value="pinos">Pinos</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Campos para Parafusos -->
+        <div id="camposParafusos" style="display:none;">
+            <div class="row">
+                <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_parafuso_altura" name="cc_parafuso_altura"></div>
+                <div class="col text-center"><label>Chave</label><input type="text" class="form-control" id="cc_parafuso_chave" name="cc_parafuso_chave"></div>
+                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_parafuso_comprimento" name="cc_parafuso_comprimento"></div>
+                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_parafuso_diametro" name="cc_parafuso_diametro"></div>
+            </div>
+            <div class="row">
+                <div class="col text-center"><label>Diâmetro da Cabeça/Corpo</label><input type="text" class="form-control" id="cc_parafuso_diametro_cabeca" name="cc_parafuso_diametro_cabeca"></div>
+                <div class="col text-center"><label>Comprimento da Rosca Parcial</label><input type="text" class="form-control" id="cc_parafuso_comprimento_rosca" name="cc_parafuso_comprimento_rosca"></div>
+                <div class="col text-center"><label>Diâmetro da Ponta</label><input type="text" class="form-control" id="cc_parafuso_diametro_ponta" name="cc_parafuso_diametro_ponta"></div>
+            </div>
+        </div>
+
+        <!-- Campos para Porcas -->
+        <div id="camposPorcas" style="display:none;">
+            <div class="row">
+                <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_porcas_altura" name="cc_porcas_altura"></div>
+                <div class="col text-center"><label>Chave</label><input type="text" class="form-control" id="cc_porcas_chave" name="cc_porcas_chave"></div>
+                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_porcas_diametro" name="cc_porcas_diametro"></div>
+                <div class="col text-center"><label>Diâmetro da Estrutura(Porca T)</label><input type="text" class="form-control" id="cc_porcas_diametro_estrutura" name="cc_porcas_diametro_estrutura"></div>
+            </div>
+            <div class="row">
+                <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_porcas_diametro_interno" name="cc_porcas_diametro_interno"></div>
+                <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_porcas_diametro_externo" name="cc_porcas_diametro_externo"></div>
+            </div>
+        </div>
+
+        <!-- Campos para Arruelas -->
+        <div id="camposArruelas" style="display:none;">
+            <div class="row">
+                <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_arruelas_altura" name="cc_arruelas_altura"></div>
+                <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_arruelas_diametro_interno" name="cc_arruelas_diametro_interno"></div>
+                <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_arruelas_diametro_externo" name="cc_arruelas_diametro_externo"></div>
+            </div>
+        </div>
+
+        <!-- Campos para Anel -->
+        <div id="camposAnel" style="display:none;">
+            <div class="row">
+                <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_anel_altura" name="cc_anel_altura"></div>
+                <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_anel_diametro_interno" name="cc_anel_diametro_interno"></div>
+                <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_anel_diametro_externo" name="cc_anel_diametro_externo"></div>
+            </div>
+        </div>
+
+        <!-- Campos para Grampos -->
+        <div id="camposGrampos" style="display:none;">
+            <div class="row">
+                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_grampos_comprimento" name="cc_grampos_comprimento"></div>
+                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_grampos_diametro" name="cc_grampos_diametro"></div>
+            </div>
+        </div>
+
+        <!-- Campos para Pinos -->
+        <div id="camposPinos" style="display:none;">
+            <div class="row">
+                <div class="col text-center"><label>Espessura</label><input type="text" class="form-control" id="cc_pinos_espessura" name="cc_pinos_espessura"></div>
+                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_pinos_comprimento" name="cc_pinos_comprimento"></div>
+                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_pinos_diametro" name="cc_pinos_diametro"></div>
+                <div class="col text-center"><label>Diâmetro da Cabeça</label><input type="text" class="form-control" id="cc_pinos_diametro_cabeca" name="cc_pinos_diametro_cabeca"></div>
+            </div>
+            <div class="row">
+                <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_pinos_diametro_interno" name="cc_pinos_diametro_interno"></div>
+                <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_pinos_diametro_externo" name="cc_pinos_diametro_externo"></div>
+            </div>
+        </div>
+
+  </div>
+</div>
 
 
         {% with messages = get_flashed_messages() %}
@@ -129,11 +220,18 @@
             </div>
         {% endif %}
         {% endwith %}
+
+
+            <!-- Limitar botão de acordo com privilegio -->
+            {% if session['privilegio'] != 0 %}
+            <!-- Botão de envio -->
+            <button type="submit" class="btn btn-secondary w-100 mb-3">Registrar Inspeção</button>
+            {% else %}
+                <!-- Botão desabilitado se o privilégio for 0 -->
+                <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
+            {% endif %}
+
       </div>
-
-
-          <!-- Botão de envio -->
-          <button type="submit" class="btn btn-secondary w-100 mb-3">Registrar Inspeção</button>
         </form>
       </div>
     </div>
@@ -160,6 +258,6 @@
         camposGrampos.style.display = selecao == "grampos" ? "block" : "none";
         camposPinos.style.display = selecao == "pinos" ? "block" : "none";
     }
-  </script>
+</script>
 
 {% endblock %}

@@ -1,6 +1,20 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_session import Session
 import pymysql
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from flask import send_file, Response, send_from_directory
+import os
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import Image
+from reportlab.platypus import Spacer
+from reportlab.platypus import Paragraph
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -40,6 +54,10 @@ def login():
         if user:
             session['logged_in'] = True
             session['username'] = username
+
+            # Armazenar o privilegio na sessão
+            session['privilegio'] = user['privilegio']  # Assumindo que 'privilegio' é o nome da coluna
+
             return redirect(url_for('home'))
         else:
             flash('Login falhou. Verifique seu nome de usuário e senha.')
@@ -59,6 +77,10 @@ def home():
     if not is_logged_in():
         return redirect(url_for('login'))
     return render_template('home.html')
+
+@app.route('/criar_certificado')
+def criar_certificado():
+    return render_template('criar_certificado.html')
 
 @app.route('/base')
 def base():
@@ -81,7 +103,338 @@ def pesquisar_certificado():
     print("Enviando para o template:", resultados)  # Adicione esta linha para depuração
     return render_template('pesquisar_certificado.html', resultados=resultados)
 
+@app.route('/criar_certificado', methods=['POST'])
+def tratar_formulario():
+    numero_nota = request.form['criar_numero_nota']
+    resultado = buscar_certificado_nota(numero_nota)
+    session.pop('dados_pdf', None)
+    session['dados_pdf'] = resultado
+    if 'bt_procurar_nota' in request.form:
+        # código para buscar nota
+        numero_nota = request.form['criar_numero_nota']
+        resultado = buscar_certificado_nota(numero_nota)
+        return render_template('criar_certificado.html', resultado=resultado)
 
+    elif 'bt_criar_certificado' in request.form:
+        numero_nota = request.form['criar_numero_nota']
+        resultado = buscar_certificado_nota(numero_nota)
+        # Armazenando os dados necessários na sessão
+        session.pop('dados_pdf', None)
+        session['dados_pdf'] = resultado
+
+        return redirect(url_for('gerar_pdf'))
+
+@app.route('/gerar_pdf', methods=['POST'])
+def gerar_pdf():
+    # Recuperando os dados da sessão
+    dados_pdf = session.get('dados_pdf')
+    print(dados_pdf)
+
+    # Verifica se os dados necessários estão presentes
+    if dados_pdf:
+        criar_desc_material = request.form.get('criar_desc_material', 'Não informado')
+        criar_codigo_fornecedor = request.form.get('criar_codigo_fornecedor', 'Não informado')
+        numero_certificado = request.form.get('criar_numero_certificado', 'Não informado')
+        criar_data = request.form.get('criar_data', 'Não informado')
+        criar_cliente = request.form.get('criar_cliente', 'Não informado')
+        criar_pedido = request.form.get('criar_pedido', 'Não informado')
+        criar_pedido_ars = request.form.get('criar_pedido_ars', 'Não informado')
+        criar_numero_fabricante = request.form.get('criar_numero_fabricante', 'Não informado')
+        criar_quantidade = request.form.get('criar_quantidade', 'Não informado')
+        criar_material = request.form.get('criar_material', 'Não informado')
+        criar_lote = request.form.get('criar_lote', 'Não informado')
+        criar_codigo_fornecedor = request.form.get('criar_codigo_fornecedor', 'Não informado')
+
+        # Verifica se há dados na tabela 'comp_quimica'
+        tem_dados_comp_quimica = dados_pdf.get('comp_quimica') and any(dados_pdf['comp_quimica'].values())
+        # Verifica se há dados na tabela 'prop_mecanicas'
+        tem_dados_prop_mecanicas = dados_pdf.get('prop_mecanicas') and any(dados_pdf['prop_mecanicas'].values())
+        # Verifica se há dados na tabela 'tratamentos'
+        tem_dados_tratamentos = dados_pdf.get('tratamentos') and any(dados_pdf['tratamentos'].values())
+        # Verifica se há dados na tabela 'ad_porcas'
+        tem_dados_ad_porcas = dados_pdf.get('ad_porcas') and any(dados_pdf['ad_porcas'].values())
+        # Verifica se há dados na tabela 'ad_pinos'
+        tem_dados_ad_pinos = dados_pdf.get('ad_pinos') and any(dados_pdf['ad_pinos'].values())
+        # Verifica se há dados na tabela 'ad_parafusos'
+        tem_dados_ad_parafusos = dados_pdf.get('ad_parafusos') and any(dados_pdf['ad_parafusos'].values())
+        # Verifica se há dados na tabela 'ad_grampos'
+        tem_dados_ad_grampos = dados_pdf.get('ad_grampos') and any(dados_pdf['ad_grampos'].values())
+        # Verifica se há dados na tabela 'ad_arruelas'
+        tem_dados_ad_arruelas = dados_pdf.get('ad_arruelas') and any(dados_pdf['ad_arruelas'].values())
+        # Verifica se há dados na tabela 'ad_anel'
+        tem_dados_ad_anel = dados_pdf.get('ad_anel') and any(dados_pdf['ad_anel'].values())
+
+        # Acessando o valor de 'cc_numero_nota'
+        numero_nota = dados_pdf.get('cadastro_certificados', {}).get('cc_numero_nota', 'Não informado')
+        comp_quimica = dados_pdf.get('comp_quimica', {}.get('cc_c', ''))
+
+        # Cria um arquivo PDF na memória
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        page_width, page_height = letter
+
+        # Defina as margens da página
+        left_margin = 0.5 * inch
+        right_margin = 0.5 * inch
+        top_margin = 0.5 * inch
+        bottom_margin = 0.5 * inch
+
+        # Defina a largura e altura efetivas da página
+        effective_page_width = page_width - left_margin - right_margin
+        effective_page_height = page_height - top_margin - bottom_margin
+
+        # Lista para armazenar elementos do PDF
+        elements = []
+
+        # Estilo para o título
+        texto_style1 = ParagraphStyle(name='TextoStyle1', fontSize=20, alignment=1, leading=22)
+        texto_style2 = ParagraphStyle(name='TextoStyle2', fontSize=12, alignment=1, leading=14)
+
+        # Texto dentro da tabela
+        texto_tabela = "Certificado de Qualidade / Quality Certificate"
+
+        # Cria o parágrafo do texto com o estilo personalizado
+        texto_paragraph = Paragraph(texto_tabela, texto_style1)
+
+        # Cria uma tabela com 2 colunas para posicionar a imagem e o texto
+        data = [
+            [Image(os.path.join(app.static_folder, 'images', 'LogoCertificado.png'), width=2 * inch, height=1 * inch),
+             texto_paragraph]
+        ]
+
+        table = Table(data, colWidths=[2 * inch, 4 * inch])
+        table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),  # Alinha a imagem à esquerda
+            ('ALIGN', (1, 0), (1, 0), 'CENTER'),  # Alinha o texto ao centro
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+
+        elements.append(table)
+
+        # Adiciona espaço entre a imagem e o texto
+        elements.append(Spacer(0.1, 0.1 * inch))
+
+        # Estilos para o texto
+        styles = getSampleStyleSheet()
+        normal_style = styles['Normal']
+
+        # Cria uma tabela com 3 colunas para posicionar os textos lado a lado
+        data = [
+            ["REG:7.1b - Revisao.04", criar_data, f"Nº Certificado / Nº Certificate Nº{numero_certificado}"]
+        ]
+
+        table = Table(data, colWidths=[2 * inch, 2 * inch, 2 * inch])
+        table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Alinha todas as colunas à esquerda
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+
+        elements.append(table)
+
+        # Adiciona espaço entre as linhas de texto
+        elements.append(Spacer(0.2, 0.2 * inch))
+
+        data = [
+            [Paragraph(f"<font size='6'>Cliente<br/>Customer: </font><font size='10'>{criar_cliente}</font>", getSampleStyleSheet()['Normal']),
+             Paragraph(f"<font size='6'>Pedido<br/>Customer Order: </font><font size='10'>{criar_pedido}</font>", getSampleStyleSheet()['Normal'])],
+            [Paragraph(f"<font size='6'>Nº Certificado do Fabricante<br/>Nº Certificate Supplier:      </font><font size='10'>{criar_numero_fabricante}</font>", getSampleStyleSheet()['Normal']),
+             Paragraph(f"<font size='6'>Pedido<br/>ARS:     </font><font size='10'>{criar_pedido_ars}</font>", getSampleStyleSheet()['Normal'])],
+            [Paragraph(
+                f"<font size='6'>Descrição do Material<br/>Description of Material: </font><font size='10'>{criar_desc_material}</font>",
+                getSampleStyleSheet()['Normal']),
+             Paragraph(f"<font size='6'>Quantidade de Peças<br/>Quantity of Parts: </font><font size='10'>{criar_quantidade}</font>",
+                       getSampleStyleSheet()['Normal'])],
+            [Paragraph(
+                f"<font size='6'>Material<br/>Material: </font><font size='10'>{criar_material}</font>",
+                getSampleStyleSheet()['Normal']),
+                Paragraph(
+                    f"<font size='6'>Data<br/>Date: </font><font size='10'>{criar_data}</font>",
+                    getSampleStyleSheet()['Normal'])],
+            [Paragraph(
+                f"<font size='6'>Lote<br/>Lote: </font><font size='10'>{criar_lote}</font>",
+                getSampleStyleSheet()['Normal']),
+                Paragraph(
+                    f"<font size='6'>Cod. For.<br/>Code: </font><font size='10'>{criar_codigo_fornecedor}</font>",
+                    getSampleStyleSheet()['Normal'])],
+
+        ]
+
+        # Defina a largura das colunas (em polegadas)
+        colWidths = [(2/3) * effective_page_width, (1/3) * effective_page_width]
+
+        # Crie a tabela
+        table = Table(data, colWidths=colWidths)
+
+        # Defina o estilo da tabela
+        table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Alinhar todo o texto à esquerda
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adicionar grade
+        ]))
+
+        elements.append(table)
+
+        # Se tem dados em 'comp_quimica', adiciona uma tabela ao PDF
+        if tem_dados_comp_quimica:
+            c = dados_pdf['comp_quimica'].get('cc_c', '***')
+            mn = dados_pdf['comp_quimica'].get('cc_mn', '')
+            p = dados_pdf['comp_quimica'].get('cc_p', '')
+            s = dados_pdf['comp_quimica'].get('cc_s', '')
+            si = dados_pdf['comp_quimica'].get('cc_si', '')
+            ni = dados_pdf['comp_quimica'].get('cc_ni', '')
+            cr = dados_pdf['comp_quimica'].get('cc_cr', '')
+            b = dados_pdf['comp_quimica'].get('cc_b', '')
+            cu = dados_pdf['comp_quimica'].get('cc_cu', '')
+            mo = dados_pdf['comp_quimica'].get('cc_mo', '')
+            co = dados_pdf['comp_quimica'].get('cc_co', '')
+            fe = dados_pdf['comp_quimica'].get('cc_fe', '')
+            sn = dados_pdf['comp_quimica'].get('cc_sn', '')
+            al = dados_pdf['comp_quimica'].get('cc_al', '')
+            n = dados_pdf['comp_quimica'].get('cc_n', '')
+            nb = dados_pdf['comp_quimica'].get('cc_nb', '')
+
+            # Texto dentro da tabela
+            texto_subtitulo = "Composição Química / Chemical Analysis"
+            # Cria o parágrafo do texto com o estilo personalizado
+            texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
+            elements.append(texto_paragraph)
+            elements.append(Spacer(0.2, 0.2 * inch))
+
+            data = [
+                [f"C: {c}", f"Mn: {mn}", f"P: {p}", f"S: {s}", f"Si: {si}", f"Ni: {ni}", f"Cr: {cr}", f"B: {b}"],
+                [f"Cu: {cu}", f"Mo: {mo}", f"Co: {co}", f"Fe: {fe}", f"Al: {al}", f"N: {n}", f"Nb: {nb}", f"Sn: {sn}"]
+            ]
+            comp_quimica_table = Table(data, colWidths=effective_page_width / 8)
+
+            comp_quimica_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
+            ]))
+            elements.append(comp_quimica_table)
+
+        # Se tem dados em 'prop_mecanicas', adiciona uma tabela ao PDF
+        if tem_dados_prop_mecanicas:
+            escoamento = dados_pdf.get('prop_mecanicas', {}.get('cc_escoamento'))
+            tracao = dados_pdf.get('prop_mecanicas', {}.get('cc_tracao'))
+            reducao = dados_pdf.get('prop_mecanicas', {}.get('cc_reducao'))
+            alongamento = dados_pdf.get('prop_mecanicas', {}.get('cc_alongamento'))
+            dureza = dados_pdf.get('prop_mecanicas', {}.get('cc_dureza'))
+            carga = dados_pdf.get('prop_mecanicas', {}.get('cc_carga'))
+
+        # Se tem dados em 'tratamentos', adiciona uma tabela ao PDF
+        if tem_dados_tratamentos:
+            revenimento = dados_pdf.get('tratamentos', {}.get('cc_revenimento'))
+            termico = dados_pdf.get('tratamentos', {}.get('cc_termico'))
+            superficial = dados_pdf.get('tratamentos', {}.get('cc_superficial'))
+            macrografia = dados_pdf.get('tratamentos', {}.get('cc_macrografia'))
+            observacao = dados_pdf.get('tratamentos', {}.get('cc_observacao'))
+
+        if tem_dados_ad_porcas:
+            altura = dados_pdf.get('ad_porcas', {}.get('cc_adporcas_altura'))
+            chave = dados_pdf.get('ad_porcas', {}.get('cc_adporcas_chave'))
+            diametro = dados_pdf.get('ad_porcas', {}.get('cc_adporcas_diametro'))
+            diametro_estrutura = dados_pdf.get('ad_porcas', {}.get('cc_adporcas_diametro_estrutura'))
+            diametro_interno = dados_pdf.get('ad_porcas', {}.get('cc_adporcas_diametro_interno'))
+            diametro_externo = dados_pdf.get('ad_porcas', {}.get('cc_adporcas_diametro_externo'))
+
+        if tem_dados_ad_pinos:
+            espessura = dados_pdf.get('ad_pinos', {}.get('cc_adpinos_espessura'))
+            comprimento = dados_pdf.get('ad_pinos', {}.get('cc_adpinos_comprimento'))
+            diametro = dados_pdf.get('ad_pinos', {}.get('cc_adpinos_diametro'))
+            diametro_cabeca = dados_pdf.get('ad_pinos', {}.get('cc_adpinos_diametro_cabeca'))
+            diametro_interno = dados_pdf.get('ad_pinos', {}.get('cc_adpinos_diametro_interno'))
+            diametro_externo = dados_pdf.get('ad_pinos', {}.get('cc_adpinos_diametro_externo'))
+
+        if tem_dados_ad_parafusos:
+            altura = dados_pdf.get('ad_parafusos', {}.get('cc_adparafusos_altura'))
+            chave = dados_pdf.get('ad_parafusos', {}.get('cc_adparafusos_chave'))
+            comprimento = dados_pdf.get('ad_parafusos', {}.get('cc_adparafusos_comprimento'))
+            diametro = dados_pdf.get('ad_parafusos', {}.get('cc_adparafusos_diametro'))
+            diametro_cabeca = dados_pdf.get('ad_parafusos', {}.get('cc_adparafusos_diametro_cabeca'))
+            comprimento_rosca = dados_pdf.get('ad_parafusos', {}.get('cc_adparafusos_comprimento_rosca'))
+            diametro_ponta = dados_pdf.get('ad_parafusos', {}.get('cc_adparafusos_diametro_ponta'))
+
+        if tem_dados_ad_grampos:
+            comprimento = dados_pdf.get('ad_grampos', {}.get('cc_adgrampos_comprimento'))
+            diametro = dados_pdf.get('ad_grampos', {}.get('cc_adgrampos_diametro'))
+
+        if tem_dados_ad_arruelas:
+            altura = dados_pdf.get('ad_arruelas', {}.get('cc_adarruelas_altura'))
+            diametro_interno = dados_pdf.get('ad_arruelas', {}.get('cc_adarruelas_diametro_interno'))
+            diametro_externo = dados_pdf.get('ad_arruelas', {}.get('cc_adarruelas_diametro_externo'))
+
+        if tem_dados_ad_anel:
+            altura = dados_pdf.get('ad_anel', {}.get('cc_adanel_altura'))
+            diametro_interno = dados_pdf.get('ad_anel', {}.get('cc_adanel_diametro_interno'))
+            diametro_externo = dados_pdf.get('ad_anel', {}.get('cc_adanel_diametro_externo'))
+
+        # Constrói o PDF
+        doc.build(elements)
+
+        session.pop('dados_pdf', None)
+        # Retorna o PDF como resposta
+        buffer.seek(0)
+        return Response(buffer.getvalue(), mimetype='application/pdf',
+                        headers={"Content-Disposition": "attachment;filename=certificado.pdf"})
+
+    else:
+        flash("Dados necessários para gerar o PDF não foram encontrados.")
+        return redirect(url_for('criar_certificado'))
+
+
+def buscar_certificado_nota(numero_nota):
+    connection = conectar_db()
+    try:
+        resultado = {}
+
+        with connection.cursor() as cursor:
+            # Busca na tabela de cadastro de certificados
+            sql = "SELECT * FROM cadastro_certificados WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['cadastro_certificados'] = cursor.fetchone()
+
+            sql = "SELECT * FROM comp_quimica WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['comp_quimica'] = cursor.fetchone()
+
+            sql = "SELECT * FROM prop_mecanicas WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['prop_mecanicas'] = cursor.fetchone()
+
+            sql = "SELECT * FROM tratamentos WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['tratamentos'] = cursor.fetchone()
+
+            sql = "SELECT * FROM ad_porcas WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_porcas'] = cursor.fetchone()
+
+            sql = "SELECT * FROM ad_pinos WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_pinos'] = cursor.fetchone()
+
+            sql = "SELECT * FROM ad_parafusos WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_parafusos'] = cursor.fetchone()
+
+            sql = "SELECT * FROM ad_grampos WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_grampos'] = cursor.fetchone()
+
+            sql = "SELECT * FROM ad_arruelas WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_arruelas'] = cursor.fetchone()
+
+            sql = "SELECT * FROM ad_anel WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_anel'] = cursor.fetchone()
+
+    except Exception as e:
+        print(f"Erro ao buscar certificado por nota: {e}")
+        resultado = None
+    finally:
+        connection.close()
+
+    return resultado
 
 def buscar_certificados(numero_nota, codigo_fornecedor, codigo_produto, corrida):
     connection = conectar_db()
@@ -217,7 +570,7 @@ def cadastro_certificados():
                 'cu': request.form.get('cc_cu'),
                 'mo': request.form.get('cc_mo'),
                 'co': request.form.get('cc_co'),
-                'ti': request.form.get('cc_ti'),
+                'fe': request.form.get('cc_fe'),
                 'sn': request.form.get('cc_sn'),
                 'al': request.form.get('cc_al'),
                 'n': request.form.get('cc_n'),
@@ -373,7 +726,7 @@ def inserir_cadastro_composicao_quimica(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO comp_quimica
-            (cc_numero_nota, cc_c, cc_mn, cc_p, cc_s, cc_si, cc_ni, cc_cr, cc_b, cc_cu, cc_mo, cc_co, cc_ti, cc_sn, cc_al, cc_n, cc_nb)
+            (cc_numero_nota, cc_c, cc_mn, cc_p, cc_s, cc_si, cc_ni, cc_cr, cc_b, cc_cu, cc_mo, cc_co, cc_fe, cc_sn, cc_al, cc_n, cc_nb)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(sql, (
@@ -389,7 +742,7 @@ def inserir_cadastro_composicao_quimica(dados):
                 dados['cu'],
                 dados['mo'],
                 dados['co'],
-                dados['ti'],
+                dados['fe'],
                 dados['sn'],
                 dados['al'],
                 dados['n'],
