@@ -5,7 +5,7 @@
 <!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-  <form method="POST" action="{{ url_for('cadastro_certificados') }}">
+  <form method="POST" action="{{ url_for('cadastro_certificados') }}" enctype="multipart/form-data">
     <div class="py-5">
     <div class="container">
       <div class="row">
@@ -13,10 +13,20 @@
           <h1 class="text-center">Cadastro de Certificados</h1>
         </div>
       </div>
+
     </div>
   </div>
   <div class="">
     <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label for="arquivo">Certificado do Fornecedor ---> </label>
+                    <label for="arquivo">Escolher arquivo em PDF:</label>
+                    <input type="file" class="form-control-file" id="arquivo" name="arquivo">
+                </div>
+            </div>
+        </div>
       <div class="row">
         <div class="col-md-2" style="">
           <div class="form-group"><label>Número da Nota</label><input type="text" class="form-control" id="cc_numero_nota" name="cc_numero_nota"></div>

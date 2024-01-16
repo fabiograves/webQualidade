@@ -33,6 +33,11 @@
                     <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilégio Para Criar Cadastro</button>
                 {% endif %}
             </div>
+            <div class="col-md-3">
+                {% if resultado and resultado['cadastro_certificados'] and resultado['cadastro_certificados']['cc_arquivo'] %}
+                    <a href="{{ url_for('download_arquivo', numero_nota=resultado['cadastro_certificados']['cc_numero_nota']) }}" class="btn btn-primary" target="_blank">Baixar Arquivo</a>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
