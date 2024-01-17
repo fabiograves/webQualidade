@@ -107,7 +107,7 @@ def pesquisar_certificado():
         # Busque os resultados do banco de dados
         resultados = buscar_certificados(numero_nota, codigo_fornecedor, codigo_produto, corrida)
 
-    print("Enviando para o template:", resultados)  # Adicione esta linha para depuração
+    # print("Enviando para o template:", resultados)  # Adicione esta linha para depuração
     return render_template('pesquisar_certificado.html', resultados=resultados)
 
 @app.route('/criar_certificado', methods=['POST'])
@@ -142,7 +142,6 @@ def tratar_formulario():
 def gerar_pdf():
     # Recuperando os dados da sessão
     dados_pdf = session.get('dados_pdf')
-    print(dados_pdf)
 
     # Verifica se os dados necessários estão presentes
     if dados_pdf:
@@ -751,7 +750,7 @@ def buscar_certificado_nota(numero_nota):
             sql = "SELECT * FROM ad_anel WHERE cc_numero_nota = %s"
             cursor.execute(sql, (numero_nota,))
             resultado['ad_anel'] = cursor.fetchone()
-            print(resultado)
+
 
     except Exception as e:
         print(f"1 Erro ao buscar certificado por nota: {e}")
@@ -846,7 +845,7 @@ def buscar_certificados(numero_nota, codigo_fornecedor, codigo_produto, corrida)
     finally:
         connection.close()
 
-    print("Resultados encontrados:", resultados_agrupados)  # Para depuração
+    # print("Resultados encontrados:", resultados_agrupados)  # Para depuração
     return resultados_agrupados
 
 
@@ -966,7 +965,7 @@ def cadastro_certificados():
         medidas_dimensionais = {}
         if analise_dimensional:
             tipo_analise = request.form.get('selecaoTipo')
-            print("Tipo de Análise:", tipo_analise)
+            # print("Tipo de Análise:", tipo_analise)
             if tipo_analise == 'parafusos':
                 medidas_dimensionais = {
                     'nota_fiscal': nota_fiscal,
