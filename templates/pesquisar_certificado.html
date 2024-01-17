@@ -266,13 +266,17 @@
             <div class="resultados">
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-6 text-center"><strong>Comprimento</strong></div>
-                  <div class="col-md-6 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento Rosca</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro Interno</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-6 text-center"> {{ dados.ad_grampos.cc_adgrampos_comprimento }} </div>
-                  <div class="col-md-6 text-center"> {{ dados.ad_grampos.cc_adgrampos_diametro }} </div>
+                  <div class="col-md-3 text-center"> {{ dados.ad_grampos.cc_adgrampos_comprimento }} </div>
+                  <div class="col-md-3 text-center"> {{ dados.ad_grampos.cc_adgrampos_diametro }} </div>
+                  <div class="col-md-3 text-center"> {{ dados.ad_grampos.cc_adgrampos_comprimento_rosca }} </div>
+                  <div class="col-md-3 text-center"> {{ dados.ad_grampos.cc_adgrampos_diametro_interno }} </div>
                 </div>
             </div>
           {% endif %}
@@ -313,6 +317,62 @@
                   <div class="col-md-4 text-center"> {{ dados.ad_anel.cc_adanel_altura }} </div>
                   <div class="col-md-4 text-center"> {{ dados.ad_anel.cc_adanel_diametro_interno }} </div>
                   <div class="col-md-4 text-center"> {{ dados.ad_anel.cc_adanel_diametro_externo }} </div>
+                </div>
+            </div>
+          {% endif %}
+
+        <!-- Exibir resultados de Análise Dimensional Prisioneiro Estojo -->
+          {% set comp = dados.ad_prisioneiro_estojo %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Prisioneiro / Estojo</h3>
+            <div class="resultados">
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-4 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-4 text-center"><strong>Comprimento Rosca</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"> {{ dados.ad_prisioneiro_estojo.cc_adprisioneiroestojo_comprimento }} </div>
+                  <div class="col-md-4 text-center"> {{ dados.ad_prisioneiro_estojo.cc_adprisioneiroestojo_diametro }} </div>
+                  <div class="col-md-4 text-center"> {{ dados.ad_prisioneiro_estojo.cc_adprisioneiroestojo_comprimento_rosca }} </div>
+                </div>
+            </div>
+          {% endif %}
+
+        <!-- Exibir resultados de Análise Dimensional Especial -->
+          {% set comp = dados.ad_especial %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Especial</h3>
+            <div class="resultados">
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-3 text-center"><strong>Chave</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"> {{ dados.ad_especial.cc_adespecial_altura }} </div>
+                  <div class="col-md-3 text-center"> {{ dados.ad_especial.cc_adespecial_chave }} </div>
+                  <div class="col-md-3 text-center"> {{ dados.ad_especial.cc_adespecial_comprimento }} </div>
+                  <div class="col-md-3 text-center"> {{ dados.ad_especial.cc_adespecial_diametro }} </div>
+                </div>
+              <!-- Terceira Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"><strong>Diâmetro Cabeça</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento Rosca</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro Externo</strong></div>
+                </div>
+              <!-- Quarta Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"> {{ dados.ad_especial.cc_adespecial_diametro_cabeca }} </div>
+                  <div class="col-md-3 text-center"> {{ dados.ad_especial.cc_adespecial_comprimento_rosca }} </div>
+                  <div class="col-md-3 text-center"> {{ dados.ad_especial.cc_adespecial_diametro_interno }} </div>
+                  <div class="col-md-3 text-center"> {{ dados.ad_especial.cc_adespecial_diametro_externo }} </div>
                 </div>
             </div>
           {% endif %}

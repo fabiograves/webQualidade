@@ -146,7 +146,6 @@ def gerar_pdf():
     # Verifica se os dados necessários estão presentes
     if dados_pdf:
         criar_desc_material = request.form.get('criar_desc_material', 'Não informado')
-        criar_codigo_fornecedor = request.form.get('criar_codigo_fornecedor', 'Não informado')
         numero_certificado = request.form.get('criar_numero_certificado', 'Não informado')
         criar_data = request.form.get('criar_data', 'Não informado')
         criar_cliente = request.form.get('criar_cliente', 'Não informado')
@@ -176,6 +175,18 @@ def gerar_pdf():
         tem_dados_ad_arruelas = dados_pdf.get('ad_arruelas') and any(dados_pdf['ad_arruelas'].values())
         # Verifica se há dados na tabela 'ad_anel'
         tem_dados_ad_anel = dados_pdf.get('ad_anel') and any(dados_pdf['ad_anel'].values())
+        # Verifica se há dados na tabela 'ad_prisioneiro_estojo'
+        tem_dados_ad_prisioneiro_estojo = dados_pdf.get('ad_prisioneiro_estojo') and any(dados_pdf['ad_prisioneiro_estojo'].values())
+        # Verifica se há dados na tabela 'ad_especial'
+        tem_dados_ad_chumbador = dados_pdf.get('ad_chumbador') and any(dados_pdf['ad_chumbador'].values())
+        # Verifica se há dados na tabela 'ad_especial'
+        tem_dados_ad_rebite = dados_pdf.get('ad_rebite') and any(dados_pdf['ad_rebite'].values())
+        # Verifica se há dados na tabela 'ad_especial'
+        tem_dados_ad_chaveta = dados_pdf.get('ad_chaveta') and any(dados_pdf['ad_chaveta'].values())
+        # Verifica se há dados na tabela 'ad_especial'
+        tem_dados_ad_contrapino = dados_pdf.get('ad_contrapino') and any(dados_pdf['ad_contrapino'].values())
+        # Verifica se há dados na tabela 'ad_especial'
+        tem_dados_ad_especial = dados_pdf.get('ad_especial') and any(dados_pdf['ad_especial'].values())
 
         # Acessando o valor de 'cc_numero_nota'
         numero_nota = dados_pdf.get('cadastro_certificados', {}).get('cc_numero_nota', 'Não informado')
@@ -416,6 +427,7 @@ def gerar_pdf():
             diametro_estrutura = dados_pdf['ad_porcas'].get('cc_adporcas_diametro_estrutura', '')
             diametro_interno = dados_pdf['ad_porcas'].get('cc_adporcas_diamentro_interno', '')
             diametro_externo = dados_pdf['ad_porcas'].get('cc_adporcas_diametro_externo', '')
+            norma = dados_pdf['ad_porcas'].get('cc_adporcas_norma', '')
 
             # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
@@ -431,10 +443,11 @@ def gerar_pdf():
                 [Paragraph("Altura<br/>Height", estilo_centralizado),
                  Paragraph("Chave<br/>Key", estilo_centralizado),
                  Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
-                 Paragraph("Diâmetro Estrutural<br/>Structura Diameter", estilo_centralizado),
+                 Paragraph("Diâmetro Estrutural<br/>Structural Diameter", estilo_centralizado),
                  Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
-                 Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado)],
-                [altura, chave, diametro, diametro_estrutura, diametro_interno, diametro_externo]
+                 Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [altura, chave, diametro, diametro_estrutura, diametro_interno, diametro_externo, norma]
             ]
 
             # Crie uma lista de estilos de célula com o tamanho da fonte definido
@@ -445,7 +458,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
             ]
 
-            adporcas_table = Table(data, colWidths=effective_page_width / 6)
+            adporcas_table = Table(data, colWidths=effective_page_width / 7)
             adporcas_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adporcas_table)
@@ -456,8 +469,9 @@ def gerar_pdf():
             comprimento = dados_pdf['ad_pinos'].get('cc_adpinos_comprimento', '')
             diametro = dados_pdf['ad_pinos'].get('cc_adpinos_diametro', '')
             diametro_cabeca = dados_pdf['ad_pinos'].get('cc_adpinos_diametro_cabeca', '')
-            diametro_interno = dados_pdf['ad_pinos'].get('cc_adpinos_', '')
-            diametro_externo = dados_pdf['ad_pinos'].get('cc_adpinos_', '')
+            diametro_interno = dados_pdf['ad_pinos'].get('cc_adpinos_diametro_interno', '')
+            diametro_externo = dados_pdf['ad_pinos'].get('cc_adpinos_diametro_externo', '')
+            norma = dados_pdf['ad_pinos'].get('cc_adpinos_norma', '')
 
             # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
@@ -475,8 +489,9 @@ def gerar_pdf():
                  Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
                  Paragraph("Diâmetro Cabeça<br/>Head Diameter", estilo_centralizado),
                  Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
-                 Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado)],
-                [espessura, comprimento, diametro, diametro_cabeca, diametro_interno, diametro_externo]
+                 Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [espessura, comprimento, diametro, diametro_cabeca, diametro_interno, diametro_externo, norma]
             ]
 
             # Crie uma lista de estilos de célula com o tamanho da fonte definido
@@ -487,7 +502,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
             ]
 
-            adpinos_table = Table(data, colWidths=effective_page_width / 6)
+            adpinos_table = Table(data, colWidths=effective_page_width / 7)
             adpinos_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adpinos_table)
@@ -501,6 +516,7 @@ def gerar_pdf():
             diametro_cabeca = dados_pdf['ad_parafusos'].get('cc_adparafusos_diametro_cabeca', "")
             comprimento_rosca = dados_pdf['ad_parafusos'].get('cc_adparafusos_comprimento_rosca', "")
             diametro_ponta = dados_pdf['ad_parafusos'].get('cc_adparafusos_diametro_ponta', "")
+            norma = dados_pdf['ad_parafusos'].get('cc_adparafusos_norma', "")
 
             # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
@@ -520,8 +536,9 @@ def gerar_pdf():
                 [altura, chave, comprimento,diametro],
                 [Paragraph("Diâmetro Cabeça/Corpo<br/>Head/Body Diameter", estilo_centralizado),
                  Paragraph("Comprimento Rosca<br/>Thread Lenght", estilo_centralizado),
-                 Paragraph("Diâmetro Ponta<br/>Tip Diameter", estilo_centralizado), ""],
-                [diametro_cabeca, comprimento_rosca, diametro_ponta, ""]
+                 Paragraph("Diâmetro Ponta<br/>Tip Diameter", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [diametro_cabeca, comprimento_rosca, diametro_ponta, norma]
             ]
 
             # Crie uma lista de estilos de célula com o tamanho da fonte definido
@@ -541,6 +558,9 @@ def gerar_pdf():
         if tem_dados_ad_grampos:
             comprimento = dados_pdf['ad_grampos'].get('cc_adgrampos_comprimento', '')
             diametro = dados_pdf['ad_grampos'].get('cc_adgrampos_diametro', '')
+            comprimento_rosca = dados_pdf['ad_grampos'].get('cc_adgrampos_comprimentro_rosca', '')
+            diametro_interno = dados_pdf['ad_grampos'].get('cc_adgrampos_diametro_interno', '')
+            norma = dados_pdf['ad_grampos'].get('cc_adgrampos_norma', '')
 
             # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
@@ -554,8 +574,11 @@ def gerar_pdf():
 
             data = [
                 [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
-                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado)],
-                [comprimento, diametro]
+                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
+                 Paragraph("Comprimento Rosca<br/>Thread Lenght", estilo_centralizado),
+                 Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [comprimento, diametro, comprimento_rosca, diametro_interno, norma]
             ]
 
             # Crie uma lista de estilos de célula com o tamanho da fonte definido
@@ -566,7 +589,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
             ]
 
-            adgrampos_table = Table(data, colWidths=effective_page_width / 2)
+            adgrampos_table = Table(data, colWidths=effective_page_width / 5)
             adgrampos_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adgrampos_table)
@@ -576,6 +599,7 @@ def gerar_pdf():
             altura = dados_pdf['ad_arruelas'].get('cc_adarruelas_altura', '')
             diametro_interno = dados_pdf['ad_arruelas'].get('cc_adarruelas_diametro_interno', '')
             diametro_externo = dados_pdf['ad_arruelas'].get('cc_adarruelas_diametro_externo', '')
+            norma = dados_pdf['ad_arruelas'].get('cc_adarruelas_norma', '')
 
             # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
@@ -590,8 +614,9 @@ def gerar_pdf():
             data = [
                 [Paragraph("Altura<br/>Height", estilo_centralizado),
                  Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
-                 Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado)],
-                [altura, diametro_interno, diametro_externo]
+                 Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [altura, diametro_interno, diametro_externo, norma]
             ]
 
             # Crie uma lista de estilos de célula com o tamanho da fonte definido
@@ -602,7 +627,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
             ]
 
-            adarruelas_table = Table(data, colWidths=effective_page_width / 2)
+            adarruelas_table = Table(data, colWidths=effective_page_width / 4)
             adarruelas_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adarruelas_table)
@@ -612,6 +637,7 @@ def gerar_pdf():
             altura = dados_pdf['ad_anel'].get('cc_adanel_altura', '')
             diametro_interno = dados_pdf['ad_anel'].get('cc_adanel_diametro_interno', '')
             diametro_externo = dados_pdf['ad_anel'].get('cc_adanel_diametro_externo', '')
+            norma = dados_pdf['ad_anel'].get('cc_adanel_norma', '')
 
             # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
@@ -626,8 +652,9 @@ def gerar_pdf():
             data = [
                 [Paragraph("Altura<br/>Height", estilo_centralizado),
                  Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
-                 Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado)],
-                [altura, diametro_interno, diametro_externo]
+                 Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [altura, diametro_interno, diametro_externo, norma]
             ]
 
             # Crie uma lista de estilos de célula com o tamanho da fonte definido
@@ -638,10 +665,245 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
             ]
 
-            adanel_table = Table(data, colWidths=effective_page_width / 2)
+            adanel_table = Table(data, colWidths=effective_page_width / 4)
             adanel_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adanel_table)
+            elements.append(Spacer(0.1, 0.1 * inch))
+
+        if tem_dados_ad_prisioneiro_estojo:
+            comprimento = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_comprimento', '')
+            diametro = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_diametro', '')
+            comprimento_rosca = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_comprimento_rosca', '')
+            norma = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_norma', '')
+
+            # Texto dentro da tabela
+            texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
+            # Cria o parágrafo do texto com o estilo personalizado
+            texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
+            elements.append(texto_paragraph)
+            elements.append(Spacer(0.05, 0.05 * inch))
+
+            # Defina o tamanho da fonte que você deseja para as células da tabela
+            tamanho_da_fonte = 8
+
+            data = [
+                [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
+                 Paragraph("Comprimento Rosca<br/>Thread Lenght", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [comprimento, diametro, comprimento_rosca, norma]
+            ]
+
+            # Crie uma lista de estilos de célula com o tamanho da fonte definido
+            cell_styles = [
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+            ]
+
+            adprisioneiroestojo_table = Table(data, colWidths=effective_page_width / 4)
+            adprisioneiroestojo_table.setStyle(TableStyle(cell_styles))
+
+            elements.append(adprisioneiroestojo_table)
+            elements.append(Spacer(0.1, 0.1 * inch))
+
+        if tem_dados_ad_especial:
+            altura = dados_pdf['ad_especial'].get('cc_adespecial_altura', '')
+            chave = dados_pdf['ad_especial'].get('cc_adespecial_chave', '')
+            comprimento = dados_pdf['ad_especial'].get('cc_adespecial_comprimento', '')
+            diametro = dados_pdf['ad_especial'].get('cc_adespecial_diametro', '')
+            diametro_cabeca = dados_pdf['ad_especial'].get('cc_adespecial_diametro_cabeca', '')
+            comprimento_rosca = dados_pdf['ad_especial'].get('cc_adespecial_comprimento_rosca', '')
+            diametro_interno = dados_pdf['ad_especial'].get('cc_adespecial_diametro_interno', '')
+            diametro_externo = dados_pdf['ad_especial'].get('cc_adespecial_diametro_externo', '')
+            norma = dados_pdf['ad_especial'].get('cc_adespecial_norma', '')
+
+            # Texto dentro da tabela
+            texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
+            # Cria o parágrafo do texto com o estilo personalizado
+            texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
+            elements.append(texto_paragraph)
+            elements.append(Spacer(0.05, 0.05 * inch))
+
+            # Defina o tamanho da fonte que você deseja para as células da tabela
+            tamanho_da_fonte = 8
+
+            data = [
+                [Paragraph("Altura<br/>Height", estilo_centralizado),
+                 Paragraph("Chave<br/>Key", estilo_centralizado),
+                 Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
+                 Paragraph("Diâmetro Cabeça<br/>Head Diameter", estilo_centralizado)],
+                [altura, chave, comprimento, diametro, diametro_cabeca],
+                [Paragraph("Comprimento Rosca<br/>Thread Lenght", estilo_centralizado),
+                 Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
+                 Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [comprimento_rosca, diametro_interno, diametro_externo, norma]
+            ]
+
+            # Crie uma lista de estilos de célula com o tamanho da fonte definido
+            cell_styles = [
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+            ]
+
+            adespecial_table = Table(data, colWidths=effective_page_width / 5)
+            adespecial_table.setStyle(TableStyle(cell_styles))
+
+            elements.append(adespecial_table)
+            elements.append(Spacer(0.1, 0.1 * inch))
+
+        if tem_dados_ad_chumbador:
+            comprimento = dados_pdf['ad_chumbador'].get('cc_chumbador_comprimento', '')
+            bitola = dados_pdf['ad_chumbador'].get('cc_chumbador_bitola', '')
+            norma = dados_pdf['ad_chumbador'].get('cc_chumbador_norma', '')
+
+            # Texto dentro da tabela
+            texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
+            # Cria o parágrafo do texto com o estilo personalizado
+            texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
+            elements.append(texto_paragraph)
+            elements.append(Spacer(0.05, 0.05 * inch))
+
+            # Defina o tamanho da fonte que você deseja para as células da tabela
+            tamanho_da_fonte = 8
+
+            data = [
+                [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                 Paragraph("Bitola<br/>Gauge", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [comprimento, bitola, norma]
+            ]
+
+            # Crie uma lista de estilos de célula com o tamanho da fonte definido
+            cell_styles = [
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+            ]
+
+            adchumbador_table = Table(data, colWidths=effective_page_width / 5)
+            adchumbador_table.setStyle(TableStyle(cell_styles))
+
+            elements.append(adchumbador_table)
+            elements.append(Spacer(0.1, 0.1 * inch))
+
+        if tem_dados_ad_rebite:
+            comprimento = dados_pdf['ad_rebite'].get('cc_rebite_comprimento', '')
+            bitola = dados_pdf['ad_rebite'].get('cc_rebite_bitola', '')
+            diametro_cabeca = dados_pdf['ad_rebite'].get('cc_rebite_diametro_cabeca', '')
+            norma = dados_pdf['ad_rebite'].get('cc_rebite_norma', '')
+
+            # Texto dentro da tabela
+            texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
+            # Cria o parágrafo do texto com o estilo personalizado
+            texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
+            elements.append(texto_paragraph)
+            elements.append(Spacer(0.05, 0.05 * inch))
+
+            # Defina o tamanho da fonte que você deseja para as células da tabela
+            tamanho_da_fonte = 8
+
+            data = [
+                [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                 Paragraph("Bitola<br/>Gauge", estilo_centralizado),
+                 Paragraph("Diâmetro Cabeça<br/>Head Diameter", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [comprimento, bitola, norma]
+            ]
+
+            # Crie uma lista de estilos de célula com o tamanho da fonte definido
+            cell_styles = [
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+            ]
+
+            adrebite_table = Table(data, colWidths=effective_page_width / 5)
+            adrebite_table.setStyle(TableStyle(cell_styles))
+
+            elements.append(adrebite_table)
+            elements.append(Spacer(0.1, 0.1 * inch))
+
+        if tem_dados_ad_chaveta:
+            comprimento = dados_pdf['ad_chaveta'].get('cc_chaveta_comprimento', '')
+            diametro = dados_pdf['ad_chaveta'].get('cc_chaveta_diametro', '')
+            altura = dados_pdf['ad_chaveta'].get('cc_chaveta_altura', '')
+            norma = dados_pdf['ad_chaveta'].get('cc_chaveta_norma', '')
+
+            # Texto dentro da tabela
+            texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
+            # Cria o parágrafo do texto com o estilo personalizado
+            texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
+            elements.append(texto_paragraph)
+            elements.append(Spacer(0.05, 0.05 * inch))
+
+            # Defina o tamanho da fonte que você deseja para as células da tabela
+            tamanho_da_fonte = 8
+
+            data = [
+                [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
+                 Paragraph("Altura<br/>Height", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [comprimento, diametro, altura, norma]
+            ]
+
+            # Crie uma lista de estilos de célula com o tamanho da fonte definido
+            cell_styles = [
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+            ]
+
+            adchaveta_table = Table(data, colWidths=effective_page_width / 5)
+            adchaveta_table.setStyle(TableStyle(cell_styles))
+
+            elements.append(adchaveta_table)
+            elements.append(Spacer(0.1, 0.1 * inch))
+
+        if tem_dados_ad_contrapino:
+            comprimento = dados_pdf['ad_contrapino'].get('cc_contrapino_comprimento', '')
+            diametro = dados_pdf['ad_contrapino'].get('cc_contrapino_diametro', '')
+            norma = dados_pdf['ad_contrapino'].get('cc_contrapino_norma', '')
+
+            # Texto dentro da tabela
+            texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
+            # Cria o parágrafo do texto com o estilo personalizado
+            texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
+            elements.append(texto_paragraph)
+            elements.append(Spacer(0.05, 0.05 * inch))
+
+            # Defina o tamanho da fonte que você deseja para as células da tabela
+            tamanho_da_fonte = 8
+
+            data = [
+                [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
+                 Paragraph("Norma<br/>Norm", estilo_centralizado)],
+                [comprimento, diametro, norma]
+            ]
+
+            # Crie uma lista de estilos de célula com o tamanho da fonte definido
+            cell_styles = [
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+            ]
+
+            adcontrapino_table = Table(data, colWidths=effective_page_width / 5)
+            adcontrapino_table.setStyle(TableStyle(cell_styles))
+
+            elements.append(adcontrapino_table)
             elements.append(Spacer(0.1, 0.1 * inch))
 
         nome_assinatura = session.get('nome_assinatura')
@@ -658,8 +920,8 @@ def gerar_pdf():
             [Paragraph("* Com base nos resultados obtidos, certificamos<br/>"
                        "que o produto encontra-se dentro das normas citadas.<br/>"
                        "* In according with test results, we certify that the<br/>"
-                       "product is in according with reference standards.", estilo_centralizado),
-             Paragraph(f"Atenciosamente,<br/>{nome_assinatura}<br/><b>{setor_assinatura}</b><br/>"
+                       "product is in according with reference standards.<br/> ", estilo_centralizado),
+             Paragraph(f"{nome_assinatura}<br/><b>{setor_assinatura}</b><br/>"
                        f"{telefone_assinatura}<br/>{email_assinatura}", estilo_centralizado)
              ]
         ]
@@ -751,6 +1013,30 @@ def buscar_certificado_nota(numero_nota):
             cursor.execute(sql, (numero_nota,))
             resultado['ad_anel'] = cursor.fetchone()
 
+            sql = "SELECT * FROM ad_prisioneiro_estojo WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_prisioneiro_estojo'] = cursor.fetchone()
+
+            sql = "SELECT * FROM ad_chumbador WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_chumbador'] = cursor.fetchone()
+
+            sql = "SELECT * FROM ad_rebite WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_rebite'] = cursor.fetchone()
+
+            sql = "SELECT * FROM ad_chaveta WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_chaveta'] = cursor.fetchone()
+
+            sql = "SELECT * FROM ad_contrapino WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_contrapino'] = cursor.fetchone()
+
+            sql = "SELECT * FROM ad_especial WHERE cc_numero_nota = %s"
+            cursor.execute(sql, (numero_nota,))
+            resultado['ad_especial'] = cursor.fetchone()
+
 
     except Exception as e:
         print(f"1 Erro ao buscar certificado por nota: {e}")
@@ -837,6 +1123,36 @@ def buscar_certificados(numero_nota, codigo_fornecedor, codigo_produto, corrida)
                 sql = "SELECT * FROM ad_anel WHERE cc_numero_nota = %s"
                 cursor.execute(sql, (numero,))
                 resultados_agrupados[numero]['ad_anel'] = cursor.fetchone()
+
+                # Busca analise dimensional prisioneiro estojo
+                sql = "SELECT * FROM ad_prisioneiro_estojo WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['ad_prisioneiro_estojo'] = cursor.fetchone()
+
+                # Busca analise dimensional chumbador
+                sql = "SELECT * FROM ad_chumbador WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['ad_chumbador'] = cursor.fetchone()
+
+                # Busca analise dimensional rebite
+                sql = "SELECT * FROM ad_rebite WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['ad_rebite'] = cursor.fetchone()
+
+                # Busca analise dimensional chaveta
+                sql = "SELECT * FROM ad_chaveta WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['ad_chaveta'] = cursor.fetchone()
+
+                # Busca analise dimensional prisioneiro estojo
+                sql = "SELECT * FROM ad_prisioneiro_estojo WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['ad_prisioneiro_estojo'] = cursor.fetchone()
+
+                # Busca analise dimensional especial
+                sql = "SELECT * FROM ad_especial WHERE cc_numero_nota = %s"
+                cursor.execute(sql, (numero,))
+                resultados_agrupados[numero]['ad_especial'] = cursor.fetchone()
 
 
     except Exception as e:
@@ -975,7 +1291,8 @@ def cadastro_certificados():
                     'diametro': request.form.get('cc_parafuso_diametro'),
                     'diametro_cabeca': request.form.get('cc_parafuso_diametro_cabeca'),
                     'comprimento_rosca': request.form.get('cc_parafuso_comprimento_rosca'),
-                    'diametro_ponta': request.form.get('cc_parafuso_diametro_ponta')
+                    'diametro_ponta': request.form.get('cc_parafuso_diametro_ponta'),
+                    'norma': request.form.get('cc_parafuso_norma')
                 }
                 inserir_cadastro_adparafusos(medidas_dimensionais)
 
@@ -987,7 +1304,8 @@ def cadastro_certificados():
                     'diametro': request.form.get('cc_porcas_diametro'),
                     'diametro_estrutura': request.form.get('cc_porcas_diametro_estrutura'),
                     'diametro_interno': request.form.get('cc_porcas_diametro_interno'),
-                    'diametro_externo': request.form.get('cc_porcas_diametro_externo')
+                    'diametro_externo': request.form.get('cc_porcas_diametro_externo'),
+                    'norma': request.form.get('cc_porcas_norma')
                 }
                 inserir_cadastro_adporcas(medidas_dimensionais)
 
@@ -996,7 +1314,8 @@ def cadastro_certificados():
                     'nota_fiscal': nota_fiscal,
                     'altura': request.form.get('cc_arruelas_altura'),
                     'diametro_interno': request.form.get('cc_arruelas_diametro_interno'),
-                    'diametro_externo': request.form.get('cc_arruelas_diametro_externo')
+                    'diametro_externo': request.form.get('cc_arruelas_diametro_externo'),
+                    'norma': request.form.get('cc_arruelas_norma')
                 }
                 inserir_cadastro_adarruelas(medidas_dimensionais)
 
@@ -1005,7 +1324,8 @@ def cadastro_certificados():
                     'nota_fiscal': nota_fiscal,
                     'altura': request.form.get('cc_anel_altura'),
                     'diametro_interno': request.form.get('cc_anel_diametro_interno'),
-                    'diametro_externo': request.form.get('cc_anel_diametro_externo')
+                    'diametro_externo': request.form.get('cc_anel_diametro_externo'),
+                    'norma': request.form.get('cc_anel_norma')
                 }
                 inserir_cadastro_adanel(medidas_dimensionais)
 
@@ -1013,7 +1333,10 @@ def cadastro_certificados():
                 medidas_dimensionais = {
                     'nota_fiscal': nota_fiscal,
                     'comprimento': request.form.get('cc_grampos_comprimento'),
-                    'diametro': request.form.get('cc_grampos_diametro')
+                    'diametro': request.form.get('cc_grampos_diametro'),
+                    'comprimento_rosca': request.form.get('cc_grampos_comprimento_rosca'),
+                    'diametro_interno': request.form.get('cc_grampos_diametro_interno'),
+                    'norma': request.form.get('cc_grampos_norma')
                 }
                 inserir_cadastro_adgrampos(medidas_dimensionais)
 
@@ -1025,9 +1348,73 @@ def cadastro_certificados():
                     'diametro': request.form.get('cc_pinos_diametro'),
                     'diametro_cabeca': request.form.get('cc_pinos_diametro_cabeca'),
                     'diametro_interno': request.form.get('cc_pinos_diametro_interno'),
-                    'diametro_externo': request.form.get('cc_pinos_diametro_externo')
+                    'diametro_externo': request.form.get('cc_pinos_diametro_externo'),
+                    'norma': request.form.get('cc_pinos_norma')
                 }
                 inserir_cadastro_adpinos(medidas_dimensionais)
+
+            if tipo_analise == 'prisioneiro_estojo':
+                medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
+                    'comprimento': request.form.get('cc_prisioneiro_comprimento'),
+                    'diametro': request.form.get('cc_prisioneiro_diametro'),
+                    'comprimento_rosca': request.form.get('cc_prisioneiro_comprimento_rosca'),
+                    'norma': request.form.get('cc_prisioneiro_norma')
+                }
+                inserir_cadastro_adprisioneiro_estojo(medidas_dimensionais)
+
+            if tipo_analise == 'chumbador':
+                medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
+                    'comprimento': request.form.get('cc_chumbador_comprimento'),
+                    'bitola': request.form.get('cc_chumbador_bitola'),
+                    'norma': request.form.get('cc_chumbador_norma')
+                }
+                inserir_cadastro_adchumbador(medidas_dimensionais)
+
+            if tipo_analise == 'rebite':
+                medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
+                    'comprimento': request.form.get('cc_rebite_comprimento'),
+                    'bitola': request.form.get('cc_rebite_diametro'),
+                    'diametro_cabeca': request.form.get('cc_rebite_diametro_cabeca'),
+                    'norma': request.form.get('cc_rebite_norma')
+                }
+                inserir_cadastro_adrebite(medidas_dimensionais)
+
+            if tipo_analise == 'chaveta':
+                medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
+                    'comprimento': request.form.get('cc_chaveta_comprimento'),
+                    'diametro': request.form.get('cc_chaveta_diametro'),
+                    'altura': request.form.get('cc_chaveta_altura'),
+                    'norma': request.form.get('cc_chaveta_norma')
+                }
+                inserir_cadastro_adchaveta(medidas_dimensionais)
+
+            if tipo_analise == 'contrapino':
+                medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
+                    'comprimento': request.form.get('cc_contrapino_comprimento'),
+                    'diametro': request.form.get('cc_contrapino_diametro'),
+                    'norma': request.form.get('cc_contrapino_norma')
+                }
+                inserir_cadastro_adcontrapino(medidas_dimensionais)
+
+            if tipo_analise == 'especial':
+                medidas_dimensionais = {
+                    'nota_fiscal': nota_fiscal,
+                    'altura': request.form.get('cc_especial_altura'),
+                    'chave': request.form.get('cc_especial_chave'),
+                    'comprimento': request.form.get('cc_especial_comprimento'),
+                    'diametro': request.form.get('cc_especial_diametro'),
+                    'diametro_cabeca': request.form.get('cc_especial_diametro_cabeca'),
+                    'comprimento_rosca': request.form.get('cc_especial_comprimento_rosca'),
+                    'diametro_interno': request.form.get('cc_especial_diametro_interno'),
+                    'diametro_externo': request.form.get('cc_especial_diametro_externo'),
+                    'norma': request.form.get('cc_especial_norma')
+                }
+                inserir_cadastro_adespecial(medidas_dimensionais)
 
         flash('Formulário enviado com sucesso!')
         return redirect(url_for('cadastro_certificados'))
@@ -1162,8 +1549,8 @@ def inserir_cadastro_adparafusos(dados):
             sql = """
             INSERT INTO ad_parafusos
             (cc_numero_nota, cc_adparafusos_altura, cc_adparafusos_chave, cc_adparafusos_comprimento, cc_adparafusos_diametro,
-            cc_adparafusos_diametro_cabeca, cc_adparafusos_comprimento_rosca, cc_adparafusos_diametro_ponta)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            cc_adparafusos_diametro_cabeca, cc_adparafusos_comprimento_rosca, cc_adparafusos_diametro_ponta, cc_adparafusos_norma)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1173,7 +1560,8 @@ def inserir_cadastro_adparafusos(dados):
                 dados['diametro'],
                 dados['diametro_cabeca'],
                 dados['comprimento_rosca'],
-                dados['diametro_ponta']
+                dados['diametro_ponta'],
+                dados['norma']
             ))
             connection.commit()
     except Exception as e:
@@ -1187,8 +1575,8 @@ def inserir_cadastro_adporcas(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO ad_porcas
-            (cc_numero_nota, cc_adporcas_altura, cc_adporcas_chave, cc_adporcas_diametro, cc_adporcas_diametro_estrutura, cc_adporcas_diametro_interno, cc_adporcas_diametro_externo)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            (cc_numero_nota, cc_adporcas_altura, cc_adporcas_chave, cc_adporcas_diametro, cc_adporcas_diametro_estrutura, cc_adporcas_diametro_interno, cc_adporcas_diametro_externo, cc_adporcas_norma)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1197,7 +1585,8 @@ def inserir_cadastro_adporcas(dados):
                 dados['diametro'],
                 dados['diametro_estrutura'],
                 dados['diametro_interno'],
-                dados['diametro_externo']
+                dados['diametro_externo'],
+                dados['norma']
             ))
             connection.commit()
     except Exception as e:
@@ -1211,14 +1600,15 @@ def inserir_cadastro_adarruelas(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO ad_arruelas
-            (cc_numero_nota, cc_adarruelas_altura, cc_adarruelas_diametro_interno, cc_adarruelas_diametro_externo)
-            VALUES (%s, %s, %s, %s)
+            (cc_numero_nota, cc_adarruelas_altura, cc_adarruelas_diametro_interno, cc_adarruelas_diametro_externo, cc_adarruelas_norma)
+            VALUES (%s, %s, %s, %s, %s)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
                 dados['altura'],
                 dados['diametro_interno'],
-                dados['diametro_externo']
+                dados['diametro_externo'],
+                dados['norma']
             ))
             connection.commit()
     except Exception as e:
@@ -1232,14 +1622,15 @@ def inserir_cadastro_adanel(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO ad_anel
-            (cc_numero_nota, cc_adanel_altura, cc_adanel_diametro_interno, cc_adanel_diametro_externo)
-            VALUES (%s, %s, %s, %s)
+            (cc_numero_nota, cc_adanel_altura, cc_adanel_diametro_interno, cc_adanel_diametro_externo, cc_adanel_norma)
+            VALUES (%s, %s, %s, %s, %s)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
                 dados['altura'],
                 dados['diametro_interno'],
-                dados['diametro_externo']
+                dados['diametro_externo'],
+                dados['norma']
             ))
             connection.commit()
     except Exception as e:
@@ -1253,13 +1644,16 @@ def inserir_cadastro_adgrampos(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO ad_grampos
-            (cc_numero_nota, cc_adgrampos_comprimento, cc_adgrampos_diametro)
-            VALUES (%s, %s, %s)
+            (cc_numero_nota, cc_adgrampos_comprimento, cc_adgrampos_diametro, cc_adgrampos_comprimento_rosca, cc_adgrampos_diametro_interno, cc_adgrampos_norma)
+            VALUES (%s, %s, %s, %s, %s, %s)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
                 dados['comprimento'],
-                dados['diametro']
+                dados['diametro'],
+                dados['comprimento_rosca'],
+                dados['diametro_interno'],
+                dados['norma']
             ))
             connection.commit()
     except Exception as e:
@@ -1273,8 +1667,8 @@ def inserir_cadastro_adpinos(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO ad_pinos
-            (cc_numero_nota, cc_adpinos_espessura, cc_adpinos_comprimento, cc_adpinos_diametro, cc_adpinos_diametro_cabeca, cc_adpinos_diametro_interno, cc_adpinos_diametro_externo)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            (cc_numero_nota, cc_adpinos_espessura, cc_adpinos_comprimento, cc_adpinos_diametro, cc_adpinos_diametro_cabeca, cc_adpinos_diametro_interno, cc_adpinos_diametro_externo, cc_adpinos_norma)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1283,7 +1677,58 @@ def inserir_cadastro_adpinos(dados):
                 dados['diametro'],
                 dados['diametro_cabeca'],
                 dados['diametro_interno'],
-                dados['diametro_externo']
+                dados['diametro_externo'],
+                dados['norma']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
+
+def inserir_cadastro_adprisioneiro_estojo(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO ad_prisioneiro_estojo
+            (cc_numero_nota, cc_adprisioneiroestojo_comprimento, cc_adprisioneiroestojo_diametro, cc_adprisioneiroestojo_comprimento_rosca, cc_adprisioneiroestojo_norma)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['comprimento'],
+                dados['diametro'],
+                dados['comprimento_rosca'],
+                dados['norma']
+            ))
+            connection.commit()
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    finally:
+        connection.close()
+
+def inserir_cadastro_adespecial(dados):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO ad_especial
+            (cc_numero_nota, cc_adespecial_altura, cc_adespecial_chave, cc_adespecial_comprimento, cc_adespecial_diametro, cc_adespecial_diametro_cabeca, cc_adespecial_comprimento_rosca,
+            cc_adespecial_diametro_interno, cc_adespecial_diametro_externo, cc_adespecial_norma)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                dados['nota_fiscal'],
+                dados['altura'],
+                dados['chave'],
+                dados['comprimento'],
+                dados['diametro'],
+                dados['diametro_cabeca'],
+                dados['comprimento_rosca'],
+                dados['diametro_interno'],
+                dados['diametro_externo'],
+                dados['norma']
             ))
             connection.commit()
     except Exception as e:
