@@ -25,6 +25,12 @@
                 </div>
             </div>
             <div class="col-md-3">
+                <div class="form-group">
+                    <input type="text" placeholder="Cod. Produto:" class="form-control" id="criar_cod_produto" name="criar_cod_produto"
+                        value="{{ resultado['cadastro_certificados']['cc_cod_produto'] if resultado is defined and resultado['cadastro_certificados'] else '' }}">
+                </div>
+            </div>
+            <div class="col-md-3">
                 {% if session['privilegio'] != 0 %}
                 <!-- Botão de envio -->
                 <button type="submit" name="bt_procurar_nota" value="bt_procurar_nota" class="btn btn-secondary w-100 mb-3">Procurar Nota</button>

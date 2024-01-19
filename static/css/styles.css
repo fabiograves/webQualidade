@@ -27,3 +27,20 @@
   padding: 10px;
   margin-bottom: 10px;
 }
+
+.flash-error {
+    color: red; /* Defina a cor vermelha para o texto */
+    /* Outros estilos CSS, se desejar */
+}
+
+.border-black {
+    border: 3px solid black;
+}
+
+.border-yellow {
+    border: 3px solid yellow;
+}
+
+.border-red {
+    border: 3px solid red;
+}

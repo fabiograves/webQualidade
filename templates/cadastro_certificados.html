@@ -6,19 +6,18 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
   <form method="POST" action="{{ url_for('cadastro_certificados') }}" enctype="multipart/form-data">
-    <div class="py-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <h1 class="text-center">Cadastro de Certificados</h1>
-        </div>
+      <div class="py-5">
+          <div class="container">
+              <div class="row">
+                  <div class="col-md-12">
+                      <h1 class="text-center">Cadastro de Certificados</h1>
+                  </div>
+              </div>
+          </div>
       </div>
-
-    </div>
-  </div>
   <div class="">
-    <div class="container">
-        <div class="row">
+      <div class="container">
+          <div class="row">
             <div class="col-md-12">
                 <div class="form-group">
                     <label for="arquivo">Certificado do Fornecedor ---> </label>
@@ -26,357 +25,183 @@
                     <input type="file" class="form-control-file" id="arquivo" name="arquivo">
                 </div>
             </div>
-        </div>
-      <div class="row">
-        <div class="col-md-2" style="">
-          <div class="form-group"><label>Número da Nota</label><input type="text" class="form-control" id="cc_numero_nota" name="cc_numero_nota"></div>
-        </div>
-        <div class="col-md-6" style="">
-          <div class="form-group"><label>Descrição do Material</label><input type="text" class="form-control" id="cc_descricao" name="cc_descricao"></div>
-        </div>
-        <div class="col-md-2">
-            <div class="form-group">
-                <label for="cc_cod_fornecedor">Código Fonecedor</label>
-                <input type="text" class="form-control" id="cc_cod_fornecedor" name="cc_cod_fornecedor">
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="form-group">
-                <label for="cc_qtd_pedidos">Cod. Produto</label>
-                <input type="text" class="form-control" id="cc_cod_produto" name="cc_cod_produto">
-            </div>
-      </div>
-      </div>
-      <div class="row">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label for="cc_corrida">Corrida</label>
-                <input type="text" class="form-control" id="cc_corrida" name="cc_corrida">
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label for="cc_data">Data</label>
-                <input type="date" class="form-control" id="cc_data" name="cc_data">
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label for="cc_cq">CQ Nº</label>
-                <input type="text" class="form-control" id="cc_cq" name="cc_cq">
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label for="cc_qtd_pedidos">Qtd. Pedido</label>
-                <input type="text" class="form-control" id="cc_qtd_pedidos" name="cc_qtd_pedidos">
-            </div>
-        </div>
-
-    </div>
-
-      <div class="row mb-3">
-        <div class="col-md-3">
-          <div class="form-group">
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="comp_quimica" name="comp_quimica">
-              <label class="form-check-label text-center" for="comp_quimica">Composição Química</label>
-            </div>
           </div>
-        </div>
-        <div class="col-md-3">
-          <div class="form-group">
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="prop_mecanicas" name="prop_mecanicas">
-              <label class="form-check-label" for="prop_mecanicas">Propriedades Mecânicas</label>
-            </div>
+          <div class="row">
+              <div class="col-md-2">
+                  <div class="form-group">
+                      <label for="cc_cq">Número da Nota</label>
+                      <input type="text" class="form-control" id="cc_numero_nota" name="cc_numero_nota" value="{{ cc_numero_nota }}">
+                  </div>
+              </div>
+              <div class="col-md-2">
+                  <div class="form-group">
+                      <label for="cc_cq">Código Produto</label>
+                      <input type="text" class="form-control" id="cc_cod_produto" name="cc_cod_produto" value="{{ cc_cod_produto }}">
+                  </div>
+              </div>
+              <div class="col-md-2">
+                  <button type="submit" id="botao-procurar" name="bt_procurar_nota" value="bt_procurar_nota" class="btn btn-secondary w-100 mb-3">Procurar Nota</button>
+              </div>
+              <div class="col-md-4">
+                  <div class="form-group">
+                      <label for="cc_cq">Descrição do Material</label>
+                      <input type="text" class="form-control" id="cc_descricao" name="cc_descricao">
+                  </div>
+              </div>
+              <div class="col-md-2">
+                  <div class="form-group">
+                      <label for="cc_cq">Código do Fornecedor</label>
+                      <input type="text" class="form-control" id="cc_cod_fornecedor" name="cc_cod_fornecedor">
+                  </div>
+              </div>
+              <div>
+                  <div class="row">
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              <label for="cc_corrida">Corrida</label>
+                              <input type="text" class="form-control" id="cc_corrida" name="cc_corrida">
+                          </div>
+                      </div>
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              <label for="cc_data">Data</label>
+                              <input type="date" class="form-control" id="cc_data" name="cc_data">
+                          </div>
+                      </div>
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              <label for="cc_cq">CQ Nº</label>
+                              <input type="text" class="form-control" id="cc_cq" name="cc_cq">
+                          </div>
+                      </div>
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              <label for="cc_qtd_pedidos">Qtd. Pedido</label>
+                              <input type="text" class="form-control" id="cc_qtd_pedidos" name="cc_qtd_pedidos">
+                          </div>
+                      </div>
+                  </div>
+                  <div class="row mb-3">
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              <div class="form-check">
+                                  <input type="checkbox" class="form-check-input" id="comp_quimica" name="comp_quimica">
+                                  <label class="form-check-label text-center" for="comp_quimica">Composição Química</label>
+                              </div>
+                          </div>
+                      </div>
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              <div class="form-check">
+                                  <input type="checkbox" class="form-check-input" id="prop_mecanicas" name="prop_mecanicas">
+                                  <label class="form-check-label" for="prop_mecanicas">Propriedades Mecânicas</label>
+                              </div>
+                          </div>
+                      </div>
+                      <div class="col-md-3">
+                          <div class="form-group">
+                              <div class="form-check">
+                                  <input type="checkbox" class="form-check-input" id="tratamentos" name="tratamentos">
+                                  <label class="form-check-label" for="tratamentos">Tratamentos</label>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
           </div>
-        </div>
-        <div class="col-md-3">
-          <div class="form-group">
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="tratamentos" name="tratamentos">
-              <label class="form-check-label" for="tratamentos">Tratamentos</label>
-            </div>
+
+          <div id="camposExtras_comp_quimica" style="display:none;">
+              <div class="container" id="fundo_diferente">
+                  <!-- Primeira Linha de Inputs -->
+                  <div class="row">
+                      <h2 class="text-center">Composição Química</h2>
+                  </div>
+                  <div class="row">
+                      <div class="col text-center"><label>C</label><input type="text" class="form-control" id="cc_c" name="cc_c"></div>
+                      <div class="col text-center"><label>Mn</label><input type="text" class="form-control" id="cc_mn" name="cc_mn"></div>
+                      <div class="col text-center"><label>P</label><input type="text" class="form-control" id="cc_p" name="cc_p"></div>
+                      <div class="col text-center"><label>S</label><input type="text" class="form-control" id="cc_s" name="cc_s"></div>
+                      <div class="col text-center"><label>Si</label><input type="text" class="form-control" id="cc_si" name="cc_si"></div>
+                      <div class="col text-center"><label>Ni</label><input type="text" class="form-control" id="cc_ni" name="cc_ni"></div>
+                      <div class="col text-center"><label>Cr</label><input type="text" class="form-control" id="cc_cr" name="cc_cr"></div>
+                      <div class="col text-center"><label>B</label><input type="text" class="form-control" id="cc_b" name="cc_b"></div>
+                  </div>
+                  <!-- Segunda Linha de Inputs -->
+                  <div class="row">
+                      <div class="col text-center"><label>Cu</label><input type="text" class="form-control" id="cc_cu" name="cc_cu"></div>
+                      <div class="col text-center"><label>Mo</label><input type="text" class="form-control" id="cc_mo" name="cc_mo"></div>
+                      <div class="col text-center"><label>Co</label><input type="text" class="form-control" id="cc_co" name="cc_co"></div>
+                      <div class="col text-center"><label>Fe</label><input type="text" class="form-control" id="cc_fe" name="cc_fe"></div>
+                      <div class="col text-center"><label>Sn</label><input type="text" class="form-control" id="cc_sn" name="cc_sn"></div>
+                      <div class="col text-center"><label>Al</label><input type="text" class="form-control" id="cc_al" name="cc_al"></div>
+                      <div class="col text-center"><label>N</label><input type="text" class="form-control" id="cc_n" name="cc_n"></div>
+                      <div class="col text-center"><label>Nb</label><input type="text" class="form-control" id="cc_nb" name="cc_nb"></div>
+                  </div>
+              </div>
           </div>
-        </div>
-        <div class="col-md-3">
-          <div class="form-group">
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="analise_dimensional" name="analise_dimensional">
-              <label class="form-check-label" for="analise_dimensional">Análise Dimensional</label>
-            </div>
+
+          <div id="camposExtras_prop_mecanicas" style="display:none;">
+              <div class="container" id="fundo_diferente">
+                  <!-- Primeira Linha de Inputs -->
+                  <div class="row mb-3">
+                      <h2 class="text-center">Propriedades Mecânicas</h2>
+                  </div>
+                  <div class="row">
+                      <div class="col text-center"><label>Escoamento<br>Yield Strength</label><input type="text" class="form-control" id="cc_escoamento" name="cc_escoamento"></div>
+                      <div class="col text-center"><label>Resistência Tração<br>Tensile Strength</label><input type="text" class="form-control" id="cc_tracao" name="cc_tracao"></div>
+                      <div class="col text-center"><label>Redução de Área(%)<br>Reduction of Area(%)</label><input type="text" class="form-control" id="cc_reducao" name="cc_reducao"></div>
+                      <div class="col text-center"><label>Alongamento(%)<br>Elongation(%)</label><input type="text" class="form-control" id="cc_alongamento" name="cc_alongamento"></div>
+                      <div class="col text-center"><label>Dureza<br>Hardness</label><input type="text" class="form-control" id="cc_dureza" name="cc_dureza"></div>
+                      <div class="col text-center"><label>Prova de Carga<br>Load Proof</label><input type="text" class="form-control" id="cc_carga" name="cc_carga"></div>
+                  </div>
+              </div>
           </div>
-        </div>
 
-      </div>
-    </div>
-
-  </div>
-
-<div id="camposExtras_comp_quimica" style="display:none;">
-    <div class="container" id="fundo_diferente">
-    <!-- Primeira Linha de Inputs -->
-    <div class="row">
-        <h2 class="text-center">Composição Química</h2>
-    </div>
-    <div class="row">
-      <div class="col text-center"><label>C</label><input type="text" class="form-control" id="cc_c" name="cc_c"></div>
-      <div class="col text-center"><label>Mn</label><input type="text" class="form-control" id="cc_mn" name="cc_mn"></div>
-      <div class="col text-center"><label>P</label><input type="text" class="form-control" id="cc_p" name="cc_p"></div>
-      <div class="col text-center"><label>S</label><input type="text" class="form-control" id="cc_s" name="cc_s"></div>
-      <div class="col text-center"><label>Si</label><input type="text" class="form-control" id="cc_si" name="cc_si"></div>
-      <div class="col text-center"><label>Ni</label><input type="text" class="form-control" id="cc_ni" name="cc_ni"></div>
-      <div class="col text-center"><label>Cr</label><input type="text" class="form-control" id="cc_cr" name="cc_cr"></div>
-      <div class="col text-center"><label>B</label><input type="text" class="form-control" id="cc_b" name="cc_b"></div>
-    </div>
-    <!-- Segunda Linha de Inputs -->
-    <div class="row">
-      <div class="col text-center"><label>Cu</label><input type="text" class="form-control" id="cc_cu" name="cc_cu"></div>
-      <div class="col text-center"><label>Mo</label><input type="text" class="form-control" id="cc_mo" name="cc_mo"></div>
-      <div class="col text-center"><label>Co</label><input type="text" class="form-control" id="cc_co" name="cc_co"></div>
-      <div class="col text-center"><label>Fe</label><input type="text" class="form-control" id="cc_fe" name="cc_fe"></div>
-      <div class="col text-center"><label>Sn</label><input type="text" class="form-control" id="cc_sn" name="cc_sn"></div>
-      <div class="col text-center"><label>Al</label><input type="text" class="form-control" id="cc_al" name="cc_al"></div>
-      <div class="col text-center"><label>N</label><input type="text" class="form-control" id="cc_n" name="cc_n"></div>
-      <div class="col text-center"><label>Nb</label><input type="text" class="form-control" id="cc_nb" name="cc_nb"></div>
-    </div>
-  </div>
-</div>
-
-<div id="camposExtras_prop_mecanicas" style="display:none;">
-    <div class="container" id="fundo_diferente">
-    <!-- Primeira Linha de Inputs -->
-    <div class="row mb-3">
-        <h2 class="text-center">Propriedades Mecânicas</h2>
-    </div>
-    <div class="row">
-      <div class="col text-center"><label>Escoamento<br>Yield Strength</label><input type="text" class="form-control" id="cc_escoamento" name="cc_escoamento"></div>
-      <div class="col text-center"><label>Resistência Tração<br>Tensile Strength</label><input type="text" class="form-control" id="cc_tracao" name="cc_tracao"></div>
-      <div class="col text-center"><label>Redução de Área(%)<br>Reduction of Area(%)</label><input type="text" class="form-control" id="cc_reducao" name="cc_reducao"></div>
-      <div class="col text-center"><label>Alongamento(%)<br>Elongation(%)</label><input type="text" class="form-control" id="cc_alongamento" name="cc_alongamento"></div>
-      <div class="col text-center"><label>Dureza<br>Hardness</label><input type="text" class="form-control" id="cc_dureza" name="cc_dureza"></div>
-      <div class="col text-center"><label>Prova de Carga<br>Load Proof</label><input type="text" class="form-control" id="cc_carga" name="cc_carga"></div>
-    </div>
-  </div>
-</div>
-
-<div id="camposExtras_tratamentos" style="display:none;">
-    <div class="container" id="fundo_diferente">
-    <!-- Primeira Linha de Inputs -->
-    <div class="row mb-3">
-        <h2 class="text-center">Tratamentos</h2>
-    </div>
-    <div class="row">
-      <div class="col text-center"><label>Temperatura de Revenimento<br>Tempering Temperature</label><input type="text" class="form-control" id="cc_revenimento" name="cc_revenimento"></div>
-      <div class="col text-center"><label>Tratamento Térmico<br>Thermal Treatment</label><input type="text" class="form-control" id="cc_termico" name="cc_termico"></div>
-      <div class="col text-center"><label>Tratamento Superficial<br>Surface Treatment</label><input type="text" class="form-control" id="cc_superficial" name="cc_superficial"></div>
-      <div class="col text-center"><label>Macrografia<br>Macrography</label><input type="text" class="form-control" id="cc_macrografia" name="cc_macrografia"></div>
-      <div class="col text-center"><label>Observações<br>Comments</label><input type="text" class="form-control" id="cc_observacao" name="cc_observacao"></div>
-    </div>
-  </div>
-</div>
-
-<div id="camposExtras_analise_dimensional" style="display:none;">
-    <div class="container" id="fundo_diferente">
-    <!-- Primeira Linha de Inputs -->
-    <div class="row mb-3">
-        <h2 class="text-center">Análise Dimensional</h2>
-    </div>
-    <div class="row">
-        <div class="col">
-            <select id="selecaoTipo" name="selecaoTipo" class="form-control" onchange="exibirCampos()">
-                <option value="">Selecione...</option>
-                <option value="parafusos">Parafusos</option>
-                <option value="porcas">Porcas</option>
-                <option value="arruelas">Arruelas</option>
-                <option value="anel">Anel</option>
-                <option value="grampos">Grampos</option>
-                <option value="pinos">Pinos</option>
-                <option value="prisioneiro_estojo">Prisioneiro / Estojo</option>
-                <option value="chumbador">Chumbador</option>
-                <option value="rebite">Rebite</option>
-                <option value="chaveta">Chaveta</option>
-                <option value="contrapino">Contrapino</option>
-                <option value="especial">Especial</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Campos para Parafusos -->
-        <div id="camposParafusos" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_parafuso_altura" name="cc_parafuso_altura"></div>
-                <div class="col text-center"><label>Chave</label><input type="text" class="form-control" id="cc_parafuso_chave" name="cc_parafuso_chave"></div>
-                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_parafuso_comprimento" name="cc_parafuso_comprimento"></div>
-                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_parafuso_diametro" name="cc_parafuso_diametro"></div>
-            </div>
-            <div class="row">
-                <div class="col text-center"><label>Diâmetro da Cabeça/Corpo</label><input type="text" class="form-control" id="cc_parafuso_diametro_cabeca" name="cc_parafuso_diametro_cabeca"></div>
-                <div class="col text-center"><label>Comprimento da Rosca Parcial</label><input type="text" class="form-control" id="cc_parafuso_comprimento_rosca" name="cc_parafuso_comprimento_rosca"></div>
-                <div class="col text-center"><label>Diâmetro da Ponta</label><input type="text" class="form-control" id="cc_parafuso_diametro_ponta" name="cc_parafuso_diametro_ponta"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_parafuso_norma" name="cc_parafuso_norma"></div>
-            </div>
-        </div>
-
-        <!-- Campos para Porcas -->
-        <div id="camposPorcas" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_porcas_altura" name="cc_porcas_altura"></div>
-                <div class="col text-center"><label>Chave</label><input type="text" class="form-control" id="cc_porcas_chave" name="cc_porcas_chave"></div>
-                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_porcas_diametro" name="cc_porcas_diametro"></div>
-                <div class="col text-center"><label>Diâmetro da Estrutura(Porca T)</label><input type="text" class="form-control" id="cc_porcas_diametro_estrutura" name="cc_porcas_diametro_estrutura"></div>
-            </div>
-            <div class="row">
-                <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_porcas_diametro_interno" name="cc_porcas_diametro_interno"></div>
-                <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_porcas_diametro_externo" name="cc_porcas_diametro_externo"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_porcas_norma" name="cc_porcas_norma"></div>
-            </div>
-        </div>
-
-        <!-- Campos para Arruelas -->
-        <div id="camposArruelas" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_arruelas_altura" name="cc_arruelas_altura"></div>
-                <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_arruelas_diametro_interno" name="cc_arruelas_diametro_interno"></div>
-                <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_arruelas_diametro_externo" name="cc_arruelas_diametro_externo"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_arruelas_norma" name="cc_arruelas_norma"></div>
-            </div>
-        </div>
-
-        <!-- Campos para Anel -->
-        <div id="camposAnel" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_anel_altura" name="cc_anel_altura"></div>
-                <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_anel_diametro_interno" name="cc_anel_diametro_interno"></div>
-                <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_anel_diametro_externo" name="cc_anel_diametro_externo"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_anel_norma" name="cc_anel_norma"></div>
-            </div>
-        </div>
-
-        <!-- Campos para Grampos -->
-        <div id="camposGrampos" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_grampos_comprimento" name="cc_grampos_comprimento"></div>
-                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_grampos_diametro" name="cc_grampos_diametro"></div>
-                <div class="col text-center"><label>Comprimento da Rosca Parcial</label><input type="text" class="form-control" id="cc_grampos_comprimento_rosca" name="cc_grampos_comprimento_rosca"></div>
-            </div>
-            <div class="row">
-                <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_grampos_diametro_interno" name="cc_grampos_diametro_interno"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_grampos_norma" name="cc_grampos_norma"></div>
-            </div>
-        </div>
-
-        <!-- Campos para Pinos -->
-        <div id="camposPinos" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Espessura</label><input type="text" class="form-control" id="cc_pinos_espessura" name="cc_pinos_espessura"></div>
-                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_pinos_comprimento" name="cc_pinos_comprimento"></div>
-                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_pinos_diametro" name="cc_pinos_diametro"></div>
-                <div class="col text-center"><label>Diâmetro da Cabeça</label><input type="text" class="form-control" id="cc_pinos_diametro_cabeca" name="cc_pinos_diametro_cabeca"></div>
-            </div>
-            <div class="row">
-                <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_pinos_diametro_interno" name="cc_pinos_diametro_interno"></div>
-                <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_pinos_diametro_externo" name="cc_pinos_diametro_externo"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_pinos_norma" name="cc_pinos_norma"></div>
-            </div>
-        </div>
-
-        <!-- Campos para prisioneiro estojo -->
-        <div id="camposPrisioneiroEstojo" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_prisioneiro_comprimento" name="cc_prisioneiro_comprimento"></div>
-                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_prisioneiro_diametro" name="cc_prisioneiro_diametro"></div>
-                <div class="col text-center"><label>Comprimento da Rosca Parcial</label><input type="text" class="form-control" id="cc_prisioneiro_comprimento_rosca" name="cc_prisioneiro_comprimento_rosca"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_prisioneiro_norma" name="cc_prisioneiro_norma"></div>
-            </div>
-        </div>
-
-        <!-- Campos para chumbador -->
-        <div id="camposChumbador" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_chumbador_comprimento" name="cc_chumbador_comprimento"></div>
-                <div class="col text-center"><label>Bitola</label><input type="text" class="form-control" id="cc_chumbador_bitola" name="cc_chumbador_bitola"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_chumbador_norma" name="cc_chumbador_norma"></div>
-            </div>
-        </div>
-
-        <!-- Campos para rebite -->
-        <div id="camposRebite" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_rebite_comprimento" name="cc_rebite_comprimento"></div>
-                <div class="col text-center"><label>Bitola</label><input type="text" class="form-control" id="cc_rebite_bitola" name="cc_rebite_bitola"></div>
-                <div class="col text-center"><label>Diâmetro Cabeça/Corpo</label><input type="text" class="form-control" id="cc_rebite_diametro_cabeca" name="cc_rebite_diametro_cabeca"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_rebite_norma" name="cc_rebite_norma"></div>
-            </div>
-        </div>
-
-        <!-- Campos para chaveta -->
-        <div id="camposChaveta" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_chaveta_comprimento" name="cc_chaveta_comprimento"></div>
-                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_chaveta_diametro" name="cc_chaveta_diametro"></div>
-                <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_chaveta_altura" name="cc_chaveta_altura"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_chaveta_norma" name="cc_chaveta_norma"></div>
-            </div>
-        </div>
-
-        <!-- Campos para contra pino -->
-        <div id="camposContrapino" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_contra_pino_comprimento" name="cc_contra_pino_comprimento"></div>
-                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_contra_pino_diametro" name="cc_contra_pino_diametro"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_contra_pino_norma" name="cc_contra_pino_norma"></div>
-            </div>
-        </div>
-
-        <!-- Campos para Especial -->
-        <div id="camposEspecial" style="display:none;">
-            <div class="row">
-                <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_especial_altura" name="cc_especial_altura"></div>
-                <div class="col text-center"><label>Chave</label><input type="text" class="form-control" id="cc_especial_chave" name="cc_especial_chave"></div>
-                <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_especial_comprimento" name="cc_especial_comprimento"></div>
-                <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_especial_diametro" name="cc_especial_diametro"></div>
-            </div>
-            <div class="row">
-                <div class="col text-center"><label>Diâmetro da Cabeça</label><input type="text" class="form-control" id="cc_especial_diametro_cabeca" name="cc_especial_diametro_cabeca"></div>
-                <div class="col text-center"><label>Comprimento da Rosca Parcial</label><input type="text" class="form-control" id="cc_especial_comprimento_rosca" name="cc_especial_comprimento_rosca"></div>
-                <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_especial_diametro_interno" name="cc_especial_diametro_interno"></div>
-                <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_especial_diametro_externo" name="cc_especial_diametro_externo"></div>
-                <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_especial_norma" name="cc_especial_norma"></div>
-            </div>
-        </div>
-
-  </div>
-</div>
-
-      <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
+          <div id="camposExtras_tratamentos" style="display:none;">
+              <div class="container" id="fundo_diferente">
+                  <!-- Primeira Linha de Inputs -->
+                  <div class="row mb-3">
+                      <h2 class="text-center">Tratamentos</h2>
+                  </div>
+                  <div class="row">
+                      <div class="col text-center"><label>Temperatura de Revenimento<br>Tempering Temperature</label><input type="text" class="form-control" id="cc_revenimento" name="cc_revenimento"></div>
+                      <div class="col text-center"><label>Tratamento Térmico<br>Thermal Treatment</label><input type="text" class="form-control" id="cc_termico" name="cc_termico"></div>
+                      <div class="col text-center"><label>Tratamento Superficial<br>Surface Treatment</label><input type="text" class="form-control" id="cc_superficial" name="cc_superficial"></div>
+                      <div class="col text-center"><label>Macrografia<br>Macrography</label><input type="text" class="form-control" id="cc_macrografia" name="cc_macrografia"></div>
+                      <div class="col text-center"><label>Observações<br>Comments</label><input type="text" class="form-control" id="cc_observacao" name="cc_observacao"></div>
+                  </div>
+              </div>
+          </div>
+          <div class="container">
+              <div class="row">
+                    {% with messages = get_flashed_messages() %}
+                    {% if messages %}
                     <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
-                    <ul>
-                        {% for message in messages %}
-                        <li>{{ message }}</li>
-                        {% endfor %}
-                    </ul>
-                     </div>
-                {% endif %}
-            {% endwith %}
+                        <ul>
+                            {% for message in messages %}
+                            {% if 'Erro' in message %} {# Verifique se a mensagem contém a palavra 'erro' #}
+                            <li class="flash-error">{{ message }}</li> {# Aplicar a classe flash-error #}
+                            {% else %}
+                            <li>{{ message }}</li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
 
-            <!-- Limitar botão de acordo com privilegio -->
-            {% if session['privilegio'] != 0 %}
-            <!-- Botão de envio -->
-            <button type="submit" class="btn btn-secondary w-100 mb-3">Registrar Certificado</button>
-            {% else %}
-                <!-- Botão desabilitado se o privilégio for 0 -->
-                <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
-            {% endif %}
-
-        </div>
+                  <!-- Limitar botão de acordo com privilegio -->
+                  {% if session['privilegio'] != 0 %}
+                  <!-- Botão de envio -->
+                  <button type="submit" id="botao-registrar" name="bt_registrar_certificado" value="bt_registrar_certificado" class="btn btn-secondary w-100 mb-3">Registrar Certificado</button>
+                  {% else %}
+                  <!-- Botão desabilitado se o privilégio for 0 -->
+                  <button type="submit" id="botao-registrar_d" name="bt_registrar_certificado" value="bt_registrar_certificado" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
+                  {% endif %}
+              </div>
+          </div>
       </div>
-    </div>
+  </div>
 
 </form>
 
@@ -402,34 +227,6 @@
 
     });
 
-    function exibirCampos() {
-        var selecao = document.getElementById("selecaoTipo").value;
-        var camposParafusos = document.getElementById("camposParafusos");
-        var camposPorcas = document.getElementById("camposPorcas");
-        var camposArruelas = document.getElementById("camposArruelas");
-        var camposAnel = document.getElementById("camposAnel");
-        var camposGrampos = document.getElementById("camposGrampos");
-        var camposPinos = document.getElementById("camposPinos");
-        var camposPrisioneiroEstojo = document.getElementById("camposPrisioneiroEstojo");
-        var camposChumbador = document.getElementById("camposChumbador");
-        var camposRebite = document.getElementById("camposRebite");
-        var camposChaveta = document.getElementById("camposChaveta");
-        var camposContrapino = document.getElementById("camposContrapino");
-        var camposEspecial = document.getElementById("camposEspecial");
-
-        camposParafusos.style.display = selecao == "parafusos" ? "block" : "none";
-        camposPorcas.style.display = selecao == "porcas" ? "block" : "none";
-        camposArruelas.style.display = selecao == "arruelas" ? "block" : "none";
-        camposAnel.style.display = selecao == "anel" ? "block" : "none";
-        camposGrampos.style.display = selecao == "grampos" ? "block" : "none";
-        camposPinos.style.display = selecao == "pinos" ? "block" : "none";
-        camposPrisioneiroEstojo.style.display = selecao == "prisioneiro_estojo" ? "block" : "none";
-        camposChumbador.style.display = selecao == "chumbador" ? "block" : "none";
-        camposRebite.style.display = selecao == "rebite" ? "block" : "none";
-        camposChaveta.style.display = selecao == "chaveta" ? "block" : "none";
-        camposContrapino.style.display = selecao == "contrapino" ? "block" : "none";
-        camposEspecial.style.display = selecao == "especial" ? "block" : "none";
-    }
   </script>
 
 

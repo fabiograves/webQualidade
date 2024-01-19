@@ -7,16 +7,395 @@
 
   <form method="POST" action="{{ url_for('pesquisar_registro_inspecao') }}">
     <div class="py-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <h1 class="text-center">Pesquisar Registro de Inspeção</h1>
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12">
+            <h1 class="text-center">Pesquisar Registro de Inspeção</h1>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-
+    <div class="">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3" style="">
+                  <div class="form-group"><label>Número da Nota</label><input type="text" class="form-control" id="pc_numero_nota" name="pc_numero_nota"></div>
+                </div>
+                <div class="col-md-3" style="">
+                  <!--<div class="form-group"><label>Código do Produto</label><input type="text" class="form-control" id="pc_codigo_produto" name="pc_codigo_produto"></div>-->
+                </div>
+            </div>
+            <!-- Botão de envio -->
+            <button type="submit" class="btn btn-secondary w-100 mb-3">Pesquisar Registro Inspeção</button>
+        </div>
+    </div>
 
   </form>
+
+<!-- Resultados da Pesquisa -->
+<div class="container mt-4">
+  {% if resultados %}
+    {% for numero_nota, dados in resultados.items() %}
+      {% set cadastro = dados.registro_inspecao %}
+      {% if cadastro %}
+        {% set border_class = 'border-black' %}
+        {% if cadastro.ri_opcao == 'A' %}
+          {% set border_class = 'border-black' %}
+        {% elif cadastro.ri_opcao == 'C' %}
+          {% set border_class = 'border-yellow' %}
+        {% elif cadastro.ri_opcao == 'R' %}
+          {% set border_class = 'border-red' %}
+        {% endif %}
+        <!-- Determine a cor da borda com base no status -->
+        <div class="card {{ border_class }}" style="margin-bottom: 20px;">
+          <div class="card-body">
+            <h5 class="card-title">Resultados para Nota Número: {{ numero_nota }}</h5>
+
+            <h3 class="text-center">Dados</h3>
+            <div class="resultados">
+              <!-- Primeira Linha -->
+              <div class="row">
+                <div class="col-md-3"><strong>Número da Nota:</strong> {{ cadastro.ri_numero_nota }}</div>
+                <div class="col-md-3"><strong>Código do Produto:</strong> {{ cadastro.ri_cod_produto }}</div>
+                <div class="col-md-3"><strong>Fornecedor:</strong> {{ cadastro.ri_fornecedor }}</div>
+                <div class="col-md-3"><strong>Pedido de Compra:</strong> {{ cadastro.ri_pedido_compra }}</div>
+              </div>
+              <!-- Segunda Linha -->
+              <div class="row">
+                <div class="col-md-3"><strong>Quantidade Total:</strong> {{ cadastro.ri_quantidade_total }}</div>
+                <div class="col-md-3"><strong>Volume:</strong> {{ cadastro.ri_volume }}</div>
+                <div class="col-md-3"><strong>Desenho:</strong> {{ cadastro.ri_desenho }}</div>
+                <div class="col-md-3"><strong>Acabamento:</strong> {{ cadastro.ri_acabamento }}</div>
+              </div>
+              <!-- Terceira Linha -->
+              <div class="row">
+                <div class="col-md-3"><strong>Dureza:</strong> {{ cadastro.ri_dureza }}</div>
+                <div class="col-md-3"><strong>Status:</strong> {{ cadastro.ri_opcao }}</div>
+                <div class="col-md-3"><strong>Responsável:</strong> {{ cadastro.ri_resp_inspecao }}</div>
+                <div class="col-md-3"><strong>Data:</strong> {{ cadastro.ri_data }}</div>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Porcas -->
+          {% set comp = dados.ad_porcas %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Porcas</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-2 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-2 text-center"><strong>Chave</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro da Estrutura</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Externo</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_altura }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_chave }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_diametro }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_diametro_estrutura }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_diametro_interno }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_diametro_externo }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Pinos -->
+          {% set comp = dados.ad_pinos %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Pinos</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-2 text-center"><strong>Espessura</strong></div>
+                  <div class="col-md-2 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro da Cabeça</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Externo</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_espessura }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_comprimento }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_diametro }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_diametro_cabeca }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_diametro_interno }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_diametro_externo }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Parafusos -->
+          {% set comp = dados.ad_parafusos %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Parafusos</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-3 text-center"><strong>Chave</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"> {{ item.cc_adparafusos_altura }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adparafusos_chave }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adpaafusos_comprimento }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adparafusos_diametro }} </div>
+                </div>
+              <!-- Terceira Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"><strong>Diâmetro da Cabeça/Corpo</strong></div>
+                  <div class="col-md-4 text-center"><strong>Comprimento da Rosca Parcial</strong></div>
+                  <div class="col-md-4 text-center"><strong>Diâmetro da Ponta</strong></div>
+                </div>
+              <!-- Quarta Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"> {{ item.cc_adparafusos_diametro_cabeca }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adparafusos_comprimento_rosca }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adparafusos_diametro_ponta }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Grampos -->
+          {% set comp = dados.ad_grampos %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Grampos</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento Rosca</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro Interno</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"> {{ item.cc_adgrampos_comprimento }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adgrampos_diametro }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adgrampos_comprimento_rosca }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adgrampos_diametro_interno }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Arruelas -->
+          {% set comp = dados.ad_arruelas %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Arruelas</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-4 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-4 text-center"><strong>Diâmetro Externo</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"> {{ item.cc_adarruelas_altura }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adarruelas_diametro_interno }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adarruelas_diametro_externo }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Anel -->
+          {% set comp = dados.ad_anel %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Anel</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-4 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-4 text-center"><strong>Diâmetro Externo</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"> {{ item.cc_adanel_altura }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adanel_diametro_interno }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adanel_diametro_externo }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Prisioneiro Estojo -->
+          {% set comp = dados.ad_prisioneiro_estojo %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Prisioneiro / Estojo</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-4 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-4 text-center"><strong>Comprimento Rosca</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"> {{ item.cc_adprisioneiroestojo_comprimento }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adprisioneiroestojo_diametro }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adprisioneiroestojo_comprimento_rosca }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Contrapino -->
+          {% set comp = dados.ad_contrapino %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Contrapino</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-4 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-4 text-center"><strong>Norma</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"> {{ item.cc_adcontrapino_comprimento }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adcontrapino_diametro }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adcontrapino_norma }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Chaveta -->
+          {% set comp = dados.ad_chaveta %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Chaveta</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-3 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-3 text-center"><strong>Norma</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"> {{ item.cc_adchaveta_comprimento }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adchaveta_diametro }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adchaveta_altura }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adchaveta_norma }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Rebite -->
+          {% set comp = dados.ad_rebite %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Rebite</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-3 text-center"><strong>Bitola</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro Cabeça</strong></div>
+                  <div class="col-md-3 text-center"><strong>Norma</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"> {{ item.cc_adrebite_comprimento }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adrebite_bitola }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adrebite_diametro_cabeca }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adrebite_norma }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Chumbador -->
+          {% set comp = dados.ad_chumbador %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Chumbador</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-4 text-center"><strong>Bitola</strong></div>
+                  <div class="col-md-4 text-center"><strong>Norma</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-4 text-center"> {{ item.cc_adchumbador_comprimento }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adchumbador_bitola }} </div>
+                  <div class="col-md-4 text-center"> {{ item.cc_adchumbador_norma }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Exibir resultados de Análise Dimensional Especial -->
+          {% set comp = dados.ad_especial %}
+          {% if comp %}
+            <h3 class="text-center">Análise Dimensional Especial</h3>
+            <div class="resultados">
+              {% for item in comp %}
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-3 text-center"><strong>Chave</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_altura }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_chave }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_comprimento }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_diametro }} </div>
+                </div>
+              <!-- Terceira Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"><strong>Diâmetro Cabeça</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento Rosca</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro Externo</strong></div>
+                </div>
+              <!-- Quarta Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_diametro_cabeca }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_comprimento_rosca }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_diametro_interno }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_diametro_externo }} </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+        </div><!--Fecha card Body-->
+      </div><!--Fecha card Inteiro-->
+    {% endfor %}
+  {% else %}
+    <p>Nenhum resultado encontrado.</p>
+  {% endif %}
+</div>
+
 {% endblock %}
