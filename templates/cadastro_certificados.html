@@ -193,7 +193,7 @@
                   <!-- Limitar botão de acordo com privilegio -->
                   {% if session['privilegio'] != 0 %}
                   <!-- Botão de envio -->
-                  <button type="submit" id="botao-registrar" name="bt_registrar_certificado" value="bt_registrar_certificado" class="btn btn-secondary w-100 mb-3">Registrar Certificado</button>
+                  <button type="submit" id="botao-registrar" name="bt_registrar_certificado" value="bt_registrar_certificado" class="btn btn-secondary w-100 mb-3 ">Registrar Certificado</button>
                   {% else %}
                   <!-- Botão desabilitado se o privilégio for 0 -->
                   <button type="submit" id="botao-registrar_d" name="bt_registrar_certificado" value="bt_registrar_certificado" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
@@ -225,6 +225,13 @@
         camposExtras_analise_dimensional.style.display = analise_dimensionalCheckbox.checked ? 'block' : 'none';
       });
 
+    });
+
+    document.getElementById('botao-registrar').addEventListener('click', function(event) {
+        var confirmacao = confirm('Tem certeza que deseja registrar o certificado?');
+        if (!confirmacao) {
+            event.preventDefault();
+        }
     });
 
   </script>

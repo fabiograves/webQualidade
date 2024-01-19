@@ -282,14 +282,15 @@
         {% endif %}
         {% endwith %}
 
-            <!-- Limitar botão de acordo com privilegio -->
+            <!-- Limitar botão de acordo com privilégio -->
             {% if session['privilegio'] != 0 %}
-            <!-- Botão de envio -->
-            <button type="submit" class="btn btn-secondary w-100 mb-3">Registrar Inspeção</button>
+            <!-- Botão de envio com confirmação -->
+            <button type="submit" class="btn btn-secondary w-100 mb-3" onclick="return confirm('Tem certeza que deseja registrar a inspeção?')">Registrar Inspeção</button>
             {% else %}
-                <!-- Botão desabilitado se o privilégio for 0 -->
-                <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
+            <!-- Botão desabilitado se o privilégio for 0 -->
+            <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
             {% endif %}
+
 
 
         </form>

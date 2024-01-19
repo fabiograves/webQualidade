@@ -98,7 +98,7 @@
                     <!-- Limitar botão de acordo com privilegio -->
                     {% if session['privilegio'] != 0 %}
                     <!-- Botão de envio -->
-                    <button type="submit" name="bt_criar_certificado" value="bt_criar_certificado" class="btn btn-secondary w-100 mb-3">Criar Certificado</button>
+                    <button type="submit" ID="botao-criar" name="bt_criar_certificado" value="bt_criar_certificado" class="btn btn-secondary w-100 mb-3">Criar Certificado</button>
                     {% else %}
                         <!-- Botão desabilitado se o privilégio for 0 -->
                         <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio Para Criar Certificado</button>
@@ -109,8 +109,15 @@
         </div>
 </div>
 
-
 </form>
 
+<script>
+    document.getElementById('botao-criar').addEventListener('click', function(event) {
+        var confirmacao = confirm('Tem certeza que deseja criar o certificado?');
+        if (!confirmacao) {
+            event.preventDefault();
+        }
+    });
+</script>
 
 {% endblock %}
