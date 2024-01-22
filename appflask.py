@@ -101,12 +101,10 @@ def pesquisar_certificado():
     if request.method == 'POST':
         # Extraia os dados do formulário
         numero_nota = request.form.get('pc_numero_nota')
-        codigo_fornecedor = request.form.get('pc_codigo_fornecedor')
         codigo_produto = request.form.get('pc_codigo_produto')
-        corrida = request.form.get('pc_corrida')
 
         # Busque os resultados do banco de dados
-        resultados = buscar_certificados(numero_nota, codigo_fornecedor, codigo_produto, corrida)
+        resultados = buscar_certificados(numero_nota, codigo_produto)
 
     # print("Enviando para o template:", resultados)  # Adicione esta linha para depuração
     return render_template('pesquisar_certificado.html', resultados=resultados)
@@ -116,16 +114,22 @@ def tratar_formulario():
     resultado = None  # Defina resultado com um valor padrão
 
     if 'bt_procurar_nota' in request.form:
-        # Código para buscar nota
-        numero_nota = request.form['criar_numero_nota']
-        cod_produto = request.form['criar_cod_produto']
-        resultado = buscar_certificado_nota(numero_nota, cod_produto)
-        if resultado:
-            # Se os dados foram encontrados, armazene-os na sessão
-            session['dados_pdf'] = resultado
+        # Verifique se ambos os campos são fornecidos
+        numero_nota = request.form.get('criar_numero_nota')
+        cod_produto = request.form.get('criar_cod_produto')
+
+        if not numero_nota or not cod_produto:
+            # Se algum dos campos estiver vazio, exiba uma mensagem de erro
+            flash('É necessário fornecer o código do produto e o número da nota.')
         else:
-            # Se os dados não foram encontrados, você pode exibir uma mensagem de erro
-            flash('Nota fiscal não encontrada.')
+            # Se ambos os campos foram fornecidos, proceda com a busca
+            resultado = buscar_certificado_nota(numero_nota, cod_produto)
+            if resultado and not all(value is None for value in resultado.values()):
+                # Se os dados foram encontrados, armazene-os na sessão
+                session['dados_pdf'] = resultado
+            else:
+                # Se os dados não foram encontrados, exiba uma mensagem de erro
+                flash('Nota fiscal não encontrada.')
 
     elif 'bt_criar_certificado' in request.form:
         # Código para criar o PDF
@@ -1074,14 +1078,14 @@ def buscar_certificado_nota(numero_nota, cod_produto):
 
     return resultado
 
-@app.route('/download_arquivo/<numero_nota>')
-def download_arquivo(numero_nota):
-    resultado = buscar_certificado_nota(numero_nota)
+@app.route('/download_arquivo/<numero_nota>/<cod_produto>')
+def download_arquivo(numero_nota, cod_produto):
+    resultado = buscar_certificado_nota(numero_nota, cod_produto)
 
     # Verifica se um arquivo foi encontrado
     if resultado and resultado['arquivo']:
         arquivo_binario = resultado['arquivo']
-        nome_arquivo = f"certificado_{numero_nota}.pdf"
+        nome_arquivo = f"certificado_{numero_nota}_{cod_produto}.pdf"
         file_like = io.BytesIO(arquivo_binario)
 
         response = make_response(file_like.getvalue())
@@ -1092,7 +1096,7 @@ def download_arquivo(numero_nota):
         return "Arquivo não encontrado", 404
 
 
-def buscar_certificados(numero_nota, codigo_fornecedor, codigo_produto, corrida):
+def buscar_certificados(numero_nota, codigo_produto):
     connection = conectar_db()
     try:
         resultados_agrupados = {}
@@ -1101,9 +1105,9 @@ def buscar_certificados(numero_nota, codigo_fornecedor, codigo_produto, corrida)
             # Busca por cadastro de certificados
             sql = """
             SELECT * FROM cadastro_certificados
-            WHERE cc_numero_nota = %s OR cc_cod_fornecedor = %s OR cc_cod_produto = %s OR cc_corrida = %s
+            WHERE cc_numero_nota = %s OR cc_cod_produto = %s
             """
-            cursor.execute(sql, (numero_nota, codigo_fornecedor, codigo_produto, corrida))
+            cursor.execute(sql, (numero_nota, codigo_produto))
             cadastros = cursor.fetchall()
 
             # Inicializa os cadastros no resultados_agrupados
@@ -1304,7 +1308,6 @@ def buscar_certificados(numero_nota, codigo_fornecedor, codigo_produto, corrida)
         traceback.print_exc()
         resultados_agrupados = None
     finally:
-        print(resultados_agrupados)
         connection.close()
 
     return resultados_agrupados
@@ -1507,7 +1510,6 @@ def buscar_registro_inspecao(numero_nota, codigo_produto):
         traceback.print_exc()
         resultados_agrupados = None
     finally:
-        print(resultados_agrupados)
         connection.close()
 
     return resultados_agrupados

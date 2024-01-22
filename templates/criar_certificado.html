@@ -41,7 +41,8 @@
             </div>
             <div class="col-md-3">
                 {% if resultado and resultado['cadastro_certificados'] and resultado['cadastro_certificados']['cc_arquivo'] %}
-                    <a href="{{ url_for('download_arquivo', numero_nota=resultado['cadastro_certificados']['cc_numero_nota']) }}" class="btn btn-primary" target="_blank">Baixar Arquivo</a>
+                    <a href="{{ url_for('download_arquivo', numero_nota=resultado['cadastro_certificados']['cc_numero_nota'],
+                    cod_produto=resultado['cadastro_certificados']['cc_cod_produto']) }}" class="btn btn-primary" target="_blank">Baixar Arquivo</a>
                 {% endif %}
             </div>
         </div>
@@ -84,7 +85,7 @@
             </div>
             <div class="row">
                 <div class="col-md-3" style="">
-                    <div class="form-group"><label>Data:</label><input type="text" class="form-control" id="criar_data" name="criar_data"></div>
+                    <div class="form-group"><label>Data:</label><input type="date" class="form-control" id="criar_data" name="criar_data"></div>
                 </div>
                 <div class="col-md-3" style="">
                     <div class="form-group"><label>Lote:</label><input type="text" class="form-control" id="criar_lote" name="criar_lote"></div>
@@ -93,6 +94,17 @@
                     <div class="form-group"><label>Código Fornecedor:</label><input type="text" class="form-control" id="criar_codigo_fornecedor" name="criar_codigo_fornecedor" value="{{ resultado['cadastro_certificados']['cc_cod_fornecedor'] if resultado is defined and resultado['cadastro_certificados'] else '' }}"></div>
                 </div>
             </div>
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+                    <ul>
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            {% endwith %}
             <div class="row">
                 <div class="col-md-12" style="">
                     <!-- Limitar botão de acordo com privilegio -->

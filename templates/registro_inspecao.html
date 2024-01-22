@@ -52,7 +52,7 @@
                     <div class="col-md-2">
                         <div class="form-group"><label>Dureza</label><input type="text" class="form-control" id="ri_dureza" name="ri_dureza"></div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <style>
                             /* Estilo para botões de rádio */
                             .radio-input {
@@ -62,28 +62,36 @@
                             }
 
                             /* Estilo para botões de rádio selecionados */
-                            .radio-input:checked {
-                                background-color: #007bff; /* Cor de fundo quando selecionado */
+                            .radio-input-green:checked {
+                                background-color: #31f511; /* Cor de fundo quando selecionado */
+                                color: #fff; /* Cor do texto quando selecionado */
+                            }
+                            .radio-input-yellow:checked {
+                                background-color: #f6ca27; /* Cor de fundo quando selecionado */
+                                color: #fff; /* Cor do texto quando selecionado */
+                            }
+                            .radio-input-red:checked {
+                                background-color: #f30325; /* Cor de fundo quando selecionado */
                                 color: #fff; /* Cor do texto quando selecionado */
                             }
                         </style>
                         <div class="row">
-                            <div class="col-md-4 text-center">
+                            <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>A</label>
-                                    <input type="radio" class="form-control radio-input" id="ri_a" name="ri_option" value="A">
+                                    <label>Aprov.</label>
+                                    <input type="radio" class="form-control radio-input radio-input-green" id="ri_a" name="ri_option" value="A">
                                 </div>
                             </div>
-                            <div class="col-md-4 text-center">
+                            <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>C</label>
-                                    <input type="radio" class="form-control radio-input" id="ri_c" name="ri_option" value="C">
+                                    <label>Cond.</label>
+                                    <input type="radio" class="form-control radio-input radio-input-yellow" id="ri_c" name="ri_option" value="C">
                                 </div>
                             </div>
-                            <div class="col-md-4 text-center">
+                            <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>R</label>
-                                    <input type="radio" class="form-control radio-input" id="ri_r" name="ri_option" value="R">
+                                    <label>Repro.</label>
+                                    <input type="radio" class="form-control radio-input radio-input-red" id="ri_r" name="ri_option" value="R">
                                 </div>
                             </div>
                         </div>
