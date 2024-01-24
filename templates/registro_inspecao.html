@@ -49,9 +49,6 @@
                     <div class="col-md-2">
                         <div class="form-group"><label>Acabamento</label><input type="text" class="form-control" id="ri_acabamento" name="ri_acabamento"></div>
                     </div>
-                    <div class="col-md-2">
-                        <div class="form-group"><label>Dureza</label><input type="text" class="form-control" id="ri_dureza" name="ri_dureza"></div>
-                    </div>
                     <div class="col-md-3">
                         <style>
                             /* Estilo para botões de rádio */
@@ -79,19 +76,19 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Aprov.</label>
-                                    <input type="radio" class="form-control radio-input radio-input-green" id="ri_a" name="ri_option" value="A">
+                                    <input type="radio" class="form-control radio-input radio-input-green" id="ri_a" name="ri_option" value="Aprovado">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Cond.</label>
-                                    <input type="radio" class="form-control radio-input radio-input-yellow" id="ri_c" name="ri_option" value="C">
+                                    <input type="radio" class="form-control radio-input radio-input-yellow" id="ri_c" name="ri_option" value="Condicional">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Repro.</label>
-                                    <input type="radio" class="form-control radio-input radio-input-red" id="ri_r" name="ri_option" value="R">
+                                    <input type="radio" class="form-control radio-input radio-input-red" id="ri_r" name="ri_option" value="Reprovado">
                                 </div>
                             </div>
                         </div>
@@ -135,6 +132,7 @@
             <!-- Campos para Parafusos -->
             <div id="camposParafusos" style="display:none;">
                 <div class="row">
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_parafuso_dureza" name="cc_parafuso_dureza"></div>
                     <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_parafuso_altura" name="cc_parafuso_altura"></div>
                     <div class="col text-center"><label>Chave</label><input type="text" class="form-control" id="cc_parafuso_chave" name="cc_parafuso_chave"></div>
                     <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_parafuso_comprimento" name="cc_parafuso_comprimento"></div>
@@ -151,12 +149,13 @@
             <!-- Campos para Porcas -->
             <div id="camposPorcas" style="display:none;">
                 <div class="row">
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_porcas_dureza" name="cc_porcas_dureza"></div>
                     <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_porcas_altura" name="cc_porcas_altura"></div>
                     <div class="col text-center"><label>Chave</label><input type="text" class="form-control" id="cc_porcas_chave" name="cc_porcas_chave"></div>
                     <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_porcas_diametro" name="cc_porcas_diametro"></div>
-                    <div class="col text-center"><label>Diâmetro da Estrutura(Porca T)</label><input type="text" class="form-control" id="cc_porcas_diametro_estrutura" name="cc_porcas_diametro_estrutura"></div>
                 </div>
                 <div class="row">
+                    <div class="col text-center"><label>Diâmetro da Estrutura(Porca T)</label><input type="text" class="form-control" id="cc_porcas_diametro_estrutura" name="cc_porcas_diametro_estrutura"></div>
                     <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_porcas_diametro_interno" name="cc_porcas_diametro_interno"></div>
                     <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_porcas_diametro_externo" name="cc_porcas_diametro_externo"></div>
                     <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_porcas_norma" name="cc_porcas_norma"></div>
@@ -166,6 +165,7 @@
             <!-- Campos para Arruelas -->
             <div id="camposArruelas" style="display:none;">
                 <div class="row">
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_arruelas_dureza" name="cc_arruelas_dureza"></div>
                     <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_arruelas_altura" name="cc_arruelas_altura"></div>
                     <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_arruelas_diametro_interno" name="cc_arruelas_diametro_interno"></div>
                     <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_arruelas_diametro_externo" name="cc_arruelas_diametro_externo"></div>
@@ -176,6 +176,7 @@
             <!-- Campos para Anel -->
             <div id="camposAnel" style="display:none;">
                 <div class="row">
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_anel_dureza" name="cc_anel_dureza"></div>
                     <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_anel_altura" name="cc_anel_altura"></div>
                     <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_anel_diametro_interno" name="cc_anel_diametro_interno"></div>
                     <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_anel_diametro_externo" name="cc_anel_diametro_externo"></div>
@@ -186,11 +187,12 @@
             <!-- Campos para Grampos -->
             <div id="camposGrampos" style="display:none;">
                 <div class="row">
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_grampos_dureza" name="cc_grampos_dureza"></div>
                     <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_grampos_comprimento" name="cc_grampos_comprimento"></div>
                     <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_grampos_diametro" name="cc_grampos_diametro"></div>
-                    <div class="col text-center"><label>Comprimento da Rosca Parcial</label><input type="text" class="form-control" id="cc_grampos_comprimento_rosca" name="cc_grampos_comprimento_rosca"></div>
                 </div>
                 <div class="row">
+                    <div class="col text-center"><label>Comprimento da Rosca Parcial</label><input type="text" class="form-control" id="cc_grampos_comprimento_rosca" name="cc_grampos_comprimento_rosca"></div>
                     <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_grampos_diametro_interno" name="cc_grampos_diametro_interno"></div>
                     <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_grampos_norma" name="cc_grampos_norma"></div>
                 </div>
@@ -199,12 +201,13 @@
             <!-- Campos para Pinos -->
             <div id="camposPinos" style="display:none;">
                 <div class="row">
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_pinos_dureza" name="cc_pinos_dureza"></div>
                     <div class="col text-center"><label>Espessura</label><input type="text" class="form-control" id="cc_pinos_espessura" name="cc_pinos_espessura"></div>
                     <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_pinos_comprimento" name="cc_pinos_comprimento"></div>
                     <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_pinos_diametro" name="cc_pinos_diametro"></div>
-                    <div class="col text-center"><label>Diâmetro da Cabeça</label><input type="text" class="form-control" id="cc_pinos_diametro_cabeca" name="cc_pinos_diametro_cabeca"></div>
                 </div>
                 <div class="row">
+                    <div class="col text-center"><label>Diâmetro da Cabeça</label><input type="text" class="form-control" id="cc_pinos_diametro_cabeca" name="cc_pinos_diametro_cabeca"></div>
                     <div class="col text-center"><label>Diâmetro Interno</label><input type="text" class="form-control" id="cc_pinos_diametro_interno" name="cc_pinos_diametro_interno"></div>
                     <div class="col text-center"><label>Diâmetro Externo</label><input type="text" class="form-control" id="cc_pinos_diametro_externo" name="cc_pinos_diametro_externo"></div>
                     <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_pinos_norma" name="cc_pinos_norma"></div>
@@ -214,6 +217,7 @@
             <!-- Campos para prisioneiro estojo -->
             <div id="camposPrisioneiroEstojo" style="display:none;">
                 <div class="row">
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_prisioneiro_dureza" name="cc_prisioneiro_dureza"></div>
                     <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_prisioneiro_comprimento" name="cc_prisioneiro_comprimento"></div>
                     <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_prisioneiro_diametro" name="cc_prisioneiro_diametro"></div>
                     <div class="col text-center"><label>Comprimento da Rosca Parcial</label><input type="text" class="form-control" id="cc_prisioneiro_comprimento_rosca" name="cc_prisioneiro_comprimento_rosca"></div>
@@ -224,6 +228,7 @@
             <!-- Campos para chumbador -->
             <div id="camposChumbador" style="display:none;">
                 <div class="row">
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_chumbador_dureza" name="cc_chumbador_dureza"></div>
                     <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_chumbador_comprimento" name="cc_chumbador_comprimento"></div>
                     <div class="col text-center"><label>Bitola</label><input type="text" class="form-control" id="cc_chumbador_bitola" name="cc_chumbador_bitola"></div>
                     <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_chumbador_norma" name="cc_chumbador_norma"></div>
@@ -233,6 +238,7 @@
             <!-- Campos para rebite -->
             <div id="camposRebite" style="display:none;">
                 <div class="row">
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_rebite_dureza" name="cc_rebite_dureza"></div>
                     <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_rebite_comprimento" name="cc_rebite_comprimento"></div>
                     <div class="col text-center"><label>Bitola</label><input type="text" class="form-control" id="cc_rebite_bitola" name="cc_rebite_bitola"></div>
                     <div class="col text-center"><label>Diâmetro Cabeça/Corpo</label><input type="text" class="form-control" id="cc_rebite_diametro_cabeca" name="cc_rebite_diametro_cabeca"></div>
@@ -243,6 +249,7 @@
             <!-- Campos para chaveta -->
             <div id="camposChaveta" style="display:none;">
                 <div class="row">
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_chaveta_dureza" name="cc_chaveta_dureza"></div>
                     <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_chaveta_comprimento" name="cc_chaveta_comprimento"></div>
                     <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_chaveta_diametro" name="cc_chaveta_diametro"></div>
                     <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_chaveta_altura" name="cc_chaveta_altura"></div>
@@ -253,15 +260,17 @@
             <!-- Campos para contra pino -->
             <div id="camposContrapino" style="display:none;">
                 <div class="row">
-                    <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_contra_pino_comprimento" name="cc_contra_pino_comprimento"></div>
-                    <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_contra_pino_diametro" name="cc_contra_pino_diametro"></div>
-                    <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_contra_pino_norma" name="cc_contra_pino_norma"></div>
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_contrapino_dureza" name="cc_contrapino_dureza"></div>
+                    <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_contrapino_comprimento" name="cc_contrapino_comprimento"></div>
+                    <div class="col text-center"><label>Diâmetro</label><input type="text" class="form-control" id="cc_contrapino_diametro" name="cc_contrapino_diametro"></div>
+                    <div class="col text-center"><label>Norma</label><input type="text" class="form-control" id="cc_contrapino_norma" name="cc_contrapino_norma"></div>
                 </div>
             </div>
 
             <!-- Campos para Especial -->
             <div id="camposEspecial" style="display:none;">
                 <div class="row">
+                    <div class="col text-center"><label>Dureza</label><input type="text" class="form-control" id="cc_especial_dureza" name="cc_especial_dureza"></div>
                     <div class="col text-center"><label>Altura</label><input type="text" class="form-control" id="cc_especial_altura" name="cc_especial_altura"></div>
                     <div class="col text-center"><label>Chave</label><input type="text" class="form-control" id="cc_especial_chave" name="cc_especial_chave"></div>
                     <div class="col text-center"><label>Comprimento</label><input type="text" class="form-control" id="cc_especial_comprimento" name="cc_especial_comprimento"></div>

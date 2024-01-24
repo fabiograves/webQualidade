@@ -37,6 +37,10 @@
     border: 3px solid black;
 }
 
+.border-green {
+    border: 3px solid #31f511;
+}
+
 .border-yellow {
     border: 3px solid yellow;
 }

@@ -41,10 +41,16 @@
       {% if cadastro %}
         {% set border_class = 'border-black' %}
         {% if cadastro.ri_opcao == 'A' %}
-          {% set border_class = 'border-black' %}
+          {% set border_class = 'border-green' %}
         {% elif cadastro.ri_opcao == 'C' %}
           {% set border_class = 'border-yellow' %}
         {% elif cadastro.ri_opcao == 'R' %}
+          {% set border_class = 'border-red' %}
+        {% elif cadastro.ri_opcao == 'Aprovado' %}
+          {% set border_class = 'border-green' %}
+        {% elif cadastro.ri_opcao == 'Condicional' %}
+          {% set border_class = 'border-yellow' %}
+        {% elif cadastro.ri_opcao == 'Reprovado' %}
           {% set border_class = 'border-red' %}
         {% endif %}
         <!-- Determine a cor da borda com base no status -->
@@ -70,7 +76,6 @@
               </div>
               <!-- Terceira Linha -->
               <div class="row">
-                <div class="col-md-3"><strong>Dureza:</strong> {{ cadastro.ri_dureza }}</div>
                 <div class="col-md-3"><strong>Status:</strong> {{ cadastro.ri_opcao }}</div>
                 <div class="col-md-3"><strong>Responsável:</strong> {{ cadastro.ri_resp_inspecao }}</div>
                 <div class="col-md-3"><strong>Data:</strong> {{ cadastro.ri_data }}</div>
@@ -86,22 +91,33 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-2 text-center"><strong>Altura</strong></div>
-                  <div class="col-md-2 text-center"><strong>Chave</strong></div>
-                  <div class="col-md-2 text-center"><strong>Diâmetro</strong></div>
-                  <div class="col-md-2 text-center"><strong>Diâmetro da Estrutura</strong></div>
-                  <div class="col-md-2 text-center"><strong>Diâmetro Interno</strong></div>
-                  <div class="col-md-2 text-center"><strong>Diâmetro Externo</strong></div>
+                  <div class="col-md-3 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-3 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-3 text-center"><strong>Chave</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_altura }} </div>
-                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_chave }} </div>
-                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_diametro }} </div>
-                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_diametro_estrutura }} </div>
-                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_diametro_interno }} </div>
-                  <div class="col-md-2 text-center"> {{ item.cc_adporcas_diametro_externo }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adporcas_dureza }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adporcas_altura }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adporcas_chave }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adporcas_diametro }} </div>
                 </div>
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"><strong>Diâmetro da Estrutura</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro Externo</strong></div>
+                  <div class="col-md-3 text-center"><strong>Norma</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"> {{ item.cc_adporcas_diametro_estrutura }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adporcas_diametro_interno }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adporcas_diametro_externo }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adporcas_norma }} </div>
+                </div>
+                <hr>
               {% endfor %}
             </div>
           {% endif %}
@@ -114,22 +130,33 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-2 text-center"><strong>Espessura</strong></div>
-                  <div class="col-md-2 text-center"><strong>Comprimento</strong></div>
-                  <div class="col-md-2 text-center"><strong>Diâmetro</strong></div>
-                  <div class="col-md-2 text-center"><strong>Diâmetro da Cabeça</strong></div>
-                  <div class="col-md-2 text-center"><strong>Diâmetro Interno</strong></div>
-                  <div class="col-md-2 text-center"><strong>Diâmetro Externo</strong></div>
+                  <div class="col-md-3 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-3 text-center"><strong>Espessura</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_espessura }} </div>
-                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_comprimento }} </div>
-                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_diametro }} </div>
-                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_diametro_cabeca }} </div>
-                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_diametro_interno }} </div>
-                  <div class="col-md-2 text-center"> {{ item.cc_adpinos_diametro_externo }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adpinos_dureza }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adpinos_espessura }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adpinos_comprimento }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adpinos_diametro }} </div>
                 </div>
+              <!-- Primeira Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"><strong>Diâmetro da Cabeça</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro Externo</strong></div>
+                  <div class="col-md-3 text-center"><strong>Norma</strong></div>
+                </div>
+              <!-- Segunda Linha -->
+                <div class="row">
+                  <div class="col-md-3 text-center"> {{ item.cc_adpinos_diametro_cabeca }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adpinos_diametro_interno }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adpinos_diametro_externo }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adpinos_norma }} </div>
+                </div>
+              <hr>
               {% endfor %}
             </div>
           {% endif %}
@@ -142,30 +169,35 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"><strong>Altura</strong></div>
-                  <div class="col-md-3 text-center"><strong>Chave</strong></div>
-                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
-                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-2 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-2 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-2 text-center"><strong>Chave</strong></div>
+                  <div class="col-md-2 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"> {{ item.cc_adparafusos_altura }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adparafusos_chave }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adpaafusos_comprimento }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adparafusos_diametro }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adparafusos_dureza }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adparafusos_altura }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adparafusos_chave }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adparafusos_comprimento }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adparafusos_diametro }} </div>
                 </div>
               <!-- Terceira Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"><strong>Diâmetro da Cabeça/Corpo</strong></div>
-                  <div class="col-md-4 text-center"><strong>Comprimento da Rosca Parcial</strong></div>
-                  <div class="col-md-4 text-center"><strong>Diâmetro da Ponta</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro da Cabeça/Corpo</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento da Rosca Parcial</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro da Ponta</strong></div>
+                  <div class="col-md-3 text-center"><strong>Norma</strong></div>
                 </div>
               <!-- Quarta Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"> {{ item.cc_adparafusos_diametro_cabeca }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adparafusos_comprimento_rosca }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adparafusos_diametro_ponta }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adparafusos_diametro_cabeca }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adparafusos_comprimento_rosca }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adparafusos_diametro_ponta }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adparafusos_norma }} </div>
                 </div>
+              <hr>
               {% endfor %}
             </div>
           {% endif %}
@@ -178,18 +210,23 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
-                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
-                  <div class="col-md-3 text-center"><strong>Comprimento Rosca</strong></div>
-                  <div class="col-md-3 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-2 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-2 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-2 text-center"><strong>Comprimento Rosca</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-2 text-center"><strong>Norma</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"> {{ item.cc_adgrampos_comprimento }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adgrampos_diametro }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adgrampos_comprimento_rosca }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adgrampos_diametro_interno }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adgrampos_dureza }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adgrampos_comprimento }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adgrampos_diametro }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adgrampos_comprimento_rosca }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adgrampos_diametro_interno }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adgrampos_norma }} </div>
                 </div>
+              <hr>
               {% endfor %}
             </div>
           {% endif %}
@@ -202,16 +239,21 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"><strong>Altura</strong></div>
-                  <div class="col-md-4 text-center"><strong>Diâmetro Interno</strong></div>
-                  <div class="col-md-4 text-center"><strong>Diâmetro Externo</strong></div>
+                  <div class="col-md-2 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-2 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Externo</strong></div>
+                  <div class="col-md-2 text-center"><strong>Norma</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"> {{ item.cc_adarruelas_altura }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adarruelas_diametro_interno }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adarruelas_diametro_externo }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adarruelas_dureza }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adarruelas_altura }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adarruelas_diametro_interno }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adarruelas_diametro_externo }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adarruelas_norma }} </div>
                 </div>
+              <hr>
               {% endfor %}
             </div>
           {% endif %}
@@ -224,16 +266,21 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"><strong>Altura</strong></div>
-                  <div class="col-md-4 text-center"><strong>Diâmetro Interno</strong></div>
-                  <div class="col-md-4 text-center"><strong>Diâmetro Externo</strong></div>
+                  <div class="col-md-2 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-2 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Externo</strong></div>
+                  <div class="col-md-2 text-center"><strong>Norma</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"> {{ item.cc_adanel_altura }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adanel_diametro_interno }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adanel_diametro_externo }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adanel_dureza }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adanel_altura }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adanel_diametro_interno }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adanel_diametro_externo }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adanel_norma }} </div>
                 </div>
+              <hr>
               {% endfor %}
             </div>
           {% endif %}
@@ -246,16 +293,21 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"><strong>Comprimento</strong></div>
-                  <div class="col-md-4 text-center"><strong>Diâmetro</strong></div>
-                  <div class="col-md-4 text-center"><strong>Comprimento Rosca</strong></div>
+                  <div class="col-md-2 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-2 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-2 text-center"><strong>Comprimento Rosca</strong></div>
+                  <div class="col-md-2 text-center"><strong>Norma</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"> {{ item.cc_adprisioneiroestojo_comprimento }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adprisioneiroestojo_diametro }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adprisioneiroestojo_comprimento_rosca }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adprisioneiroestojo_dureza }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adprisioneiroestojo_comprimento }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adprisioneiroestojo_diametro }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adprisioneiroestojo_comprimento_rosca }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adprisioneiroestojo_norma }} </div>
                 </div>
+              <hr>
               {% endfor %}
             </div>
           {% endif %}
@@ -268,16 +320,19 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"><strong>Comprimento</strong></div>
-                  <div class="col-md-4 text-center"><strong>Diâmetro</strong></div>
-                  <div class="col-md-4 text-center"><strong>Norma</strong></div>
+                  <div class="col-md-3 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-3 text-center"><strong>Norma</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"> {{ item.cc_adcontrapino_comprimento }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adcontrapino_diametro }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adcontrapino_norma }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adcontrapino_dureza }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adcontrapino_comprimento }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adcontrapino_diametro }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adcontrapino_norma }} </div>
                 </div>
+              <hr>
               {% endfor %}
             </div>
           {% endif %}
@@ -290,18 +345,21 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
-                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
-                  <div class="col-md-3 text-center"><strong>Altura</strong></div>
-                  <div class="col-md-3 text-center"><strong>Norma</strong></div>
+                  <div class="col-md-2 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-2 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-2 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-2 text-center"><strong>Norma</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"> {{ item.cc_adchaveta_comprimento }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adchaveta_diametro }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adchaveta_altura }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adchaveta_norma }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adchaveta_dureza }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adchaveta_comprimento }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adchaveta_diametro }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adchaveta_altura }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adchaveta_norma }} </div>
                 </div>
+              <hr>
               {% endfor %}
             </div>
           {% endif %}
@@ -314,18 +372,21 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
-                  <div class="col-md-3 text-center"><strong>Bitola</strong></div>
-                  <div class="col-md-3 text-center"><strong>Diâmetro Cabeça</strong></div>
-                  <div class="col-md-3 text-center"><strong>Norma</strong></div>
+                  <div class="col-md-2 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-2 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-2 text-center"><strong>Bitola</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Cabeça</strong></div>
+                  <div class="col-md-2 text-center"><strong>Norma</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"> {{ item.cc_adrebite_comprimento }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adrebite_bitola }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adrebite_diametro_cabeca }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adrebite_norma }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adrebite_dureza }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adrebite_comprimento }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adrebite_bitola }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adrebite_diametro_cabeca }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adrebite_norma }} </div>
                 </div>
+              <hr>
               {% endfor %}
             </div>
           {% endif %}
@@ -338,16 +399,19 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"><strong>Comprimento</strong></div>
-                  <div class="col-md-4 text-center"><strong>Bitola</strong></div>
-                  <div class="col-md-4 text-center"><strong>Norma</strong></div>
+                  <div class="col-md-3 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-3 text-center"><strong>Bitola</strong></div>
+                  <div class="col-md-3 text-center"><strong>Norma</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-4 text-center"> {{ item.cc_adchumbador_comprimento }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adchumbador_bitola }} </div>
-                  <div class="col-md-4 text-center"> {{ item.cc_adchumbador_norma }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adchumbador_dureza }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adchumbador_comprimento }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adchumbador_bitola }} </div>
+                  <div class="col-md-3 text-center"> {{ item.cc_adchumbador_norma }} </div>
                 </div>
+              <hr>
               {% endfor %}
             </div>
           {% endif %}
@@ -360,32 +424,37 @@
               {% for item in comp %}
               <!-- Primeira Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"><strong>Altura</strong></div>
-                  <div class="col-md-3 text-center"><strong>Chave</strong></div>
-                  <div class="col-md-3 text-center"><strong>Comprimento</strong></div>
-                  <div class="col-md-3 text-center"><strong>Diâmetro</strong></div>
+                  <div class="col-md-2 text-center"><strong>Dureza</strong></div>
+                  <div class="col-md-2 text-center"><strong>Altura</strong></div>
+                  <div class="col-md-2 text-center"><strong>Chave</strong></div>
+                  <div class="col-md-2 text-center"><strong>Comprimento</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro</strong></div>
                 </div>
               <!-- Segunda Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_altura }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_chave }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_comprimento }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_diametro }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adespecial_dureza }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adespecial_altura }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adespecial_chave }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adespecial_comprimento }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adespecial_diametro }} </div>
                 </div>
               <!-- Terceira Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"><strong>Diâmetro Cabeça</strong></div>
-                  <div class="col-md-3 text-center"><strong>Comprimento Rosca</strong></div>
-                  <div class="col-md-3 text-center"><strong>Diâmetro Interno</strong></div>
-                  <div class="col-md-3 text-center"><strong>Diâmetro Externo</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Cabeça</strong></div>
+                  <div class="col-md-2 text-center"><strong>Comprimento Rosca</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Interno</strong></div>
+                  <div class="col-md-2 text-center"><strong>Diâmetro Externo</strong></div>
+                  <div class="col-md-2 text-center"><strong>Norma</strong></div>
                 </div>
               <!-- Quarta Linha -->
                 <div class="row">
-                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_diametro_cabeca }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_comprimento_rosca }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_diametro_interno }} </div>
-                  <div class="col-md-3 text-center"> {{ item.cc_adespecial_diametro_externo }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adespecial_diametro_cabeca }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adespecial_comprimento_rosca }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adespecial_diametro_interno }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adespecial_diametro_externo }} </div>
+                  <div class="col-md-2 text-center"> {{ item.cc_adespecial_norma }} </div>
                 </div>
+              <hr>
               {% endfor %}
             </div>
           {% endif %}
