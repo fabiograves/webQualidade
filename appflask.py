@@ -45,6 +45,8 @@ def is_logged_in():
 def is_logged_in():
     """Verifica se o usuário está logado."""
     return 'logged_in' in session
+
+
 @app.route('/login', methods=['GET', 'POST'])
 
 
