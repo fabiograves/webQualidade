@@ -1,3 +1,4 @@
+import pyodbc
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, make_response
 from flask_session import Session
 import pymysql
@@ -17,6 +18,8 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 import traceback
+from flask_wtf import CSRFProtect
+
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -25,21 +28,20 @@ app.secret_key = 'sua_chave_secreta_aqui'
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
-# Configurações do banco de dados (Considere usar variáveis de ambiente para segurança)
-db_host = 'ars.mysql.uhserver.com'
-db_user = 'ars_qualidade'
-db_password = 'q1w2e3r4@'
-db_name = 'ars_qualidade'
-
 
 def conectar_db():
-    # Função para conectar ao banco de dados
-    return pymysql.connect(host=db_host, user=db_user, password=db_password, db=db_name,
-                           cursorclass=pymysql.cursors.DictCursor)
+    driver = '{ODBC Driver 17 for SQL Server}'
+    server = "172.16.2.27"
+    database = "dbQualidade"
+    username = "Qualidade"
+    password = "y2%:ff4G4A>7"
+    connectionString = f'DRIVER={driver};SERVER={server},1433;DATABASE={database};UID={username};PWD={password};Encrypt=yes;TrustServerCertificate=yes;'
 
-
-def is_logged_in():
-    return 'logged_in' in session
+    try:
+        connection = pyodbc.connect(connectionString)
+        return connection  # Retorne o objeto de conexão diretamente
+    except Exception as e:
+        raise Exception(f"Erro ao conectar ao banco de dados: {e}")
 
 
 def is_logged_in():
@@ -48,36 +50,41 @@ def is_logged_in():
 
 
 @app.route('/login', methods=['GET', 'POST'])
-
-
 def login():
     if request.method == 'POST':
         username = request.form['usuario']
         password = request.form['senha']
 
-        connection = conectar_db()
-        cursor = connection.cursor()
-        cursor.execute('SELECT * FROM usuarios WHERE nome_usuario = %s AND senha_usuario = %s', (username, password))
-        user = cursor.fetchone()
-        connection.close()
+        try:
+            connection = conectar_db()
+            cursor = connection.cursor()
+            cursor.execute('SELECT * FROM dbo.usuarios WHERE nome_usuario = ? AND senha_usuario = ?', (username, password))
+            user = cursor.fetchone()
 
-        if user:
-            session['logged_in'] = True
-            session['username'] = username
+            if user:
+                session['logged_in'] = True
+                session['username'] = username
 
-            # Armazenar o privilegio na sessão
-            session['privilegio'] = user['privilegio']  # Assumindo que 'privilegio' é o nome da coluna
+                # Aqui é importante notar que ao acessar colunas pelo nome em um cursor do pyodbc, você deve utilizar o método .cursor().description para obter os nomes das colunas.
+                # Um exemplo de como fazer isso é comentado abaixo. Supondo que 'privilegio' é uma das colunas retornadas na sua consulta.
+                # column_names = [column[0] for column in cursor.description]
+                # user_dict = dict(zip(column_names, user))
 
-            # Armazenando informações adicionais na sessão
-            session['nome_assinatura'] = user['nome_assinatura']
-            session['setor_assinatura'] = user['setor_assinatura']
-            session['telefone_assinatura'] = user['telefone_assinatura']
-            session['email_assinatura'] = user['email_assinatura']
+                session['privilegio'] = user.privilegio  # Ajuste conforme a estrutura do seu objeto 'user'
 
-            return redirect(url_for('home'))
-        else:
-            flash('Login falhou. Verifique seu nome de usuário e senha.')
-            return redirect(url_for('login'))
+                # Armazenando informações adicionais na sessão
+                session['nome_assinatura'] = user.nome_assinatura
+                session['setor_assinatura'] = user.setor_assinatura
+                session['telefone_assinatura'] = user.telefone_assinatura
+                session['email_assinatura'] = user.email_assinatura
+
+                return redirect(url_for('home'))
+            else:
+                flash('Login falhou. Verifique seu nome de usuário e senha.')
+                return redirect(url_for('login'))
+        finally:
+            if 'connection' in locals():  # Garante que a conexão será fechada mesmo se ocorrer um erro.
+                connection.close()
 
     return render_template('login.html')
 
@@ -97,6 +104,40 @@ def home():
     return render_template('home.html')
 
 
+@app.route('/download_certificado', methods=['GET', 'POST'])
+def download_certificado():
+
+    return render_template('download_certificado.html')
+
+
+@app.route('/baixar_certificado_por_id', methods=['POST'])
+def baixar_certificado_por_id():
+    numero_certificado = request.form.get('dc_numero_certificado')
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    try:
+        # Ajuste a query conforme necessário, assumindo que `numero_certificado` é usado para buscar o PDF
+        cursor.execute("SELECT arquivo FROM dbo.certificados_gerados WHERE id = ?", (numero_certificado,))
+        arquivo = cursor.fetchone()
+
+        if arquivo:
+            # Preparando a resposta com o PDF
+            response = make_response(arquivo[0])
+            response.headers['Content-Type'] = 'application/pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename=certificado_{numero_certificado}.pdf'
+            return response
+        else:
+            return "Certificado não encontrado.", 404
+    except Exception as e:
+        print(f"Erro ao buscar o certificado: {e}")
+        return "Ocorreu um erro ao processar sua solicitação.", 500
+    finally:
+        cursor.close()
+        connection.close()
+
+
 @app.route('/criar_certificado')
 def criar_certificado():
     return render_template('criar_certificado.html')
@@ -114,10 +155,9 @@ def pesquisar_certificado():
     if request.method == 'POST':
         # Extraia os dados do formulário
         numero_nota = request.form.get('pc_numero_nota')
-        codigo_produto = request.form.get('pc_codigo_produto')
 
         # Busque os resultados do banco de dados
-        resultados = buscar_certificados(numero_nota, codigo_produto)
+        resultados = buscar_certificados(numero_nota)
 
     # print("Enviando para o template:", resultados)  # Adicione esta linha para depuração
     return render_template('pesquisar_certificado.html', resultados=resultados)
@@ -126,6 +166,7 @@ def pesquisar_certificado():
 @app.route('/criar_certificado', methods=['POST'])
 def tratar_formulario():
     resultado = None  # Defina resultado com um valor padrão
+    proximo_numero_certificado = None
 
     if 'bt_procurar_nota' in request.form:
         # Verifique se ambos os campos são fornecidos
@@ -139,30 +180,44 @@ def tratar_formulario():
             # Se ambos os campos foram fornecidos, proceda com a busca
             resultado = buscar_certificado_nota(numero_nota, cod_produto)
             if resultado and not all(value is None for value in resultado.values()):
-                # Se os dados foram encontrados, armazene-os na sessão
                 session['dados_pdf'] = resultado
+                #print("dados_pdf")
+                #print(session['dados_pdf'])
             else:
-                # Se os dados não foram encontrados, exiba uma mensagem de erro
-                flash('Nota fiscal não encontrada.')
+                flash('Nota fiscal e código não encontrados.')
 
     elif 'bt_criar_certificado' in request.form:
-        # Código para criar o PDF
-        if 'dados_pdf' in session:
-            resultado = session['dados_pdf']
+        if 'dados_pdf' in session and session['dados_pdf']:
+            # Se os dados estão na sessão e não são None, prossegue para gerar o PDF
             return redirect(url_for('gerar_pdf'))
         else:
-            # Se os dados não estiverem na sessão, você pode exibir uma mensagem de erro
-            flash('Os dados para criar o PDF não estão disponíveis.')
-            return redirect(url_for('gerar_pdf'))  # Redirecionar para uma página apropriada em caso de erro
+            # Se os dados não estão disponíveis, fornece feedback e não redireciona para 'gerar_pdf'
+            flash('Os dados para criar o PDF não estão disponíveis. Por favor, procure a nota fiscal novamente.')
+            return redirect(url_for(
+                'criar_certificado'))
 
-    return render_template('criar_certificado.html', resultado=resultado)
+    # Buscar o último ID na tabela e sugerir o próximo número do certificado
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT MAX(id) AS ultimo_id FROM dbo.certificados_gerados")
+            ultimo_id = cursor.fetchone()[0] or 0  # Usa 0 como fallback se não encontrar nenhum id
+            proximo_numero_certificado = ultimo_id + 1
+    except Exception as e:
+        print(f"Erro ao buscar o último ID: {e}")
+    finally:
+        connection.close()
 
+    return render_template('criar_certificado.html', resultado=session.get('dados_pdf', {}),
+                           proximo_numero_certificado=proximo_numero_certificado)
 
 
 @app.route('/gerar_pdf', methods=['POST'])
 def gerar_pdf():
     # Recuperando os dados da sessão
     dados_pdf = session.get('dados_pdf')
+    # print("session.get(dados_pdf)")
+    # print(session.get('dados_pdf'))
 
     # Verifica se os dados necessários estão presentes
     if dados_pdf:
@@ -320,7 +375,7 @@ def gerar_pdf():
 
         # Defina o estilo da tabela
         table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Alinhar todo o texto à esquerda
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Alinhar o texto à esquerda
             ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adicionar grade
         ]))
 
@@ -1027,6 +1082,8 @@ def gerar_pdf():
 
         session.pop('dados_pdf', None)
 
+        inserir_certificado_gerado(buffer, numero_nota, cod_produto)
+
         # Define o nome do arquivo PDF
         nome_arquivo_pdf = f"{numero_nota}-{cod_produto}.pdf"
         # Retorna o PDF como resposta
@@ -1039,6 +1096,41 @@ def gerar_pdf():
         return redirect(url_for('criar_certificado'))
 
 
+def inserir_certificado_gerado(arquivo_pdf, numero_nota, cod_produto):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            # Convertendo o arquivo PDF para um objeto Binary para inserção no SQL Server
+            arquivo_binario = arquivo_pdf.getvalue()
+
+            sql = "INSERT INTO dbo.certificados_gerados (arquivo, numero_nota, cod_produto) VALUES (?, ?, ?)"
+            cursor.execute(sql, (arquivo_binario, numero_nota, cod_produto))
+            connection.commit()
+    except Exception as e:
+        print(f"Erro ao inserir o certificado gerado no banco de dados: {e}")
+    finally:
+        connection.close()
+
+
+def fetch_dict(cursor):
+    """
+    Converte o resultado do cursor atual em um dicionário
+    """
+    columns = [column[0] for column in cursor.description]
+    row = cursor.fetchone()
+    if row:
+        return dict(zip(columns, row))
+    else:
+        return None
+
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+
 def buscar_certificado_nota(numero_nota, cod_produto):
     connection = conectar_db()
     try:
@@ -1046,16 +1138,13 @@ def buscar_certificado_nota(numero_nota, cod_produto):
 
         with connection.cursor() as cursor:
             # Busca na tabela de cadastro de certificados
-            sql = "SELECT * FROM cadastro_certificados WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.cadastro_certificados WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            cadastro_certificados = cursor.fetchone()
 
-            # Verifica se o registro foi encontrado
+            cadastro_certificados = fetch_dict(cursor)
             if cadastro_certificados:
                 resultado['cadastro_certificados'] = cadastro_certificados
-
-                # Verifica se o arquivo existe
-                if cadastro_certificados['cc_arquivo']:
+                if cadastro_certificados.get('cc_arquivo'):
                     resultado['arquivo'] = cadastro_certificados['cc_arquivo']
                 else:
                     resultado['arquivo'] = None
@@ -1063,66 +1152,80 @@ def buscar_certificado_nota(numero_nota, cod_produto):
                 resultado['cadastro_certificados'] = None
                 resultado['arquivo'] = None
 
-            sql = "SELECT * FROM comp_quimica WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.comp_quimica WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['comp_quimica'] = cursor.fetchone()
+            comp_quimica = fetch_dict(cursor)
+            resultado['comp_quimica'] = comp_quimica if comp_quimica else None
 
-            sql = "SELECT * FROM prop_mecanicas WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.prop_mecanicas WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['prop_mecanicas'] = cursor.fetchone()
+            prop_mecanicas = fetch_dict(cursor)
+            resultado['prop_mecanicas'] = prop_mecanicas if prop_mecanicas else None
 
-            sql = "SELECT * FROM tratamentos WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.tratamentos WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['tratamentos'] = cursor.fetchone()
+            tratamentos = fetch_dict(cursor)
+            resultado['tratamentos'] = tratamentos if tratamentos else None
 
-            sql = "SELECT * FROM ad_porcas WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_porcas WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_porcas'] = cursor.fetchone()
+            ad_porcas = fetch_dict(cursor)
+            resultado['ad_porcas'] = ad_porcas if ad_porcas else None
 
-            sql = "SELECT * FROM ad_pinos WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_pinos WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_pinos'] = cursor.fetchone()
+            ad_pinos = fetch_dict(cursor)
+            resultado['ad_pinos'] = ad_pinos if ad_pinos else None
 
-            sql = "SELECT * FROM ad_parafusos WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_parafusos WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_parafusos'] = cursor.fetchone()
+            ad_parafusos = fetch_dict(cursor)
+            resultado['ad_parafusos'] = ad_parafusos if ad_parafusos else None
 
-            sql = "SELECT * FROM ad_grampos WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_grampos WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_grampos'] = cursor.fetchone()
+            ad_grampos = fetch_dict(cursor)
+            resultado['ad_grampos'] = ad_grampos if ad_grampos else None
 
-            sql = "SELECT * FROM ad_arruelas WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_arruelas WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_arruelas'] = cursor.fetchone()
+            ad_arruelas = fetch_dict(cursor)
+            resultado['ad_arruelas'] = ad_arruelas if ad_arruelas else None
 
-            sql = "SELECT * FROM ad_anel WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_anel WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_anel'] = cursor.fetchone()
+            ad_anel = fetch_dict(cursor)
+            resultado['ad_anel'] = ad_anel if ad_anel else None
 
-            sql = "SELECT * FROM ad_prisioneiro_estojo WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_prisioneiro_estojo WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_prisioneiro_estojo'] = cursor.fetchone()
+            ad_prisioneiro_estojo = fetch_dict(cursor)
+            resultado['ad_prisioneiro_estojo'] = ad_prisioneiro_estojo if ad_prisioneiro_estojo else None
 
-            sql = "SELECT * FROM ad_chumbador WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_chumbador WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_chumbador'] = cursor.fetchone()
+            ad_chumbador = fetch_dict(cursor)
+            resultado['ad_chumbador'] = ad_chumbador if ad_chumbador else None
 
-            sql = "SELECT * FROM ad_rebite WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_rebite WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_rebite'] = cursor.fetchone()
+            ad_rebite = fetch_dict(cursor)
+            resultado['ad_rebite'] = ad_rebite if ad_rebite else None
 
-            sql = "SELECT * FROM ad_chaveta WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_chaveta WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_chaveta'] = cursor.fetchone()
+            ad_chaveta = fetch_dict(cursor)
+            resultado['ad_chaveta'] = ad_chaveta if ad_chaveta else None
 
-            sql = "SELECT * FROM ad_contrapino WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_contrapino WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_contrapino'] = cursor.fetchone()
+            ad_contrapino = fetch_dict(cursor)
+            resultado['ad_contrapino'] = ad_contrapino if ad_contrapino else None
 
-            sql = "SELECT * FROM ad_especial WHERE cc_numero_nota = %s AND cc_cod_produto = %s"
+            sql = "SELECT * FROM dbo.ad_especial WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
             cursor.execute(sql, (numero_nota, cod_produto))
-            resultado['ad_especial'] = cursor.fetchone()
-
+            ad_especial = fetch_dict(cursor)
+            resultado['ad_especial'] = ad_especial if ad_especial else None
 
     except Exception as e:
         print(f"1 Erro ao buscar certificado por nota: {e}")
@@ -1151,219 +1254,67 @@ def download_arquivo(numero_nota, cod_produto):
         return "Arquivo não encontrado", 404
 
 
-
-def buscar_certificados(numero_nota, codigo_produto):
+def buscar_certificados(numero_nota):
     connection = conectar_db()
     try:
         resultados_agrupados = {}
 
-        with connection.cursor() as cursor:
-            # Busca por cadastro de certificados
-            sql = """
-            SELECT * FROM cadastro_certificados
-            WHERE cc_numero_nota = %s OR cc_cod_produto = %s
-            """
-            cursor.execute(sql, (numero_nota, codigo_produto))
-            cadastros = cursor.fetchall()
+        cursor = connection.cursor()
 
-            # Inicializa os cadastros no resultados_agrupados
-            for cadastro in cadastros:
-                numero = cadastro['cc_numero_nota']
-                cod_produto = cadastro['cc_cod_produto']
-                chave = f"{numero}-{cod_produto}"  # Chave única combinando número da nota e código do produto
-                resultados_agrupados[chave] = {
-                    'cadastro_certificados': cadastro,
-                    'comp_quimica': [],
-                    'prop_mecanicas': [],
-                    'tratamentos': [],
-                    'ad_rebite': [],
-                    'ad_prisioneiro_estojo': [],
-                    'ad_porcas': [],
-                    'ad_pinos': [],
-                    'ad_parafusos': [],
-                    'ad_grampos': [],
-                    'ad_especial': [],
-                    'ad_contrapino': [],
-                    'ad_chumbador': [],
-                    'ad_chaveta': [],
-                    'ad_arruelas': [],
-                    'ad_anel': []
-                }
+        # Busca por cadastro de certificados apenas pelo número da nota
+        sql = "SELECT * FROM dbo.cadastro_certificados WHERE cc_numero_nota = ?"
+        cursor.execute(sql, (numero_nota,))
+        cadastros = cursor.fetchall()
 
-            numeros_nota = [cadastro['cc_numero_nota'] for cadastro in cadastros]
+        # Converte manualmente cada linha do resultado em um dicionário
+        cadastros = [dict_factory(cursor, cadastro) for cadastro in cadastros]
 
-            # Agora, use um único SQL para cada tipo de dados relacionados, usando a cláusula IN
-            if numeros_nota:
-                # Para composição química
-                sql = "SELECT * FROM comp_quimica WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                comp_quimicas = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in comp_quimicas:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['comp_quimica'].append(comp)
+        for cadastro in cadastros:
+            # Usando apenas o número da nota e código do produto para chave
+            chave = f"{cadastro['cc_numero_nota']}-{cadastro['cc_cod_produto']}"
+            resultados_agrupados[chave] = {'cadastro_certificados': cadastro}
 
-                # Para propriedades mecanicas
-                sql = "SELECT * FROM prop_mecanicas WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                prop_mecanicas = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in prop_mecanicas:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['prop_mecanicas'].append(comp)
+            # Inicializa listas para cada tipo de informação relacionada
+            for tipo in ('comp_quimica', 'prop_mecanicas', 'tratamentos', 'ad_porcas', 'ad_pinos', 'ad_parafusos', 'ad_grampos',
+                         'ad_rebite', 'ad_prisioneiro_estojo', 'ad_chumbador', 'ad_chaveta', 'ad_arruelas', 'ad_anel',
+                         'ad_contrapino', 'ad_especial'):
+                resultados_agrupados[chave][tipo] = []
 
-                # Para tratamentos
-                sql = "SELECT * FROM tratamentos WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                tratamentos = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in tratamentos:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['tratamentos'].append(comp)
+        # Para cada tipo de dados relacionados, realizar uma busca e organizar os resultados
+        tipos_relacionados = {
+            'comp_quimica': "SELECT * FROM dbo.comp_quimica WHERE cc_numero_nota IN (?)",
+            'prop_mecanicas': "SELECT * FROM dbo.prop_mecanicas WHERE cc_numero_nota IN (?)",
+            'tratamentos': "SELECT * FROM dbo.tratamentos WHERE cc_numero_nota IN (?)",
+            'ad_porcas': "SELECT * FROM dbo.ad_porcas WHERE cc_numero_nota IN (?)",
+            'ad_pinos': "SELECT * FROM dbo.ad_pinos WHERE cc_numero_nota IN (?)",
+            'ad_parafusos': "SELECT * FROM dbo.ad_parafusos WHERE cc_numero_nota IN (?)",
+            'ad_grampos': "SELECT * FROM dbo.ad_grampos WHERE cc_numero_nota IN (?)",
+            'ad_rebite': "SELECT * FROM dbo.ad_rebite WHERE cc_numero_nota IN (?)",
+            'ad_prisioneiro_estojo': "SELECT * FROM dbo.ad_prisioneiro_estojo WHERE cc_numero_nota IN (?)",
+            'ad_chumbador': "SELECT * FROM dbo.ad_chumbador WHERE cc_numero_nota IN (?)",
+            'ad_chaveta': "SELECT * FROM dbo.ad_chaveta WHERE cc_numero_nota IN (?)",
+            'ad_arruelas': "SELECT * FROM dbo.ad_arruelas WHERE cc_numero_nota IN (?)",
+            'ad_anel': "SELECT * FROM dbo.ad_anel WHERE cc_numero_nota IN (?)",
+            'ad_contrapino': "SELECT * FROM dbo.ad_contrapino WHERE cc_numero_nota IN (?)",
+            'ad_especial': "SELECT * FROM dbo.ad_especial WHERE cc_numero_nota IN (?)"
+        }
 
-                # Para ad_porcas
-                sql = "SELECT * FROM ad_porcas WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_porcas = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_porcas:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_porcas'].append(comp)
+        for tipo, sql in tipos_relacionados.items():
+            cursor.execute(sql, (numero_nota,))
+            itens_relacionados = cursor.fetchall()
+            itens_relacionados = [dict_factory(cursor, item) for item in itens_relacionados]
 
-                # Para ad_pinos
-                sql = "SELECT * FROM ad_pinos WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_pinos = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_pinos:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_pinos'].append(comp)
-
-                # Para ad_parafusos
-                sql = "SELECT * FROM ad_parafusos WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_parafusos = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_parafusos:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_parafusos'].append(comp)
-
-                # Para ad_grampos
-                sql = "SELECT * FROM ad_grampos WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_grampos = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_grampos:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_grampos'].append(comp)
-
-                # Para ad_arruelas
-                sql = "SELECT * FROM ad_arruelas WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_arruelas = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_arruelas:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_arruelas'].append(comp)
-
-                # Para ad_anel
-                sql = "SELECT * FROM ad_anel WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_anel = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_anel:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_anel'].append(comp)
-
-                # Para ad_prisioneiro_estojo
-                sql = "SELECT * FROM ad_prisioneiro_estojo WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_prisioneiro_estojo = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_prisioneiro_estojo:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_prisioneiro_estojo'].append(comp)
-
-                # Para ad_chumbador
-                sql = "SELECT * FROM ad_chumbador WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_chumbador = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_chumbador:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_chumbador'].append(comp)
-
-                # Para ad_rebite
-                sql = "SELECT * FROM ad_rebite WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_rebite = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_rebite:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_rebite'].append(comp)
-
-                # Para ad_chaveta
-                sql = "SELECT * FROM ad_chaveta WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_chaveta = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_chaveta:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_chaveta'].append(comp)
-
-                # Para ad_contrapino
-                sql = "SELECT * FROM ad_contrapino WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_contrapino = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_contrapino:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_contrapino'].append(comp)
-
-                # Para ad_especial
-                sql = "SELECT * FROM ad_especial WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_especial = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_especial:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_especial'].append(comp)
+            for item in itens_relacionados:
+                chave = f"{item['cc_numero_nota']}-{item['cc_cod_produto']}"
+                if chave in resultados_agrupados:
+                    resultados_agrupados[chave][tipo].append(item)
 
     except Exception as e:
-        print(f"Erro ao buscar certificados pesquisa: {e}")
-        traceback.print_exc()
+        print(f"Erro ao buscar certificados: {e}")
         resultados_agrupados = None
     finally:
+        if cursor is not None:
+            cursor.close()
         connection.close()
 
     return resultados_agrupados
@@ -1377,197 +1328,71 @@ def pesquisar_registro_inspecao():
     resultados = None
     if request.method == 'POST':
         numero_nota = request.form.get('pc_numero_nota')
-        codigo_produto = request.form.get('pc_codigo_produto')
 
-        # Função que busca os dados
-        resultados = buscar_registro_inspecao(numero_nota, codigo_produto)
+        # Função que busca os dados apenas pelo número da nota
+        resultados = buscar_registro_inspecao(numero_nota)
 
     return render_template('pesquisar_registro_inspecao.html', resultados=resultados)
 
 
-def buscar_registro_inspecao(numero_nota, codigo_produto):
+def buscar_registro_inspecao(numero_nota):
     connection = conectar_db()
     try:
         resultados_agrupados = {}
 
-        with connection.cursor() as cursor:
-            if numero_nota and codigo_produto:
-                sql = "SELECT * FROM registro_inspecao WHERE ri_numero_nota = %s OR ri_cod_produto = %s"
-                parametros = (numero_nota, codigo_produto)
-            elif numero_nota:
-                sql = "SELECT * FROM registro_inspecao WHERE ri_numero_nota = %s"
-                parametros = (numero_nota,)
-            elif codigo_produto:
-                sql = "SELECT * FROM registro_inspecao WHERE ri_cod_produto = %s"
-                parametros = (codigo_produto,)
-            else:
-                return {}  # Nenhum critério de pesquisa fornecido
+        cursor = connection.cursor()
 
-            cursor.execute(sql, parametros)
-            cadastros = cursor.fetchall()
+        # Busca por registro de inspeção apenas pelo número da nota
+        sql = "SELECT * FROM dbo.registro_inspecao WHERE ri_numero_nota = ?"
+        cursor.execute(sql, (numero_nota,))
+        cadastros = cursor.fetchall()
 
-            # Inicializa os cadastros no resultados_agrupados
-            for cadastro in cadastros:
-                numero = cadastro['ri_numero_nota']
-                cod_produto = cadastro['ri_cod_produto']
-                chave = f"{numero}-{cod_produto}"  # Chave única combinando número da nota e código do produto
-                resultados_agrupados[chave] = {
-                    'registro_inspecao': cadastro,
-                    'ad_rebite': [],
-                    'ad_prisioneiro_estojo': [],
-                    'ad_porcas': [],
-                    'ad_pinos': [],
-                    'ad_parafusos': [],
-                    'ad_grampos': [],
-                    'ad_especial': [],
-                    'ad_contrapino': [],
-                    'ad_chumbador': [],
-                    'ad_chaveta': [],
-                    'ad_arruelas': [],
-                    'ad_anel': []
-                }
+        # Converte manualmente cada linha do resultado em um dicionário
+        cadastros_dict = [dict_factory(cursor, cadastro) for cadastro in cadastros]
 
-            numeros_nota = [cadastro['ri_numero_nota'] for cadastro in cadastros]
+        for cadastro in cadastros_dict:
+            chave = f"{cadastro['ri_numero_nota']}-{cadastro['ri_cod_produto']}"
+            if chave not in resultados_agrupados:
+                resultados_agrupados[chave] = {'registro_inspecao': cadastro}
 
-            # Agora, use um único SQL para cada tipo de dados relacionados, usando a cláusula IN
-            if numeros_nota:
-                # Para ad_porcas
-                sql = "SELECT * FROM ad_porcas WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_porcas = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_porcas:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_porcas'].append(comp)
+                # Inicializa listas para cada tipo de informação relacionada
+                for tipo in ('ad_porcas', 'ad_pinos', 'ad_parafusos', 'ad_grampos', 'ad_rebite', 'ad_prisioneiro_estojo',
+                             'ad_chumbador', 'ad_chaveta', 'ad_arruelas', 'ad_anel', 'ad_contrapino', 'ad_especial'):
+                    resultados_agrupados[chave][tipo] = []
 
-                # Para ad_pinos
-                sql = "SELECT * FROM ad_pinos WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_pinos = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_pinos:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_pinos'].append(comp)
+        # Para cada tipo de dados relacionados, realizar uma busca e organizar os resultados
+        tipos_relacionados = {
+            'ad_porcas': "SELECT * FROM dbo.ad_porcas WHERE cc_numero_nota IN (?)",
+            'ad_pinos': "SELECT * FROM dbo.ad_pinos WHERE cc_numero_nota IN (?)",
+            'ad_parafusos': "SELECT * FROM dbo.ad_parafusos WHERE cc_numero_nota IN (?)",
+            'ad_grampos': "SELECT * FROM dbo.ad_grampos WHERE cc_numero_nota IN (?)",
+            'ad_rebite': "SELECT * FROM dbo.ad_rebite WHERE cc_numero_nota IN (?)",
+            'ad_prisioneiro_estojo': "SELECT * FROM dbo.ad_prisioneiro_estojo WHERE cc_numero_nota IN (?)",
+            'ad_chumbador': "SELECT * FROM dbo.ad_chumbador WHERE cc_numero_nota IN (?)",
+            'ad_chaveta': "SELECT * FROM dbo.ad_chaveta WHERE cc_numero_nota IN (?)",
+            'ad_arruelas': "SELECT * FROM dbo.ad_arruelas WHERE cc_numero_nota IN (?)",
+            'ad_anel': "SELECT * FROM dbo.ad_anel WHERE cc_numero_nota IN (?)",
+            'ad_contrapino': "SELECT * FROM dbo.ad_contrapino WHERE cc_numero_nota IN (?)",
+            'ad_especial': "SELECT * FROM dbo.ad_especial WHERE cc_numero_nota IN (?)",
+            # Adicione mais conforme necessário
+        }
 
-                # Para ad_parafusos
-                sql = "SELECT * FROM ad_parafusos WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_parafusos = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_parafusos:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_parafusos'].append(comp)
+        for tipo, sql in tipos_relacionados.items():
+            cursor.execute(sql, (numero_nota,))
+            itens_relacionados = cursor.fetchall()
+            itens_relacionados = [dict_factory(cursor, item) for item in itens_relacionados]
 
-                # Para ad_grampos
-                sql = "SELECT * FROM ad_grampos WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_grampos = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_grampos:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_grampos'].append(comp)
-
-                # Para ad_arruelas
-                sql = "SELECT * FROM ad_arruelas WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_arruelas = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_arruelas:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_arruelas'].append(comp)
-
-                # Para ad_anel
-                sql = "SELECT * FROM ad_anel WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_anel = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_anel:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_anel'].append(comp)
-
-                # Para ad_prisioneiro_estojo
-                sql = "SELECT * FROM ad_prisioneiro_estojo WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_prisioneiro_estojo = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_prisioneiro_estojo:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_prisioneiro_estojo'].append(comp)
-
-                # Para ad_chumbador
-                sql = "SELECT * FROM ad_chumbador WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_chumbador = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_chumbador:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_chumbador'].append(comp)
-
-                # Para ad_rebite
-                sql = "SELECT * FROM ad_rebite WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_rebite = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_rebite:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_rebite'].append(comp)
-
-                # Para ad_chaveta
-                sql = "SELECT * FROM ad_chaveta WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_chaveta = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_chaveta:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_chaveta'].append(comp)
-
-                # Para ad_contrapino
-                sql = "SELECT * FROM ad_contrapino WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_contrapino = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_contrapino:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_contrapino'].append(comp)
-
-                # Para ad_especial
-                sql = "SELECT * FROM ad_especial WHERE cc_numero_nota IN %s"
-                cursor.execute(sql, (tuple(numeros_nota),))
-                ad_especial = cursor.fetchall()
-                # Mapeia os resultados para os respectivos números de nota
-                for comp in ad_especial:
-                    nota = comp['cc_numero_nota']
-                    cod = comp['cc_cod_produto']
-                    num = f"{nota}-{cod}"
-                    resultados_agrupados[num]['ad_especial'].append(comp)
+            for item in itens_relacionados:
+                chave = f"{item['cc_numero_nota']}-{item['cc_cod_produto']}"
+                if chave in resultados_agrupados:
+                    resultados_agrupados[chave][tipo].append(item)
 
     except Exception as e:
-        print(f"Erro ao buscar certificados pesquisa: {e}")
-        traceback.print_exc()
+        print(f"Erro ao buscar registros de inspeção: {e}")
         resultados_agrupados = None
     finally:
+        if cursor is not None:
+            cursor.close()
         connection.close()
 
     return resultados_agrupados
@@ -1693,7 +1518,7 @@ def cadastro_certificados():
             try:
                 with connection.cursor() as cursor:
                     # Consulta SQL para verificar se um registro existe com os valores fornecidos
-                    query = "SELECT * FROM registro_inspecao WHERE ri_numero_nota = %s AND ri_cod_produto = %s"
+                    query = "SELECT * FROM dbo.registro_inspecao WHERE ri_numero_nota = ? AND ri_cod_produto = ?"
                     cursor.execute(query, (nota_fiscal, cod_produto))
                     result = cursor.fetchone()  # Obtém a primeira linha correspondente
 
@@ -1722,7 +1547,7 @@ def verificar_existencia_nota(nota_fiscal):
     connection = conectar_db()
     try:
         with connection.cursor() as cursor:
-            sql = "SELECT COUNT(1) FROM cadastro_certificados WHERE cc_numero_nota = %s"
+            sql = "SELECT COUNT(1) FROM dbo.cadastro_certificados WHERE cc_numero_nota = ?"
             cursor.execute(sql, (nota_fiscal,))
             resultado = cursor.fetchone()
             return resultado['COUNT(1)'] > 0  # Verifique o nome da coluna retornado pelo cursor.
@@ -1737,11 +1562,10 @@ def inserir_cadastro_certificados(dados):
     connection = conectar_db()
     try:
         with connection.cursor() as cursor:
-            sql = """
-            INSERT INTO cadastro_certificados 
-            (cc_numero_nota, cc_descricao, cc_cod_fornecedor, cc_cod_produto, cc_corrida, cc_data, cc_cq, cc_qtd_pedidos, cc_arquivo)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """
+            # SQL query updated for clarity
+            sql = """INSERT INTO dbo.cadastro_certificados 
+                     (cc_numero_nota, cc_descricao, cc_cod_fornecedor, cc_cod_produto, cc_corrida, cc_data, cc_cq, cc_qtd_pedidos, cc_arquivo)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"""
             cursor.execute(sql, (
                 dados['nota_fiscal'],
                 dados['descricao'],
@@ -1751,11 +1575,11 @@ def inserir_cadastro_certificados(dados):
                 dados['data'],
                 dados['cq'],
                 dados['qtd_pedido'],
-                dados['arquivo']
+                dados['arquivo']  # Garante que dados['arquivo'] contenha o conteúdo binário do PDF
             ))
             connection.commit()
     except Exception as e:
-        print(f"Ocorreu um erro cadastro cert: {e}")
+        print(f"Ocorreu um erro ao inserir o certificado: {e}")
     finally:
         connection.close()
 
@@ -1764,10 +1588,10 @@ def inserir_cadastro_composicao_quimica(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO comp_quimica
+            INSERT INTO dbo.comp_quimica
             (cc_numero_nota, cc_cod_produto, cc_c, cc_mn, cc_p, cc_s, cc_si, cc_ni, cc_cr, cc_b, cc_cu, 
             cc_mo, cc_co, cc_fe, cc_sn, cc_al, cc_n, cc_nb)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1801,9 +1625,9 @@ def inserir_cadastro_propriedades_mecanicas(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO prop_mecanicas
+            INSERT INTO dbo.prop_mecanicas
             (cc_numero_nota, cc_cod_produto, cc_escoamento, cc_tracao, cc_reducao, cc_alongamento, cc_dureza, cc_carga)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1827,9 +1651,9 @@ def inserir_cadastro_tratamentos(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO tratamentos
+            INSERT INTO dbo.tratamentos
             (cc_numero_nota, cc_cod_produto, cc_revenimento, cc_termico, cc_superficial, cc_macrografia, cc_observacao)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1852,11 +1676,11 @@ def inserir_cadastro_adparafusos(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_parafusos
+            INSERT INTO dbo.ad_parafusos
             (cc_numero_nota, cc_cod_produto, cc_adparafusos_dureza, cc_adparafusos_altura, cc_adparafusos_chave, cc_adparafusos_comprimento, 
             cc_adparafusos_diametro, cc_adparafusos_diametro_cabeca, cc_adparafusos_comprimento_rosca, 
             cc_adparafusos_diametro_ponta, cc_adparafusos_norma)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1883,10 +1707,10 @@ def inserir_cadastro_adporcas(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_porcas
+            INSERT INTO dbo.ad_porcas
             (cc_numero_nota, cc_cod_produto, cc_adporcas_dureza, cc_adporcas_altura, cc_adporcas_chave, cc_adporcas_diametro, 
             cc_adporcas_diametro_estrutura, cc_adporcas_diametro_interno, cc_adporcas_diametro_externo, cc_adporcas_norma)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1912,10 +1736,10 @@ def inserir_cadastro_adarruelas(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_arruelas
+            INSERT INTO dbo.ad_arruelas
             (cc_numero_nota, cc_cod_produto, cc_adarruelas_dureza, cc_adarruelas_altura, cc_adarruelas_diametro_interno, 
             cc_adarruelas_diametro_externo, cc_adarruelas_norma)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1938,10 +1762,10 @@ def inserir_cadastro_adanel(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_anel
+            INSERT INTO dbo.ad_anel
             (cc_numero_nota, cc_cod_produto, cc_adanel_dureza, cc_adanel_altura, cc_adanel_diametro_interno, 
             cc_adanel_diametro_externo, cc_adanel_norma)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1964,10 +1788,10 @@ def inserir_cadastro_adgrampos(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_grampos
+            INSERT INTO dbo.ad_grampos
             (cc_numero_nota, cc_cod_produto, cc_adgrampos_dureza, cc_adgrampos_comprimento, cc_adgrampos_diametro, 
             cc_adgrampos_comprimento_rosca, cc_adgrampos_diametro_interno, cc_adgrampos_norma)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1991,10 +1815,10 @@ def inserir_cadastro_adpinos(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_pinos
+            INSERT INTO dbo.ad_pinos
             (cc_numero_nota, cc_cod_produto, cc_adpinos_dureza, cc_adpinos_espessura, cc_adpinos_comprimento, cc_adpinos_diametro, 
             cc_adpinos_diametro_cabeca, cc_adpinos_diametro_interno, cc_adpinos_diametro_externo, cc_adpinos_norma)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -2020,10 +1844,10 @@ def inserir_cadastro_adprisioneiro_estojo(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_prisioneiro_estojo
+            INSERT INTO dbo.ad_prisioneiro_estojo
             (cc_numero_nota, cc_cod_produto, cc_adprisioneiroestojo_dureza, cc_adprisioneiroestojo_comprimento, 
             cc_adprisioneiroestojo_diametro, cc_adprisioneiroestojo_comprimento_rosca, cc_adprisioneiroestojo_norma)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -2046,11 +1870,11 @@ def inserir_cadastro_adespecial(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_especial
+            INSERT INTO dbo.ad_especial
             (cc_numero_nota, cc_cod_produto, cc_adespecial_dureza, cc_adespecial_altura, cc_adespecial_chave, cc_adespecial_comprimento, 
             cc_adespecial_diametro, cc_adespecial_diametro_cabeca, cc_adespecial_comprimento_rosca,
             cc_adespecial_diametro_interno, cc_adespecial_diametro_externo, cc_adespecial_norma)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -2078,9 +1902,9 @@ def inserir_cadastro_adcontrapino(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_contrapino
+            INSERT INTO dbo.ad_contrapino
             (cc_numero_nota, cc_cod_produto, cc_adcontrapino_dureza, cc_adcontrapino_comprimento, cc_adcontrapino_diametro, cc_adcontrapino_norma)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -2102,9 +1926,9 @@ def inserir_cadastro_adchaveta(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_chaveta
+            INSERT INTO dbo.ad_chaveta
             (cc_numero_nota, cc_cod_produto, cc_adchaveta_dureza, cc_adchaveta_comprimento, cc_adchaveta_diametro, cc_adchaveta_altura, cc_adchaveta_norma)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -2127,9 +1951,9 @@ def inserir_cadastro_adrebite(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_rebite
+            INSERT INTO dbo.ad_rebite
             (cc_numero_nota, cc_cod_produto, cc_adrebite_dureza, cc_adrebite_comprimento, cc_adrebite_bitola, cc_adrebite_diametro_cabeca, cc_adrebite_norma)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -2152,9 +1976,9 @@ def inserir_cadastro_adchumbador(dados):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO ad_chumbador
+            INSERT INTO dbo.ad_chumbador
             (cc_numero_nota, cc_cod_produto, cc_adchumbador_dureza, cc_adchumbador_comprimento, cc_adchumbador_bitola, cc_adchumbador_norma)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -2187,6 +2011,11 @@ def registro_inspecao():
             flash('O campo Nota Fiscal não pode estar em branco.')
             return redirect(url_for('registro_inspecao'))
 
+        # Verifica se já existe um registro com o mesmo número de nota e código de produto
+        if verificar_existencia_registro(nota_fiscal, cod_produto):
+            flash('Erro: Já existe um registro de inspeção com este número de nota e código de produto.')
+            return redirect(url_for('registro_inspecao'))
+
         fornecedor = request.form.get('ri_fornecedor')
         pedido_compra = request.form.get('ri_pedido_compra')
         quantidade_total = request.form.get('ri_quantidade_total')
@@ -2203,9 +2032,9 @@ def registro_inspecao():
             connection = conectar_db()
             cursor = connection.cursor()
 
-            sql = """INSERT INTO registro_inspecao (ri_numero_nota, ri_cod_produto, ri_fornecedor, ri_pedido_compra, ri_quantidade_total, ri_volume, ri_desenho,
+            sql = """INSERT INTO dbo.registro_inspecao (ri_numero_nota, ri_cod_produto, ri_fornecedor, ri_pedido_compra, ri_quantidade_total, ri_volume, ri_desenho,
              ri_acabamento, ri_opcao, ri_resp_inspecao, ri_data) 
-                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
             cursor.execute(sql, (nota_fiscal, cod_produto, fornecedor, pedido_compra, quantidade_total,
                                  volume, desenho, acabamento, ri_opcao, resp_inspecao, data))
 
@@ -2375,6 +2204,22 @@ def registro_inspecao():
         return redirect(url_for('registro_inspecao'))
 
     return render_template('registro_inspecao.html')
+
+
+def verificar_existencia_registro(nota_fiscal, cod_produto):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            sql = "SELECT COUNT(1) FROM dbo.registro_inspecao WHERE ri_numero_nota = ? AND ri_cod_produto = ?"
+            cursor.execute(sql, (nota_fiscal, cod_produto))
+            resultado = cursor.fetchone()
+            if resultado and resultado[0] > 0:  # Verifica se o resultado da contagem é maior que zero
+                return True  # Existe um registro
+            return False  # Não existe registro
+    except Exception as e:
+        print(f"Erro ao verificar existência do registro de inspeção: {e}")
+    finally:
+        connection.close()
 
 
 if __name__ == '__main__':

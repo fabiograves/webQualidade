@@ -48,3 +48,10 @@
 .border-red {
     border: 3px solid red;
 }
+
+.flash-error {
+    background-color: #ffcccc; /* Cor de fundo vermelha */
+    color: #990000; /* Cor do texto para melhor contraste */
+    padding: 10px; /* Espaçamento interno para melhorar a aparência */
+    border-radius: 5px; /* Borda arredondada */
+}
