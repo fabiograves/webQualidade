@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+  <form method="POST" action="{{ url_for('cadastro_norma') }}" enctype="multipart/form-data">
+    <div class="py-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h1 class="text-center">Cadastro de Normas</h1>
+        </div>
+      </div>
+    </div>
+    </div>
+    <div class="">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Número da Norma</label>
+            <input type="text" class="form-control" id="cad_numero_norma" name="cad_numero_norma">
+          </div>
+        </div>
+        <div class="col-md-9">
+          <div class="form-group">
+            <label>Imagem da Norma: Somente arquivos .jpg .jpeg .png</label>
+            <input type="file" class="form-control" id="imagem_norma" name="imagem_norma">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Descrição da Norma</label>
+            <input type="text" class="form-control" id="cad_descricao_norma" name="cad_descricao_norma">
+          </div>
+        </div>
+      </div>
+      <!-- Botão de envio -->
+      <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Norma</button>
+    </div>
+    </div>
+
+  </form>
+
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+  <form method="POST" action="{{ url_for('plano_controle_inspecao') }}" enctype="multipart/form-data">
+    <div class="py-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h1 class="text-center">Cadastro de Plano de Controle de Inspeção</h1>
+        </div>
+      </div>
+    </div>
+    </div>
+    <div class="">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Número do Plano</label>
+            <input type="text" class="form-control" id="cad_numero_plano" name="cad_numero_plano">
+          </div>
+        </div>
+        <div class="col-md-9">
+          <div class="form-group">
+            <label>Imagem do Plano: Somente arquivos .jpg .jpeg .png</label>
+            <input type="file" class="form-control" id="imagem_plano" name="imagem_plano">
+          </div>
+        </div>
+      </div>
+      <!-- Botão de envio -->
+      <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Plano</button>
+    </div>
+    </div>
+      <!-- Seletor de Categoria -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <select class="form-control" id="categoriaSelector" onchange="buscarImagensPorCategoria()">
+                    <option value="parafusos">Parafusos (01-45)</option>
+                    <option value="porcas">Porcas (46-66)</option>
+                    <option value="arruelas">Arruelas (67-81)</option>
+                    <option value="anel">Anel (82-87 / 122)</option>
+                    <option value="chavetas">Chavetas (88-95)</option>
+                    <option value="grampos">Grampos (96-98)</option>
+                    <option value="bujao">Bujão (99-101)</option>
+                    <option value="pinos">Pinos (102-110)</option>
+                    <option value="prisioneiro">Prisioneiro (111-113)</option>
+                    <option value="contrapino">Contrapino (114-117)</option>
+                    <option value="rebite">Rebite (117-121)</option>
+                    <!-- Adicione mais opções conforme necessário -->
+                </select>
+            </div>
+        </div>
+    </div>
+
+      <!-- Container para as Imagens -->
+    <div class="container mt-4">
+        <div class="row" id="imagensContainer">
+            <!-- As imagens são inseridas aqui pelo Flask -->
+            {% for imagem in imagens %}
+                <div class="col-md-4 mb-4 imagemItem" data-categoria="{{ imagem.categoria }}">
+                    <img src="data:image/png;base64,{{ imagem.imagem }}" alt="Plano {{ imagem.numero }}" class="img-fluid">
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+      <!-- Modal para exibir a imagem -->
+    <div class="modal fade" id="imagemModal" tabindex="-1" role="dialog" aria-labelledby="imagemModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="imagemModalLabel">Visualização da Imagem</h5>
+          </div>
+          <div class="modal-body">
+            <img id="imagemGrande" src="" class="img-fluid" alt="Visualização ampliada">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </form>
+
+<script>
+function buscarImagensPorCategoria() {
+    var categoriaSelecionada = document.getElementById("categoriaSelector").value;
+    var imagens = document.querySelectorAll('.imagemItem');
+
+    imagens.forEach(function(imagem) {
+        var numero = parseInt(imagem.querySelector('img').alt.replace('Plano ', ''));
+        var categoriaImagem;
+
+        if (numero >= 1 && numero <= 45) {
+            categoriaImagem = 'parafusos';
+        } else if (numero >= 46 && numero <= 66) {
+            categoriaImagem = 'porcas';
+        } else if (numero >= 67 && numero <= 81) {
+            categoriaImagem = 'arruelas';
+        } else if ((numero >= 82 && numero <= 87) || numero === 122) {
+            categoriaImagem = 'anel';
+        } else if (numero >= 88 && numero <= 95) {
+            categoriaImagem = 'chavetas';
+        } else if (numero >= 96 && numero <= 98) {
+            categoriaImagem = 'grampos';
+        } else if (numero >= 99 && numero <= 101) {
+            categoriaImagem = 'bujao';
+        } else if (numero >= 102 && numero <= 110) {
+            categoriaImagem = 'pinos';
+        } else if (numero >= 111 && numero <= 113) {
+            categoriaImagem = 'prisioneiro';
+        } else if (numero >= 114 && numero <= 117) {
+            categoriaImagem = 'contrapino';
+        } else if (numero >= 117 && numero <= 121) {
+            categoriaImagem = 'rebite';
+        } else {
+            // Para números fora das faixas especificadas, você pode definir um comportamento padrão
+            categoriaImagem = 'outraCategoria';
+        }
+
+        // Comparar a categoria da imagem com a selecionada e ajustar a visibilidade
+        if (categoriaImagem === categoriaSelecionada) {
+            imagem.style.display = '';
+        } else {
+            imagem.style.display = 'none';
+        }
+    });
+}
+document.getElementById("categoriaSelector").addEventListener('change', buscarImagensPorCategoria);
+buscarImagensPorCategoria(); // Chame a função ao carregar para aplicar o filtro inicial
+
+document.querySelectorAll('.imagemItem img').forEach(item => {
+  item.addEventListener('click', event => {
+    const src = event.target.src;
+    const modalImage = document.getElementById('imagemGrande');
+    modalImage.src = src;
+    $('#imagemModal').modal('show');
+  });
+});
+
+
+</script>
+
+{% endblock %}

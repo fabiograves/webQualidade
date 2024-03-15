@@ -101,6 +101,8 @@
     
     <!-- Custom styles for this template -->
     <link href="{{ url_for('static', filename='navbars-offcanvas.css') }}" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
 
   </head>
   <body>
@@ -192,10 +194,20 @@
             <li class="nav-item">
               <a class="nav-link" aria-current="page" href="{{ url_for('pesquisar_registro_inspecao') }}">Pesquisar Registro de Inspeção</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="{{ url_for('lista_norma') }}">Lista das Normas</a>
+            </li>
             <!-- Linha divisória -->
             <li class="nav-item divider" role="separator"></li>
             <!-- Linha divisória -->
             <li class="nav-item divider" role="separator"></li>
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="{{ url_for('cadastro_norma') }}">Cadastro de Norma</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="{{ url_for('plano_controle_inspecao') }}">Plano de Controle de Inspeção</a>
+            </li>
+
             <li class="nav-item">
               <a class="nav-link" aria-current="page" href="{{ url_for('logout') }}">Logout</a>
             </li>
@@ -252,10 +264,11 @@
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="{{ url_for('pesquisar_certificado') }}">Certificado</a></li>
                 <li><a class="dropdown-item" href="{{ url_for('pesquisar_registro_inspecao') }}">Registro Inspeção</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('plano_controle_inspecao') }}">Plano de Controle</a></li>
                 <li>
                   <hr class="dropdown-divider">
                 </li>
-                <li><a class="dropdown-item" href="#">......</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('lista_norma') }}">Lista de Normas</a></li>
               </ul>
             </li>
           </ul>
@@ -271,7 +284,9 @@
 
 
 </main>
-<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
 
     </body>

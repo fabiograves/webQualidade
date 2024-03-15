@@ -55,3 +55,17 @@
     padding: 10px; /* Espaçamento interno para melhorar a aparência */
     border-radius: 5px; /* Borda arredondada */
 }
+
+.container {
+    width: 100%;
+    margin: auto;
+}
+
+.table {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.table th, .table td {
+    text-align: center;
+}
