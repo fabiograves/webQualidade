@@ -2,6 +2,7 @@ import base64
 import datetime
 
 import pyodbc
+from PyPDF2 import PdfMerger
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, make_response, jsonify
 from werkzeug.utils import secure_filename
 from flask_session import Session
@@ -106,18 +107,38 @@ def download_certificado():
 @app.route('/baixar_certificado_por_id', methods=['POST'])
 def baixar_certificado_por_id():
     numero_certificado = request.form.get('dc_numero_certificado')
+    nota_saida = request.form.get('dc_nota_saida')
 
     connection = conectar_db()
     cursor = connection.cursor()
 
     try:
-        cursor.execute("SELECT arquivo FROM dbo.certificados_gerados WHERE id = ?", (numero_certificado,))
-        arquivo = cursor.fetchone()
+        if numero_certificado:
+            cursor.execute("SELECT arquivo FROM dbo.certificados_gerados WHERE id = ?", (numero_certificado,))
+            arquivos = cursor.fetchall()
+        elif nota_saida:
+            cursor.execute("SELECT arquivo FROM dbo.certificados_gerados WHERE numero_nota = ?", (nota_saida,))
+            arquivos = cursor.fetchall()
 
-        if arquivo:
-            response = make_response(arquivo[0])
+        if arquivos:
+            if len(arquivos) == 1:
+                # Se apenas um arquivo, envie diretamente
+                response = make_response(arquivos[0][0])
+                content_filename = f'certificado_{numero_certificado}.pdf' if numero_certificado else f'certificados_nota_{nota_saida}.pdf'
+            else:
+                # Se múltiplos arquivos, combine-os primeiro
+                merger = PdfMerger()
+                for arquivo in arquivos:
+                    merger.append(io.BytesIO(arquivo[0]))
+                merged_pdf = io.BytesIO()
+                merger.write(merged_pdf)
+                merger.close()
+                merged_pdf.seek(0)
+                response = make_response(merged_pdf.read())
+                content_filename = f'certificados_nota_{nota_saida}.pdf'
+
             response.headers['Content-Type'] = 'application/pdf'
-            response.headers['Content-Disposition'] = f'attachment; filename=certificado_{numero_certificado}.pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename={content_filename}'
             return response
         else:
             return "Certificado não encontrado.", 404
@@ -277,6 +298,7 @@ def gerar_pdf():
         criar_material = request.form.get('criar_material', 'Não informado')
         criar_lote = request.form.get('criar_lote', 'Não informado')
         criar_codigo_fornecedor = request.form.get('criar_codigo_fornecedor', 'Não informado')
+        nota_saida = request.form.get('nota_saida', 'Não informado')
 
         tem_dados_comp_quimica = dados_pdf.get('comp_quimica') and any(dados_pdf['comp_quimica'].values())
         tem_dados_prop_mecanicas = dados_pdf.get('prop_mecanicas') and any(dados_pdf['prop_mecanicas'].values())
@@ -1107,7 +1129,9 @@ def gerar_pdf():
 
         session.pop('dados_pdf', None)
 
-        inserir_certificado_gerado(buffer, numero_nota, cod_produto)
+        #buffer numero_nota cod produto
+        #
+        inserir_certificado_gerado(buffer, nota_saida, cod_produto)
 
         # Define o nome do arquivo PDF
         nome_arquivo_pdf = f"{numero_nota}-{cod_produto}.pdf"
@@ -1121,7 +1145,7 @@ def gerar_pdf():
         return redirect(url_for('criar_certificado'))
 
 
-def inserir_certificado_gerado(arquivo_pdf, numero_nota, cod_produto):
+def inserir_certificado_gerado(arquivo_pdf, nota_saida, cod_produto):
     connection = conectar_db()
     try:
         with connection.cursor() as cursor:
@@ -1129,7 +1153,7 @@ def inserir_certificado_gerado(arquivo_pdf, numero_nota, cod_produto):
             arquivo_binario = arquivo_pdf.getvalue()
 
             sql = "INSERT INTO dbo.certificados_gerados (arquivo, numero_nota, cod_produto) VALUES (?, ?, ?)"
-            cursor.execute(sql, (arquivo_binario, numero_nota, cod_produto))
+            cursor.execute(sql, (arquivo_binario, nota_saida, cod_produto))
             connection.commit()
     except Exception as e:
         print(f"Erro ao inserir o certificado gerado no banco de dados: {e}")

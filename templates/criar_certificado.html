@@ -95,6 +95,9 @@
                     <div class="form-group"><label>Código Fornecedor:</label><input type="text" class="form-control" id="criar_codigo_fornecedor" name="criar_codigo_fornecedor"
                                                                                     value="{{ resultado['cadastro_certificados']['cc_cod_fornecedor'] if resultado is defined and resultado['cadastro_certificados'] else '' }}" readonly></div>
                 </div>
+                <div class="col-md-3" style="">
+                    <div class="form-group"><label>Nota de Saída:</label><input type="text" class="form-control" id="nota_saida" name="nota_saida"></div>
+                </div>
             </div>
             {% with messages = get_flashed_messages() %}
             {% if messages %}
