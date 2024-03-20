@@ -8,11 +8,12 @@
     <div class="container">
       <div class="row">
         <div class="col-md-12">
-          <h1 class="text-center">Cadastro de Plano de Controle de Inspeção</h1>
+          <h1 class="text-center">Plano de Controle de Inspeção</h1>
         </div>
       </div>
     </div>
     </div>
+      
     <div class="">
     <div class="container">
       <div class="row">
@@ -29,9 +30,10 @@
           </div>
         </div>
       </div>
-      <!-- Botão de envio -->
+       Botão de envio
       <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Plano</button>
     </div>
+
     </div>
       <!-- Seletor de Categoria -->
     <div class="container mt-4">
@@ -47,8 +49,9 @@
                     <option value="bujao">Bujão (99-101)</option>
                     <option value="pinos">Pinos (102-110)</option>
                     <option value="prisioneiro">Prisioneiro (111-113)</option>
-                    <option value="contrapino">Contrapino (114-117)</option>
+                    <option value="contrapino">Contrapino (114-116)</option>
                     <option value="rebite">Rebite (117-121)</option>
+                    <option value="chumbador">Chumbador (124-134)</option>
                     <!-- Adicione mais opções conforme necessário -->
                 </select>
             </div>
@@ -110,10 +113,12 @@ function buscarImagensPorCategoria() {
             categoriaImagem = 'pinos';
         } else if (numero >= 111 && numero <= 113) {
             categoriaImagem = 'prisioneiro';
-        } else if (numero >= 114 && numero <= 117) {
+        } else if (numero >= 114 && numero <= 116) {
             categoriaImagem = 'contrapino';
         } else if (numero >= 117 && numero <= 121) {
             categoriaImagem = 'rebite';
+        } else if (numero >= 124 && numero <= 134) {
+            categoriaImagem = 'chumbador';
         } else {
             // Para números fora das faixas especificadas, você pode definir um comportamento padrão
             categoriaImagem = 'outraCategoria';

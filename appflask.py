@@ -162,8 +162,14 @@ def lista_norma():
         with connection.cursor() as cursor:
             cursor.execute("SELECT norma, descricao FROM dbo.imagem_norma")
             normas = cursor.fetchall()
-            # Ordena as normas com base na parte numérica antes do hífen
-            normas = sorted(normas, key=lambda x: int(x[0].split('-')[0]))
+            # Separar normas em numéricas e alfabéticas
+            normas_numericas = [n for n in normas if n[0].split('-')[0].isdigit()]
+            normas_alfabeticas = [n for n in normas if not n[0].split('-')[0].isdigit()]
+            # Ordenar cada lista separadamente
+            normas_numericas.sort(key=lambda x: int(x[0].split('-')[0]))
+            normas_alfabeticas.sort(key=lambda x: x[0])
+            # Concatenar as listas
+            normas = normas_numericas + normas_alfabeticas
     except Exception as e:
         print(f"Erro ao buscar normas: {e}")
         normas = []
@@ -199,7 +205,7 @@ def plano_controle_inspecao():
     # Para o GET, vamos buscar todas as imagens no banco de dados
     connection = conectar_db()
     cursor = connection.cursor()
-    cursor.execute("SELECT numero, imagem FROM dbo.plano_controle_inspecao")
+    cursor.execute("SELECT numero, imagem FROM dbo.plano_controle_inspecao ORDER BY numero ASC")
     imagens_db = cursor.fetchall()
     connection.close()
 
@@ -2165,6 +2171,26 @@ def registro_inspecao():
     if not is_logged_in():
         return redirect(url_for('login'))
 
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT norma FROM dbo.imagem_norma")
+            normas = [row[0] for row in cursor.fetchall()]  # Ajustado aqui para pegar só a string
+            # Separar normas em numéricas e alfabéticas
+            normas_numericas = [n for n in normas if n.split('-')[0].isdigit()]
+            normas_alfabeticas = [n for n in normas if not n.split('-')[0].isdigit()]
+            # Ordenar cada lista separadamente
+            normas_numericas.sort(key=lambda x: int(x.split('-')[0]))
+            normas_alfabeticas.sort(key=lambda x: x)
+            # Concatenar as listas
+            normas = normas_numericas + normas_alfabeticas
+    except Exception as e:
+        print(f"Erro ao buscar normas: {e}")
+        normas = []
+
+    finally:
+        connection.close()
+
     if request.method == 'POST':
         # Capturando os dados do formulário
         nota_fiscal = request.form.get('ri_nota_fiscal')
@@ -2183,6 +2209,7 @@ def registro_inspecao():
         desenho = request.form.get('ri_desenho')
         acabamento = request.form.get('ri_acabamento')
         ri_opcao = request.form.get('ri_option')
+        ri_item = request.form.get('ri_item')
         print(ri_opcao)
         resp_inspecao = request.form.get('ri_resp_inspecao')
         data = request.form.get('ri_data')
@@ -2199,10 +2226,10 @@ def registro_inspecao():
                     flash('Registro existente será substituído pelo novo.', 'warning')
 
             sql = """INSERT INTO dbo.registro_inspecao (ri_numero_nota, ri_cod_produto, ri_fornecedor, ri_pedido_compra, ri_quantidade_total, ri_volume, ri_desenho,
-             ri_acabamento, ri_opcao, ri_resp_inspecao, ri_data, ri_data_inspecao) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+             ri_acabamento, ri_opcao, ri_resp_inspecao, ri_data, ri_data_inspecao, ri_item) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
             cursor.execute(sql, (nota_fiscal, cod_produto, fornecedor, pedido_compra, quantidade_total,
-                                 volume, desenho, acabamento, ri_opcao, resp_inspecao, data, data_inspecao))
+                                 volume, desenho, acabamento, ri_opcao, resp_inspecao, data, data_inspecao, ri_item))
 
             if tipo_analise == 'parafusos':
                 medidas_dimensionais = {
@@ -2381,7 +2408,7 @@ def registro_inspecao():
         flash('Registro de Inspeção criado com sucesso!')
         return redirect(url_for('registro_inspecao'))
 
-    return render_template('registro_inspecao.html')
+    return render_template('registro_inspecao.html', normas=normas)
 
 
 def verificar_existencia_registro(nota_fiscal, cod_produto, pedido_compra):
