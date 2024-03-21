@@ -2214,6 +2214,7 @@ def registro_inspecao():
         resp_inspecao = request.form.get('ri_resp_inspecao')
         data = request.form.get('ri_data')
         data_inspecao = datetime.date.today()
+        ri_observacao = request.form.get('ri_observacao')
 
         connection = conectar_db()
         try:
@@ -2226,10 +2227,11 @@ def registro_inspecao():
                     flash('Registro existente será substituído pelo novo.', 'warning')
 
             sql = """INSERT INTO dbo.registro_inspecao (ri_numero_nota, ri_cod_produto, ri_fornecedor, ri_pedido_compra, ri_quantidade_total, ri_volume, ri_desenho,
-             ri_acabamento, ri_opcao, ri_resp_inspecao, ri_data, ri_data_inspecao, ri_item) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+             ri_acabamento, ri_opcao, ri_resp_inspecao, ri_data, ri_data_inspecao, ri_item, ri_observacao) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
             cursor.execute(sql, (nota_fiscal, cod_produto, fornecedor, pedido_compra, quantidade_total,
-                                 volume, desenho, acabamento, ri_opcao, resp_inspecao, data, data_inspecao, ri_item))
+                                 volume, desenho, acabamento, ri_opcao, resp_inspecao, data, data_inspecao, ri_item,
+                                 ri_observacao))
 
             if tipo_analise == 'parafusos':
                 medidas_dimensionais = {
