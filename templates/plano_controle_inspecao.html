@@ -40,18 +40,18 @@
         <div class="row">
             <div class="col-md-12">
                 <select class="form-control" id="categoriaSelector" onchange="buscarImagensPorCategoria()">
-                    <option value="parafusos">Parafusos (01-45)</option>
-                    <option value="porcas">Porcas (46-66)</option>
-                    <option value="arruelas">Arruelas (67-81)</option>
-                    <option value="anel">Anel (82-87 / 122)</option>
-                    <option value="chavetas">Chavetas (88-95)</option>
-                    <option value="grampos">Grampos (96-98)</option>
-                    <option value="bujao">Bujão (99-101)</option>
-                    <option value="pinos">Pinos (102-110)</option>
-                    <option value="prisioneiro">Prisioneiro (111-113)</option>
-                    <option value="contrapino">Contrapino (114-116)</option>
-                    <option value="rebite">Rebite (117-121)</option>
-                    <option value="chumbador">Chumbador (124-134)</option>
+                    <option value="parafusos">Parafusos (01-50)</option>
+                    <option value="porcas">Porcas (51-76)</option>
+                    <option value="arruelas">Arruelas (77-96)</option>
+                    <option value="anel">Anel (97-107)</option>
+                    <option value="chavetas">Chavetas (108-120)</option>
+                    <option value="grampos">Grampos (121-128)</option>
+                    <option value="bujao">Bujão (129-136)</option>
+                    <option value="pinos">Pinos (137-150)</option>
+                    <option value="prisioneiro">Prisioneiro (151-158)</option>
+                    <option value="contrapino">Contrapino (159-166)</option>
+                    <option value="rebite">Rebite (167-176)</option>
+                    <option value="chumbador">Chumbador (177-192)</option>
                     <!-- Adicione mais opções conforme necessário -->
                 </select>
             </div>
@@ -95,29 +95,29 @@ function buscarImagensPorCategoria() {
         var numero = parseInt(imagem.querySelector('img').alt.replace('Plano ', ''));
         var categoriaImagem;
 
-        if (numero >= 1 && numero <= 45) {
+        if (numero >= 1 && numero <= 50) {
             categoriaImagem = 'parafusos';
-        } else if (numero >= 46 && numero <= 66) {
+        } else if (numero >= 51 && numero <= 76) {
             categoriaImagem = 'porcas';
-        } else if (numero >= 67 && numero <= 81) {
+        } else if (numero >= 77 && numero <= 96) {
             categoriaImagem = 'arruelas';
-        } else if ((numero >= 82 && numero <= 87) || numero === 122) {
+        } else if (numero >= 97 && numero <= 107) {
             categoriaImagem = 'anel';
-        } else if (numero >= 88 && numero <= 95) {
+        } else if (numero >= 108 && numero <= 120) {
             categoriaImagem = 'chavetas';
-        } else if (numero >= 96 && numero <= 98) {
+        } else if (numero >= 121 && numero <= 128) {
             categoriaImagem = 'grampos';
-        } else if (numero >= 99 && numero <= 101) {
+        } else if (numero >= 129 && numero <= 136) {
             categoriaImagem = 'bujao';
-        } else if (numero >= 102 && numero <= 110) {
+        } else if (numero >= 137 && numero <= 150) {
             categoriaImagem = 'pinos';
-        } else if (numero >= 111 && numero <= 113) {
+        } else if (numero >= 151 && numero <= 158) {
             categoriaImagem = 'prisioneiro';
-        } else if (numero >= 114 && numero <= 116) {
+        } else if (numero >= 159 && numero <= 166) {
             categoriaImagem = 'contrapino';
-        } else if (numero >= 117 && numero <= 121) {
+        } else if (numero >= 167 && numero <= 176) {
             categoriaImagem = 'rebite';
-        } else if (numero >= 124 && numero <= 134) {
+        } else if (numero >= 177 && numero <= 192) {
             categoriaImagem = 'chumbador';
         } else {
             // Para números fora das faixas especificadas, você pode definir um comportamento padrão

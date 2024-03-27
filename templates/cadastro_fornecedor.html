@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <form method="POST" action="{{ url_for('cadastro_fornecedor') }}" enctype="multipart/form-data">
+        <div class="py-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="text-center">Cadastro de Fornecedor</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Nome do Fornecedor</label>
+                            <input type="text" class="form-control" id="cad_nome_fornecedor" name="cad_nome_fornecedor">
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label>Dados Complementares</label>
+                            <input type="text" class="form-control" id="cad_dados_fornecedor" name="cad_dados_fornecedor">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <!-- Botão de envio -->
+                    <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Fornecedor</button>
+                </div>
+
+                <div class="row">
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            <div class="flash-messages">
+                                {% for message in messages %}
+                                <div class="alert alert-warning" role="alert">{{ message }}</div>
+                                    {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+            </div>
+        </div>
+    </form>
+
+{% endblock %}

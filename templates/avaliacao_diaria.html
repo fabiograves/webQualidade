@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<form method="POST" action="{{ url_for('avaliacao_diaria') }}" enctype="multipart/form-data">
+    <div class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-12">
+                    <h1 class="text-center mb-4">Avaliação Diária</h1>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label for="fornecedor">Fornecedor</label>
+                            <select class="form-control" id="fornecedor" name="fornecedor">
+                                {% for fornecedor in fornecedores %}
+                                    <option value="{{ fornecedor.id }}">{{ fornecedor.nome_fornecedor }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="ad_data">Data</label>
+                            <input type="date" class="form-control" id="ad_data" name="ad_data">
+                        </div>
+                    </div>
+                    <div class ="form-row">
+                        <div class ="form-group col-md-2">
+                            <label for="ad_nao_conformidade">Não Conformidade</label>
+                            <input type="number" class="form-control" id="ad_nao_conformidade" name="ad_nao_conformidade" min="0" max="10" value="0">
+                        </div>
+                        <div class ="form-group col-md-2">
+                            <label for="ad_atraso_entrega">Atraso Entrega</label>
+                            <input type="number" class="form-control" id="ad_atraso_entrega" name="ad_atraso_entrega" min="0" max="10" value="0">
+                        </div>
+                        <div class ="form-group col-md-8">
+                            <label for="ad_observacao">Observação</label>
+                            <input type="text" class="form-control" id="ad_observacao" name="ad_observacao">
+                        </div>
+                    </div>
+                    <div class ="form-row">
+                        <button type="submit" class="btn btn-secondary w-100">Cadastrar Avaliação</button>
+                    </div>
+                    <div class = "form-row">
+                        <div class ="form-group col-md-12">
+                            {% with messages = get_flashed_messages() %}
+                                {% if messages %}
+                                    <div class="flash-messages">
+                                        {% for message in messages %}
+                                        <div class="alert alert-warning" role="alert">{{ message }}</div>
+                                            {% endfor %}
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+<script>
+
+document.getElementById('ad_nao_conformidade').addEventListener('input', function(e) {
+    var value = parseInt(this.value, 10);
+    if (value < 0) this.value = 0;
+    if (value > 10) this.value = 10;
+});
+
+document.getElementById('ad_atraso_entrega').addEventListener('input', function(e) {
+    var value = parseInt(this.value, 10);
+    if (value < 0) this.value = 0;
+    if (value > 10) this.value = 10;
+});
+
+</script>
+
+
+{% endblock %}

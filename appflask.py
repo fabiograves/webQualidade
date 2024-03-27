@@ -3,7 +3,7 @@ import datetime
 
 import pyodbc
 from PyPDF2 import PdfMerger
-from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, make_response, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, make_response, jsonify
 from werkzeug.utils import secure_filename
 from flask_session import Session
 from flask import send_file, Response
@@ -155,6 +155,126 @@ def criar_certificado():
     return render_template('criar_certificado.html')
 
 
+@app.route('/cadastro_fornecedor', methods=['GET', 'POST'])
+def cadastro_fornecedor():
+    if request.method == 'POST':
+        # Extrair os dados do formulário
+        nome_fornecedor = request.form['cad_nome_fornecedor']
+        dados_complementares = request.form['cad_dados_fornecedor']  # Se você decidir inserir isso também
+
+        # Conexão com o banco de dados
+        connection = conectar_db()
+        try:
+            with connection.cursor() as cursor:
+                sql = "INSERT INTO dbo.cadastro_fornecedor (nome_fornecedor) VALUES (?)"
+                cursor.execute(sql, (nome_fornecedor))
+                connection.commit()
+            flash('Formulário enviado com sucesso!')
+            return redirect(url_for('cadastro_fornecedor'))
+        except Exception as e:
+            print(f"Erro ao inserir o fornecedor no banco de dados: {e}")
+            flash(f"Erro ao inserir o fornecedor no banco de dados: {e}")
+            return redirect(url_for('cadastro_fornecedor'))
+        finally:
+            connection.close()
+    else:
+        return render_template('cadastro_fornecedor.html')
+
+
+@app.route('/avaliacao_diaria.html', methods=['GET', 'POST'])
+def avaliacao_diaria():
+    connection = conectar_db()
+    fornecedores = []
+    try:
+        with connection.cursor() as cursor:
+            if request.method == 'POST':
+                data = request.form['ad_data']
+                id_fornecedor = request.form['fornecedor']
+                nao_conformidade = request.form['ad_nao_conformidade']
+                atraso_entrega = request.form['ad_atraso_entrega']
+                observacao = request.form['ad_observacao']
+
+                # Primeiro, verifique se já existe um registro para este fornecedor e data
+                sql_verifica = "SELECT COUNT(*) FROM dbo.avaliacao_diaria WHERE id_fornecedor = ? AND data = ?"
+                cursor.execute(sql_verifica, (id_fornecedor, data))
+                if cursor.fetchone()[0] > 0:
+                    # Se já existe, apague o registro existente
+                    sql_delete = "DELETE FROM dbo.avaliacao_diaria WHERE id_fornecedor = ? AND data = ?"
+                    cursor.execute(sql_delete, (id_fornecedor, data))
+                    flash('Avaliação substituida.')
+                    print(f"Registro apagado.")
+
+                # Agora, insira o novo registro
+                sql_insert = """
+                    INSERT INTO dbo.avaliacao_diaria (id_fornecedor, data, nao_conformidade, atraso_entrega, observacao)
+                    VALUES (?, ?, ?, ?, ?)
+                """
+                cursor.execute(sql_insert, (id_fornecedor, data, nao_conformidade, atraso_entrega, observacao))
+                connection.commit()
+
+                flash('Registro inserido com sucesso!')
+                return redirect(url_for('avaliacao_diaria'))
+
+            else:
+                # Se o método não for POST, apenas mostre a página com os fornecedores
+                sql_fornecedores = "SELECT id, nome_fornecedor FROM dbo.cadastro_fornecedor ORDER BY nome_fornecedor ASC"
+                cursor.execute(sql_fornecedores)
+                fornecedores = cursor.fetchall()
+    except Exception as e:
+        print(f"Erro: {e}")
+        flash(f"Erro: {e}")
+    finally:
+        connection.close()
+
+    return render_template('avaliacao_diaria.html', fornecedores=fornecedores)
+
+
+@app.route('/pesquisar_avaliacao_diaria.html', methods=['GET', 'POST'])
+def pesquisar_avaliacao_diaria():
+    connection = conectar_db()
+    fornecedores = []
+    dados_organizados = {}
+
+    try:
+        with connection.cursor() as cursor:
+            # Busca fornecedores para o <select>
+            sql_fornecedores = "SELECT id, nome_fornecedor FROM dbo.cadastro_fornecedor ORDER BY nome_fornecedor ASC"
+            cursor.execute(sql_fornecedores)
+            fornecedores = cursor.fetchall()
+
+            if request.method == 'POST':
+                id_fornecedor = request.form['fornecedor']
+                ano = request.form['ano']
+
+                # Formata a pesquisa para capturar os registros de um ano específico
+                cursor.execute("""
+                SELECT * FROM dbo.avaliacao_diaria
+                WHERE id_fornecedor = ? AND CONVERT(VARCHAR, data, 23) LIKE ?
+                """, (id_fornecedor, f"{ano}%"))
+
+                resultado = fetch_dict(cursor)
+                while resultado:
+                    data_obj = datetime.datetime.strptime(resultado['data'], '%Y-%m-%d')
+                    mes = data_obj.month
+                    dia = data_obj.day
+
+                    if mes not in dados_organizados:
+                        dados_organizados[mes] = {}
+
+                    # Diretamente atribui o resultado ao dia específico, já que só há um registro por dia
+                    dados_organizados[mes][dia] = resultado
+
+                    resultado = fetch_dict(cursor)
+
+    except Exception as e:
+        print(f"Erro: {e}")
+        flash(f"Erro ao processar a pesquisa: {e}")
+    finally:
+        connection.close()
+
+    meses_ordenados = sorted(dados_organizados.items(), key=lambda x: x[0], reverse=True)
+    return render_template('pesquisar_avaliacao_diaria.html', fornecedores=fornecedores, resultados=meses_ordenados)
+
 @app.route('/lista_norma')
 def lista_norma():
     connection = conectar_db()
@@ -205,7 +325,7 @@ def plano_controle_inspecao():
     # Para o GET, vamos buscar todas as imagens no banco de dados
     connection = conectar_db()
     cursor = connection.cursor()
-    cursor.execute("SELECT numero, imagem FROM dbo.plano_controle_inspecao ORDER BY numero ASC")
+    cursor.execute("SELECT numero, imagem FROM dbo.plano_controle_inspecao ORDER BY CAST(numero AS INT) ASC")
     imagens_db = cursor.fetchall()
     connection.close()
 
@@ -1491,7 +1611,6 @@ def cadastro_certificados():
     if request.method == 'POST':
         # Verificar qual botão foi clicado
         if 'bt_registrar_certificado' in request.form:
-            # Capturando os dados do formulário
             nota_fiscal = request.form.get('cc_numero_nota')
             cod_produto = request.form.get('cc_cod_produto')
 
