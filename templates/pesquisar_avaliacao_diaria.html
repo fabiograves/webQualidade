@@ -75,43 +75,184 @@
   .small-header {
       font-size: 0.7em;
   }
+ .trimestre-container {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1); /* Adiciona uma sombra suave */
+  }
+  .table {
+    margin-bottom: 0; /* Remove a margem embaixo da tabela */
+  }
+  .table th, .table td {
+    padding: 8px; /* Diminui o padding dentro das células */
+    font-size: 0.85em; /* Diminui o tamanho da fonte */
+    line-height: 1.2; /* Ajusta o espaçamento entre linhas */
+  }
+  h4 {
+    margin-top: 0;
+    margin-bottom: 15px; /* Adiciona espaço abaixo do título do trimestre */
+    font-size: 1.2em; /* Ajusta o tamanho do título do trimestre */
+  }
+  .nota-final {
+    font-weight: bold;
+    margin-top: 10px; /* Adiciona espaço acima da nota final */
+    text-align: right; /* Alinha a nota final à direita */
+  }
+  .nota-verde {
+    background-color: #28a745; /* Verde */
+    color: white; /* Texto branco para melhor contraste */
+  }
+
+  .nota-azul {
+    background-color: #0d5ad0; /* Amarelo */
+    color: white; /* Texto preto para melhor contraste */
+  }
+
+  .nota-amarela {
+    background-color: #ffc107; /* Amarelo */
+    color: black; /* Texto preto para melhor contraste */
+  }
+
+  .nota-vermelha {
+    background-color: #dc3545; /* Vermelho */
+    color: white; /* Texto branco para melhor contraste */
+  }
+  .final-do-mes {
+    border-bottom: 10px solid #000; /* Uma borda mais grossa */
+  }
+  .table-container {
+  border: 2px solid #000; /* Ajuste a espessura conforme desejado */
+  margin-bottom: 20px; /* Adiciona espaço abaixo do container da tabela */
+  padding: 10px; /* Espaço interno ao redor da tabela */
+}
+.circulo {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .verde { background-color: #28a745; }
+  .azul { background-color: #0d5ad0; }
+  .amarelo { background-color: #ffc107; }
+  .vermelho { background-color: #dc3545; }
+
+  /* Estilização da legenda */
+  .legenda {
+    text-align: center;
+    margin-bottom: 20px; /* Espaço antes das tabelas */
+  }
+
+  .item-legenda {
+    margin-right: 20px;
+    display: inline-block;
+    vertical-align: middle;
+  }
 </style>
 
-<div class="container">
-    <h2>Avaliação Diária</h2>
-    <table class="table-avaliacao-diaria">
-        <thead>
-            <tr>
-            <th>Meses</th>
-            <th>Índice</th>
-            {% for i in range(1, 32) %}
-                <th>{{ '%02d' | format(i) }}</th>
-            {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% set nomes_meses = {
+
+{% set nomes_meses = {
               '1': 'Janeiro', '2': 'Fevereiro', '3': 'Março', '4': 'Abril',
               '5': 'Maio', '6': 'Junho', '7': 'Julho', '8': 'Agosto',
               '9': 'Setembro', '10': 'Outubro', '11': 'Novembro', '12': 'Dezembro'
             } %}
-            {% for mes, dias in resultados %}
-                <tr>
-                    <td rowspan="2">{{ nomes_meses[mes|string()] }}</td>
-                    <td class="small-header">Não Conformidades</td>
-                    {% for i in range(1, 32) %}
-                        <td>{{ dias.get(i, {}).get('nao_conformidade', '') }}</td>
-                    {% endfor %}
-                </tr>
-                <tr>
-                    <td class="small-header">Atraso de Entrega</td>
-                    {% for i in range(1, 32) %}
-                        <td>{{ dias.get(i, {}).get('atraso_entrega', '') }}</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-        </tbody>
-  </table>
+
+{% set nomes_meses_abreviado = {
+              '1': 'Jan', '2': 'Fev', '3': 'Mar', '4': 'Abr',
+              '5': 'Mai', '6': 'Jun', '7': 'Jul', '8': 'Ago',
+              '9': 'Set', '10': 'Out', '11': 'Nov', '12': 'Dez'
+            } %}
+
+<div class="legenda">
+  <div class="item-legenda"><span class="circulo verde"></span> Aprovado sem restrições</div>
+  <div class="item-legenda"><span class="circulo azul"></span> Aprovado com alerta</div>
+  <div class="item-legenda"><span class="circulo amarelo"></span> Aprovado condicional</div>
+  <div class="item-legenda"><span class="circulo vermelho"></span> Reprovado</div>
 </div>
 
+{% if pesquisa_realizada %}
+    <div class="container">
+        <h3>Resumo por Trimestre</h3>
+        <div class="row">
+            {% for trimestre in range(1, 5) %}
+                {% set nota_final = notas_finais_trimestres[trimestre] %}
+                {% set class_cor = 'nota-vermelha' %} {# Define o padrão como vermelho #}
+                {% if nota_final > 70 %}
+                  {% set class_cor = 'nota-verde' %}
+                {% elif nota_final >= 55 %}
+                  {% set class_cor = 'nota-azul' %}
+                {% elif nota_final >= 40 %}
+                  {% set class_cor = 'nota-amarela' %}
+                {% endif %}
+                <div class="col-sm-6 col-md-3">
+                    <div class="trimestre-container {{ class_cor }}">
+                        <h4>{{ trimestre }}º Trimestre</h4>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Mês</th>
+                                    <th>NC</th>
+                                    <th>AE</th>
+                                    <th>Dias</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for mes, dados in resumo_por_trimestre[trimestre] %}
+                                    <tr>
+                                        <td>{{ nomes_meses_abreviado[mes|string()] }}</td>
+                                        <td>{{ dados['soma_nao_conformidade'] }}</td>
+                                        <td>{{ dados['soma_atraso_entrega'] }}</td>
+                                        <td>{{ dados['qtd_dias_com_valor'] }}</td>
+                                        <td>{{ "%.2f"|format(dados['valor_final']) }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="nota-final">
+                            Nota Final: {{ "%.2f"|format(notas_finais_trimestres[trimestre]) }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+
+    <div class="container">
+        <h2>Avaliação Diária</h2>
+        <table class="table-avaliacao-diaria">
+            <thead>
+                <tr>
+                <th>Meses</th>
+                <th>Índice</th>
+                {% for i in range(1, 32) %}
+                    <th>{{ '%02d' | format(i) }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for mes, dias in resultados %}
+                    <tr>
+                        <td rowspan="2">{{ nomes_meses[mes|string()] }}</td>
+                        <td class="small-header">Não Conformidades</td>
+                        {% for i in range(1, 32) %}
+                            <td>{{ dias.get(i, {}).get('nao_conformidade', '') }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <td class="small-header">Atraso de Entrega</td>
+                        {% for i in range(1, 31) %}
+                            <td>{{ dias.get(i, {}).get('atraso_entrega', '') }}</td>
+                        {% endfor %}
+                        <td class="final-do-mes">{{ dias.get(31, {}).get('atraso_entrega', '') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
 {% endblock %}

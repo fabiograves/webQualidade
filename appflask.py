@@ -18,6 +18,7 @@ from reportlab.platypus import Spacer
 from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
+from collections import defaultdict
 
 
 app = Flask(__name__)
@@ -64,7 +65,7 @@ def login():
                 session['logged_in'] = True
                 session['username'] = username
 
-                session['privilegio'] = user.privilegio  # Ajuste conforme a estrutura do seu objeto 'user'
+                session['privilegio'] = user.privilegio
 
                 # Armazenando informações adicionais na sessão
                 session['nome_assinatura'] = user.nome_assinatura
@@ -234,6 +235,9 @@ def pesquisar_avaliacao_diaria():
     connection = conectar_db()
     fornecedores = []
     dados_organizados = {}
+    resumo_trimestral = defaultdict(lambda: defaultdict(dict))
+    resumo_por_trimestre = {1: [], 2: [], 3: [], 4: []}
+    pesquisa_realizada = False
 
     try:
         with connection.cursor() as cursor:
@@ -243,6 +247,7 @@ def pesquisar_avaliacao_diaria():
             fornecedores = cursor.fetchall()
 
             if request.method == 'POST':
+                pesquisa_realizada = True
                 id_fornecedor = request.form['fornecedor']
                 ano = request.form['ano']
 
@@ -261,10 +266,36 @@ def pesquisar_avaliacao_diaria():
                     if mes not in dados_organizados:
                         dados_organizados[mes] = {}
 
-                    # Diretamente atribui o resultado ao dia específico, já que só há um registro por dia
+                    # Diretamente atribui o resultado ao dia específico
                     dados_organizados[mes][dia] = resultado
 
                     resultado = fetch_dict(cursor)
+
+        # Cálculo do resumo trimestral após todos os dados serem organizados
+        for mes, dias in dados_organizados.items():
+            soma_nao_conformidade = sum(dia.get('nao_conformidade', 0) for dia in dias.values())
+            soma_atraso_entrega = sum(dia.get('atraso_entrega', 0) for dia in dias.values())
+            qtd_dias_com_valor = sum(1 for dia in dias.values())
+
+            resumo_trimestral[mes] = {
+                'soma_nao_conformidade': soma_nao_conformidade,
+                'soma_atraso_entrega': soma_atraso_entrega,
+                'qtd_dias_com_valor': qtd_dias_com_valor
+            }
+
+        # Agrupa os dados por trimestre e calcula o valor final para cada mês
+        for mes, dados in resumo_trimestral.items():
+            trimestre = (mes - 1) // 3 + 1
+            dados['valor_final'] = ((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega']) / max(dados['qtd_dias_com_valor'], 1)) * 5
+            resumo_por_trimestre[trimestre].append((mes, dados))
+
+        notas_finais_trimestres = {}
+        for trimestre, meses in resumo_por_trimestre.items():
+            total_valor_final = sum(dados['valor_final'] for _, dados in meses if 'valor_final' in dados)
+            total_meses_com_dados = sum(1 for _, dados in meses if 'valor_final' in dados and dados['valor_final'] > 0)
+            # Calcula a nota final apenas se houver meses com dados
+            nota_final_trimestre = total_valor_final / total_meses_com_dados if total_meses_com_dados else 0
+            notas_finais_trimestres[trimestre] = nota_final_trimestre
 
     except Exception as e:
         print(f"Erro: {e}")
@@ -273,7 +304,14 @@ def pesquisar_avaliacao_diaria():
         connection.close()
 
     meses_ordenados = sorted(dados_organizados.items(), key=lambda x: x[0], reverse=True)
-    return render_template('pesquisar_avaliacao_diaria.html', fornecedores=fornecedores, resultados=meses_ordenados)
+
+    return render_template('pesquisar_avaliacao_diaria.html',
+                           fornecedores=fornecedores,
+                           resultados=meses_ordenados,
+                           resumo_por_trimestre=resumo_por_trimestre,
+                           notas_finais_trimestres=notas_finais_trimestres,
+                           pesquisa_realizada=pesquisa_realizada)
+
 
 @app.route('/lista_norma')
 def lista_norma():
