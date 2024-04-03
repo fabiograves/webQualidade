@@ -73,6 +73,8 @@ def login():
                 session['telefone_assinatura'] = user.telefone_assinatura
                 session['email_assinatura'] = user.email_assinatura
 
+                username = session['username']
+                print(f"Ação realizada por: {username}, Logou")
                 return redirect(url_for('home'))
             else:
                 flash('Login falhou. Verifique seu nome de usuário e senha.')
@@ -86,16 +88,36 @@ def login():
 
 @app.route('/logout')
 def logout():
+    username = session['username']
+    print(f"Ação realizada por: {username}, Deslogou")
     session.pop('logged_in', None)
     session.pop('username', None)
+    session.pop('privilegio', None)
+    session.pop('nome_assinatura', None)
+    session.pop('setor_assinatura', None)
+    session.pop('telefone_assinatura', None)
+    session.pop('email_assinatura', None)
     flash('Você saiu com sucesso.')
     return redirect(url_for('login'))
+
+
+# Context processor para adicionar variáveis a todos os templates
+@app.context_processor
+def inject_aviso():
+    mensagens_aviso = [
+        "Atenção: Vencimento .......",
+        "Lembrete: Calibrar .......",
+        "Aviso: Aviso ........"
+    ]
+    return dict(mensagens_aviso=mensagens_aviso)
 
 
 @app.route('/')
 def home():
     if not is_logged_in():
         return redirect(url_for('login'))
+    username = session['username']
+    print(f"Ação realizada por: {username}, Clicou Home")
     return render_template('home.html')
 
 
@@ -107,6 +129,9 @@ def download_certificado():
 
 @app.route('/baixar_certificado_por_id', methods=['POST'])
 def baixar_certificado_por_id():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
     numero_certificado = request.form.get('dc_numero_certificado')
     nota_saida = request.form.get('dc_nota_saida')
 
@@ -147,21 +172,29 @@ def baixar_certificado_por_id():
         print(f"Erro ao buscar o certificado: {e}")
         return "Ocorreu um erro ao processar sua solicitação.", 500
     finally:
+        username = session['username']
+        print(f"Ação realizada por: {username}, Baixar Certificado NF:{numero_certificado} - NS:{nota_saida}")
         cursor.close()
         connection.close()
 
 
 @app.route('/criar_certificado')
 def criar_certificado():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
     return render_template('criar_certificado.html')
 
 
 @app.route('/cadastro_fornecedor', methods=['GET', 'POST'])
 def cadastro_fornecedor():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         # Extrair os dados do formulário
         nome_fornecedor = request.form['cad_nome_fornecedor']
-        dados_complementares = request.form['cad_dados_fornecedor']  # Se você decidir inserir isso também
+        dados_complementares = request.form['cad_dados_fornecedor']
 
         # Conexão com o banco de dados
         connection = conectar_db()
@@ -171,6 +204,8 @@ def cadastro_fornecedor():
                 cursor.execute(sql, (nome_fornecedor))
                 connection.commit()
             flash('Formulário enviado com sucesso!')
+            username = session['username']
+            print(f"Ação realizada por: {username}, Cadastro Fornecedor Nome:{nome_fornecedor}")
             return redirect(url_for('cadastro_fornecedor'))
         except Exception as e:
             print(f"Erro ao inserir o fornecedor no banco de dados: {e}")
@@ -184,6 +219,9 @@ def cadastro_fornecedor():
 
 @app.route('/avaliacao_diaria.html', methods=['GET', 'POST'])
 def avaliacao_diaria():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
     connection = conectar_db()
     fornecedores = []
     try:
@@ -213,6 +251,8 @@ def avaliacao_diaria():
                 cursor.execute(sql_insert, (id_fornecedor, data, nao_conformidade, atraso_entrega, observacao))
                 connection.commit()
 
+                username = session['username']
+                print(f"Ação realizada por: {username}, Avaliação Diária Data: {data} - ID:{id_fornecedor} - NC:{nao_conformidade} - AE:{atraso_entrega}")
                 flash('Registro inserido com sucesso!')
                 return redirect(url_for('avaliacao_diaria'))
 
@@ -232,12 +272,16 @@ def avaliacao_diaria():
 
 @app.route('/pesquisar_avaliacao_diaria.html', methods=['GET', 'POST'])
 def pesquisar_avaliacao_diaria():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
     connection = conectar_db()
     fornecedores = []
     dados_organizados = {}
     resumo_trimestral = defaultdict(lambda: defaultdict(dict))
     resumo_por_trimestre = {1: [], 2: [], 3: [], 4: []}
     pesquisa_realizada = False
+    fornecedor_escolhido = None
 
     try:
         with connection.cursor() as cursor:
@@ -250,6 +294,10 @@ def pesquisar_avaliacao_diaria():
                 pesquisa_realizada = True
                 id_fornecedor = request.form['fornecedor']
                 ano = request.form['ano']
+
+                # Obtém o nome do fornecedor escolhido
+                cursor.execute("SELECT nome_fornecedor FROM dbo.cadastro_fornecedor WHERE id = ?", (id_fornecedor,))
+                fornecedor_escolhido = cursor.fetchone()[0]
 
                 # Formata a pesquisa para capturar os registros de um ano específico
                 cursor.execute("""
@@ -304,17 +352,23 @@ def pesquisar_avaliacao_diaria():
         connection.close()
 
     meses_ordenados = sorted(dados_organizados.items(), key=lambda x: x[0], reverse=True)
+    username = session['username']
+    print(f"Ação realizada por: {username}, fornecedor escolhido: {fornecedor_escolhido}")
 
     return render_template('pesquisar_avaliacao_diaria.html',
                            fornecedores=fornecedores,
                            resultados=meses_ordenados,
                            resumo_por_trimestre=resumo_por_trimestre,
                            notas_finais_trimestres=notas_finais_trimestres,
-                           pesquisa_realizada=pesquisa_realizada)
+                           pesquisa_realizada=pesquisa_realizada,
+                           fornecedor_escolhido=fornecedor_escolhido)
 
 
 @app.route('/lista_norma')
 def lista_norma():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
     connection = conectar_db()
     try:
         with connection.cursor() as cursor:
@@ -334,11 +388,17 @@ def lista_norma():
     finally:
         connection.close()
 
+    username = session['username']
+    print(f"Ação realizada por: {username}, Lista Norma")
+
     return render_template('lista_norma.html', normas=normas)
 
 
 @app.route('/plano_controle_inspecao', methods=['GET', 'POST'])
 def plano_controle_inspecao():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         numero = request.form['cad_numero_plano']
         imagem = request.files['imagem_plano']
@@ -354,7 +414,8 @@ def plano_controle_inspecao():
             connection.commit()
             connection.close()
 
-            print("Controle número: ", numero, "cadastrado com sucesso.")
+            username = session['username']
+            print(f"Ação realizada por: {username}, Plano Controle:{numero}")
             return redirect(url_for('plano_controle_inspecao'))
         else:
             print("Controle número: ", numero, "ERRO ao cadastrar.")
@@ -369,6 +430,8 @@ def plano_controle_inspecao():
 
     # Converter imagens para base64 para serem exibidas no HTML
     imagens = [{'numero': img[0], 'imagem': base64.b64encode(img[1]).decode('utf-8')} for img in imagens_db]
+    username = session['username']
+    print(f"Ação realizada por: {username}, Plano Controle Imagens")
 
     return render_template('plano_controle_inspecao.html', imagens=imagens)
 
@@ -380,16 +443,25 @@ def base():
 
 @app.route('/pesquisar_certificado', methods=['GET', 'POST'])
 def pesquisar_certificado():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
     resultados = None
     if request.method == 'POST':
         numero_nota = request.form.get('pc_numero_nota')
-        resultados = buscar_certificados(numero_nota)
+        codigo_produto = request.form.get('pc_cod_produto')
+        resultados = buscar_certificados(numero_nota, codigo_produto)
+        username = session['username']
+        print(f"Ação realizada por: {username}, Pesquisar Certificado NF:{numero_nota} CP:{codigo_produto}")
 
     return render_template('pesquisar_certificado.html', resultados=resultados)
 
 
 @app.route('/criar_certificado', methods=['POST'])
 def tratar_formulario():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
     resultado = None
     proximo_numero_certificado = None
 
@@ -406,14 +478,14 @@ def tratar_formulario():
             resultado = buscar_certificado_nota(numero_nota, cod_produto)
             if resultado and not all(value is None for value in resultado.values()):
                 session['dados_pdf'] = resultado
-                #print("dados_pdf")
-                #print(session['dados_pdf'])
             else:
                 flash('Nota fiscal e código não encontrados.')
 
     elif 'bt_criar_certificado' in request.form:
         if 'dados_pdf' in session and session['dados_pdf']:
             # Se os dados estão na sessão e não são None, prossegue para gerar o PDF
+            username = session['username']
+            print(f"Ação realizada por: {username}, Criar Certificado")
             return redirect(url_for('gerar_pdf'))
         else:
             # Se os dados não estão disponíveis, fornece feedback e não redireciona para 'gerar_pdf'
@@ -1480,60 +1552,63 @@ def download_arquivo(numero_nota, cod_produto):
         return "Arquivo não encontrado", 404
 
 
-def buscar_certificados(numero_nota):
+def buscar_certificados(numero_nota, codigo_produto):
     connection = conectar_db()
     try:
         resultados_agrupados = {}
-
         cursor = connection.cursor()
 
-        # Busca por cadastro de certificados apenas pelo número da nota
-        sql = "SELECT * FROM dbo.cadastro_certificados WHERE cc_numero_nota = ?"
-        cursor.execute(sql, (numero_nota,))
+        # Modificada para buscar registros que correspondam ao número da nota OU código do produto
+        sql = """
+                SELECT cc_numero_nota, cc_descricao, cc_cod_fornecedor, cc_cod_produto, cc_corrida, cc_data, cc_cq, cc_qtd_pedidos
+                FROM dbo.cadastro_certificados 
+                WHERE cc_numero_nota = ? OR cc_cod_produto = ?
+              """
+        cursor.execute(sql, (numero_nota, codigo_produto))
         cadastros = cursor.fetchall()
 
         # Converte manualmente cada linha do resultado em um dicionário
         cadastros = [dict_factory(cursor, cadastro) for cadastro in cadastros]
 
         for cadastro in cadastros:
-            # Usando apenas o número da nota e código do produto para chave
             chave = f"{cadastro['cc_numero_nota']}-{cadastro['cc_cod_produto']}"
             resultados_agrupados[chave] = {'cadastro_certificados': cadastro}
-
-            # Inicializa listas para cada tipo de informação relacionada
             for tipo in ('comp_quimica', 'prop_mecanicas', 'tratamentos', 'ad_porcas', 'ad_pinos', 'ad_parafusos', 'ad_grampos',
                          'ad_rebite', 'ad_prisioneiro_estojo', 'ad_chumbador', 'ad_chaveta', 'ad_arruelas', 'ad_anel',
                          'ad_contrapino', 'ad_especial'):
                 resultados_agrupados[chave][tipo] = []
 
-        # Para cada tipo de dados relacionados, realizar uma busca e organizar os resultados
         tipos_relacionados = {
-            'comp_quimica': "SELECT * FROM dbo.comp_quimica WHERE cc_numero_nota IN (?)",
-            'prop_mecanicas': "SELECT * FROM dbo.prop_mecanicas WHERE cc_numero_nota IN (?)",
-            'tratamentos': "SELECT * FROM dbo.tratamentos WHERE cc_numero_nota IN (?)",
-            'ad_porcas': "SELECT * FROM dbo.ad_porcas WHERE cc_numero_nota IN (?)",
-            'ad_pinos': "SELECT * FROM dbo.ad_pinos WHERE cc_numero_nota IN (?)",
-            'ad_parafusos': "SELECT * FROM dbo.ad_parafusos WHERE cc_numero_nota IN (?)",
-            'ad_grampos': "SELECT * FROM dbo.ad_grampos WHERE cc_numero_nota IN (?)",
-            'ad_rebite': "SELECT * FROM dbo.ad_rebite WHERE cc_numero_nota IN (?)",
-            'ad_prisioneiro_estojo': "SELECT * FROM dbo.ad_prisioneiro_estojo WHERE cc_numero_nota IN (?)",
-            'ad_chumbador': "SELECT * FROM dbo.ad_chumbador WHERE cc_numero_nota IN (?)",
-            'ad_chaveta': "SELECT * FROM dbo.ad_chaveta WHERE cc_numero_nota IN (?)",
-            'ad_arruelas': "SELECT * FROM dbo.ad_arruelas WHERE cc_numero_nota IN (?)",
-            'ad_anel': "SELECT * FROM dbo.ad_anel WHERE cc_numero_nota IN (?)",
-            'ad_contrapino': "SELECT * FROM dbo.ad_contrapino WHERE cc_numero_nota IN (?)",
-            'ad_especial': "SELECT * FROM dbo.ad_especial WHERE cc_numero_nota IN (?)"
+            'comp_quimica': "SELECT * FROM dbo.comp_quimica WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'prop_mecanicas': "SELECT * FROM dbo.prop_mecanicas WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'tratamentos': "SELECT * FROM dbo.tratamentos WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_porcas': "SELECT * FROM dbo.ad_porcas WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_pinos': "SELECT * FROM dbo.ad_pinos WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_parafusos': "SELECT * FROM dbo.ad_parafusos WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_grampos': "SELECT * FROM dbo.ad_grampos WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_rebite': "SELECT * FROM dbo.ad_rebite WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_prisioneiro_estojo': "SELECT * FROM dbo.ad_prisioneiro_estojo WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_chumbador': "SELECT * FROM dbo.ad_chumbador WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_chaveta': "SELECT * FROM dbo.ad_chaveta WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_arruelas': "SELECT * FROM dbo.ad_arruelas WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_anel': "SELECT * FROM dbo.ad_anel WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_contrapino': "SELECT * FROM dbo.ad_contrapino WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_especial': "SELECT * FROM dbo.ad_especial WHERE cc_numero_nota = ? AND cc_cod_produto = ?"
         }
 
-        for tipo, sql in tipos_relacionados.items():
-            cursor.execute(sql, (numero_nota,))
-            itens_relacionados = cursor.fetchall()
-            itens_relacionados = [dict_factory(cursor, item) for item in itens_relacionados]
+        # Ajuste nas consultas relacionadas para usar tanto número da nota quanto código do produto
+        for chave, dados in resultados_agrupados.items():
+            numero_nota, codigo_produto = chave.split('-')
+            for tipo, sql in tipos_relacionados.items():
+                # Ajuste na query para incluir o código do produto na condição
+                sql_ajustada = sql.replace("WHERE cc_numero_nota IN (?)", "WHERE cc_numero_nota = ? AND cc_cod_produto = ?")
+                cursor.execute(sql_ajustada, (numero_nota, codigo_produto))
+                itens_relacionados = cursor.fetchall()
+                itens_relacionados = [dict_factory(cursor, item) for item in itens_relacionados]
 
-            for item in itens_relacionados:
-                chave = f"{item['cc_numero_nota']}-{item['cc_cod_produto']}"
-                if chave in resultados_agrupados:
-                    resultados_agrupados[chave][tipo].append(item)
+                for item in itens_relacionados:
+                    if chave in resultados_agrupados:
+                        resultados_agrupados[chave][tipo].append(item)
 
     except Exception as e:
         print(f"Erro ao buscar certificados: {e}")
@@ -1559,6 +1634,8 @@ def pesquisar_registro_inspecao():
         # Função que busca os dados apenas pelo número da nota
         resultados = buscar_registro_inspecao(numero_nota, ri_data)
 
+    username = session['username']
+    print(f"Ação realizada por: {username}, Pesquisa Registro Inspeção")
     return render_template('pesquisar_registro_inspecao.html', resultados=resultados)
 
 
@@ -1637,6 +1714,8 @@ def buscar_registro_inspecao(numero_nota, ri_data):
             cursor.close()
         connection.close()
 
+    username = session['username']
+    print(f"Ação realizada por: {username}, Buscou Registro Inspecao NF:{numero_nota} - Data:{ri_data}")
     print("resultados_agrupado: ", resultados_agrupados)
     return resultados_agrupados
 
@@ -1750,6 +1829,8 @@ def cadastro_certificados():
                 inserir_cadastro_tratamentos(dados_tratamentos)
 
             flash('Formulário enviado com sucesso!')
+            username = session['username']
+            print(f"Ação realizada por: {username}, Cadastro Certificado NF:{nota_fiscal} - CP:{cod_produto}")
             return redirect(url_for('cadastro_certificados'))
 
         elif 'bt_procurar_nota' in request.form:
@@ -2291,6 +2372,9 @@ def buscar_imagem():
 
 @app.route('/cadastro_norma', methods=['GET', 'POST'])
 def cadastro_norma():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         numero_norma = request.form['cad_numero_norma']
         imagem = request.files['imagem_norma']
@@ -2310,6 +2394,8 @@ def cadastro_norma():
             connection.close()
 
             flash('Norma cadastrada com sucesso!')
+            username = session['username']
+            print(f"Ação realizada por: {username}, Cadastro Norma:{numero_norma}")
             return redirect(url_for('cadastro_norma'))
         else:
             flash('Erro no cadastro da norma. Verifique o arquivo de imagem.')
@@ -2564,6 +2650,8 @@ def registro_inspecao():
         finally:
             connection.close()
 
+        username = session['username']
+        print(f"Ação realizada por: {username}, registro inspeção NF:{nota_fiscal} - CP:{cod_produto}")
         flash('Registro de Inspeção criado com sucesso!')
         return redirect(url_for('registro_inspecao'))
 

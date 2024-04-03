@@ -3,88 +3,86 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-  <form method="POST" action="{{ url_for('plano_controle_inspecao') }}" enctype="multipart/form-data">
-    <div class="py-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <h1 class="text-center">Plano de Controle de Inspeção</h1>
-        </div>
-      </div>
-    </div>
-    </div>
-      
-    <div class="">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-3">
-          <div class="form-group">
-            <label>Número do Plano</label>
-            <input type="text" class="form-control" id="cad_numero_plano" name="cad_numero_plano">
-          </div>
-        </div>
-        <div class="col-md-9">
-          <div class="form-group">
-            <label>Imagem do Plano: Somente arquivos .jpg .jpeg .png</label>
-            <input type="file" class="form-control" id="imagem_plano" name="imagem_plano">
-          </div>
-        </div>
-      </div>
-       Botão de envio
-      <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Plano</button>
-    </div>
-
-    </div>
-      <!-- Seletor de Categoria -->
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-12">
-                <select class="form-control" id="categoriaSelector" onchange="buscarImagensPorCategoria()">
-                    <option value="parafusos">Parafusos (01-50)</option>
-                    <option value="porcas">Porcas (51-76)</option>
-                    <option value="arruelas">Arruelas (77-96)</option>
-                    <option value="anel">Anel (97-107)</option>
-                    <option value="chavetas">Chavetas (108-120)</option>
-                    <option value="grampos">Grampos (121-128)</option>
-                    <option value="bujao">Bujão (129-136)</option>
-                    <option value="pinos">Pinos (137-150)</option>
-                    <option value="prisioneiro">Prisioneiro (151-158)</option>
-                    <option value="contrapino">Contrapino (159-166)</option>
-                    <option value="rebite">Rebite (167-176)</option>
-                    <option value="chumbador">Chumbador (177-192)</option>
-                    <!-- Adicione mais opções conforme necessário -->
-                </select>
+    <form method="POST" action="{{ url_for('plano_controle_inspecao') }}" enctype="multipart/form-data">
+        <div class="py-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="text-center">Plano de Controle de Inspeção</h1>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-
-      <!-- Container para as Imagens -->
-    <div class="container mt-4">
-        <div class="row" id="imagensContainer">
-            <!-- As imagens são inseridas aqui pelo Flask -->
-            {% for imagem in imagens %}
-                <div class="col-md-4 mb-4 imagemItem" data-categoria="{{ imagem.categoria }}">
-                    <img src="data:image/png;base64,{{ imagem.imagem }}" alt="Plano {{ imagem.numero }}" class="img-fluid">
+        <!--
+        <div class="">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Número do Plano</label>
+                            <input type="text" class="form-control" id="cad_numero_plano" name="cad_numero_plano">
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label>Imagem do Plano: Somente arquivos .jpg .jpeg .png</label>
+                            <input type="file" class="form-control" id="imagem_plano" name="imagem_plano">
+                        </div>
+                    </div>
                 </div>
-            {% endfor %}
+                <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Plano</button>
+            </div>
         </div>
-    </div>
-
-      <!-- Modal para exibir a imagem -->
-    <div class="modal fade" id="imagemModal" tabindex="-1" role="dialog" aria-labelledby="imagemModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="imagemModalLabel">Visualização da Imagem</h5>
-          </div>
-          <div class="modal-body">
-            <img id="imagemGrande" src="" class="img-fluid" alt="Visualização ampliada">
-          </div>
+        -->
+        <!-- Seletor de Categoria -->
+        <div class="container mt-4">
+            <div class="row">
+                <div class="col-md-12">
+                    <select class="form-control" id="categoriaSelector" onchange="buscarImagensPorCategoria()">
+                        <option value="parafusos">Parafusos (01-50)</option>
+                        <option value="porcas">Porcas (51-76)</option>
+                        <option value="arruelas">Arruelas (77-96)</option>
+                        <option value="anel">Anel (97-107)</option>
+                        <option value="chavetas">Chavetas (108-120)</option>
+                        <option value="grampos">Grampos (121-128)</option>
+                        <option value="bujao">Bujão (129-136)</option>
+                        <option value="pinos">Pinos (137-150)</option>
+                        <option value="prisioneiro">Prisioneiro (151-158)</option>
+                        <option value="contrapino">Contrapino (159-166)</option>
+                        <option value="rebite">Rebite (167-176)</option>
+                        <option value="chumbador">Chumbador (177-192)</option>
+                    </select>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
-  </form>
+        <!-- Container para as Imagens -->
+        <div class="container mt-4">
+            <div class="row" id="imagensContainer">
+                <!-- As imagens são inseridas aqui pelo Flask -->
+                {% for imagem in imagens %}
+                    <div class="col-md-4 mb-4 imagemItem" data-categoria="{{ imagem.categoria }}">
+                        <img src="data:image/png;base64,{{ imagem.imagem }}" alt="Plano {{ imagem.numero }}" class="img-fluid">
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Modal para exibir a imagem -->
+        <div class="modal fade" id="imagemModal" tabindex="-1" role="dialog" aria-labelledby="imagemModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="imagemModalLabel">Visualização da Imagem</h5>
+                    </div>
+                    <div class="modal-body">
+                        <img id="imagemGrande" src="" class="img-fluid" alt="Visualização ampliada">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
 
 <script>
 function buscarImagensPorCategoria() {
@@ -136,12 +134,12 @@ document.getElementById("categoriaSelector").addEventListener('change', buscarIm
 buscarImagensPorCategoria(); // Chame a função ao carregar para aplicar o filtro inicial
 
 document.querySelectorAll('.imagemItem img').forEach(item => {
-  item.addEventListener('click', event => {
-    const src = event.target.src;
-    const modalImage = document.getElementById('imagemGrande');
-    modalImage.src = src;
-    $('#imagemModal').modal('show');
-  });
+    item.addEventListener('click', event => {
+        const src = event.target.src;
+        const modalImage = document.getElementById('imagemGrande');
+        modalImage.src = src;
+        $('#imagemModal').modal('show');
+    });
 });
 
 

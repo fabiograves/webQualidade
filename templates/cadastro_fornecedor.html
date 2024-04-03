@@ -2,7 +2,6 @@
 
 {% block content %}
 
-<!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
     <form method="POST" action="{{ url_for('cadastro_fornecedor') }}" enctype="multipart/form-data">
@@ -31,9 +30,16 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="row">
+                    <!-- Limitar botão de acordo com privilegio -->
+                    {% if session['privilegio'] == 9 or session['privilegio'] == 8 %}
                     <!-- Botão de envio -->
                     <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Fornecedor</button>
+                    {% else %}
+                    <!-- Botão desabilitado se o privilégio for 0 -->
+                    <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
+                    {% endif %}
                 </div>
 
                 <div class="row">

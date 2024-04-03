@@ -10,7 +10,6 @@
             <div class="row justify-content-center">
                 <div class="col-md-12">
                     <h1 class="text-center mb-4">Avaliação Diária</h1>
-
                     <div class="form-row">
                         <div class="form-group col-md-3">
                             <label for="fornecedor">Fornecedor</label>
@@ -40,7 +39,13 @@
                         </div>
                     </div>
                     <div class ="form-row">
-                        <button type="submit" class="btn btn-secondary w-100">Cadastrar Avaliação</button>
+                        {% if session['privilegio'] == 9 or session['privilegio'] == 8 %}
+                            <button type="submit" class="btn btn-secondary w-100">Cadastrar Avaliação</button>
+                        {% else %}
+                            <!-- Botão desabilitado se o privilégio for 0 -->
+                            <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilégio Para Avaliar</button>
+                        {% endif %}
+
                     </div>
                     <div class = "form-row">
                         <div class ="form-group col-md-12">
@@ -62,7 +67,6 @@
     </div>
 </form>
 
-
 <script>
 
 document.getElementById('ad_nao_conformidade').addEventListener('input', function(e) {
@@ -78,6 +82,5 @@ document.getElementById('ad_atraso_entrega').addEventListener('input', function(
 });
 
 </script>
-
 
 {% endblock %}

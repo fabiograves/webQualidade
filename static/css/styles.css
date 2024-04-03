@@ -69,3 +69,29 @@
 .table th, .table td {
     text-align: center;
 }
+
+.custom-bg {
+  background-color: #122556 !important; /* Define a cor de fundo como azul */
+}
+
+.navbar-dark .navbar-nav .nav-link {
+  color: #fff; /* Mantém o texto branco para melhor contraste */
+}
+
+.navbar-dark .navbar-brand, .navbar-dark .navbar-nav .nav-link.active {
+  color: #fff; /* Mantém o texto branco para marcas e links ativos */
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printableArea, #printableArea * {
+    visibility: visible;
+  }
+  #printableArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+}

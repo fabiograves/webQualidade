@@ -2,7 +2,6 @@
 
 {% block content %}
 
-  <!-- Layout da pagina de cadastro de certificados -->
     <div class="py-5">
         <div class="container">
             <div class="row">
@@ -17,7 +16,6 @@
             <div class="row">
                 <div class="col-md-12">
                 <form method="POST" action="{{ url_for('registro_inspecao') }}">
-                    <!-- Seus campos de input aqui... -->
                     <div class="row">
                         <div class="col-md-2">
                             <div class="form-group"><label>Data de Entrada</label><input type="date" class="form-control" id="ri_data" name="ri_data"></div>
@@ -71,23 +69,22 @@
                         <style>
                             /* Estilo para botões de rádio */
                             .radio-input {
-                                width: 40px; /* Ajuste o tamanho conforme necessário */
-                                height: 38px; /* Ajuste o tamanho conforme necessário */
-                                cursor: pointer; /* Mostrar o cursor como ponteiro ao passar o mouse */
+                                width: 40px;
+                                height: 38px;
+                                cursor: pointer;
                             }
-
                             /* Estilo para botões de rádio selecionados */
                             .radio-input-green:checked {
-                                background-color: #31f511; /* Cor de fundo quando selecionado */
-                                color: #fff; /* Cor do texto quando selecionado */
+                                background-color: #31f511;
+                                color: #fff;
                             }
                             .radio-input-yellow:checked {
-                                background-color: #ffff00; /* Cor de fundo quando selecionado */
-                                color: #fff; /* Cor do texto quando selecionado */
+                                background-color: #ffff00;
+                                color: #fff;
                             }
                             .radio-input-red:checked {
-                                background-color: #f30325; /* Cor de fundo quando selecionado */
-                                color: #fff; /* Cor do texto quando selecionado */
+                                background-color: #f30325;
+                                color: #fff;
                             }
                         </style>
                         <div class="row">
@@ -308,66 +305,62 @@
             </div>
     </div>
 </div>
+                    {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+                            <ul>
+                                {% for message in messages %}
+                                <li>{{ message }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    {% endwith %}
 
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
-                <ul>
-                    {% for message in messages %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
+                    <!-- Limitar botão de acordo com privilégio -->
+                    {% if session['privilegio'] == 9 or session['privilegio'] == 8 %}
+                    <!-- Botão de envio com confirmação -->
+                    <button type="submit" class="btn btn-secondary w-100 mb-3" onclick="return confirm('Tem certeza que deseja registrar a inspeção?')">Registrar Inspeção</button>
+                    {% else %}
+                    <!-- Botão desabilitado se o privilégio for 0 -->
+                    <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
+                    {% endif %}
+
+                </form>
+                </div>
             </div>
-        {% endif %}
-        {% endwith %}
-
-            <!-- Limitar botão de acordo com privilégio -->
-            {% if session['privilegio'] != 0 %}
-            <!-- Botão de envio com confirmação -->
-            <button type="submit" class="btn btn-secondary w-100 mb-3" onclick="return confirm('Tem certeza que deseja registrar a inspeção?')">Registrar Inspeção</button>
-            {% else %}
-            <!-- Botão desabilitado se o privilégio for 0 -->
-            <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
-            {% endif %}
-
-
-
-        </form>
-      </div>
-    </div>
-
-    </div>
+        </div>
   </div>
 
 
 <script>
     function exibirCampos() {
-            var selecao = document.getElementById("selecaoTipo").value;
-            var camposAnel = document.getElementById("camposAnel");
-            var camposArruelas = document.getElementById("camposArruelas");
-            var camposChaveta = document.getElementById("camposChaveta");
-            var camposChumbador = document.getElementById("camposChumbador");
-            var camposContrapino = document.getElementById("camposContrapino");
-            var camposEspecial = document.getElementById("camposEspecial");
-            var camposGrampos = document.getElementById("camposGrampos");
-            var camposParafusos = document.getElementById("camposParafusos");
-            var camposPorcas = document.getElementById("camposPorcas");
-            var camposPinos = document.getElementById("camposPinos");
-            var camposPrisioneiroEstojo = document.getElementById("camposPrisioneiroEstojo");
-            var camposRebite = document.getElementById("camposRebite");
+        var selecao = document.getElementById("selecaoTipo").value;
+        var camposAnel = document.getElementById("camposAnel");
+        var camposArruelas = document.getElementById("camposArruelas");
+        var camposChaveta = document.getElementById("camposChaveta");
+        var camposChumbador = document.getElementById("camposChumbador");
+        var camposContrapino = document.getElementById("camposContrapino");
+        var camposEspecial = document.getElementById("camposEspecial");
+        var camposGrampos = document.getElementById("camposGrampos");
+        var camposParafusos = document.getElementById("camposParafusos");
+        var camposPorcas = document.getElementById("camposPorcas");
+        var camposPinos = document.getElementById("camposPinos");
+        var camposPrisioneiroEstojo = document.getElementById("camposPrisioneiroEstojo");
+        var camposRebite = document.getElementById("camposRebite");
 
-            camposAnel.style.display = selecao == "anel" ? "block" : "none";
-            camposArruelas.style.display = selecao == "arruelas" ? "block" : "none";
-            camposChaveta.style.display = selecao == "chaveta" ? "block" : "none";
-            camposChumbador.style.display = selecao == "chumbador" ? "block" : "none";
-            camposContrapino.style.display = selecao == "contrapino" ? "block" : "none";
-            camposEspecial.style.display = selecao == "especial" ? "block" : "none";
-            camposGrampos.style.display = selecao == "grampos" ? "block" : "none";
-            camposParafusos.style.display = selecao == "parafusos" ? "block" : "none";
-            camposPorcas.style.display = selecao == "porcas" ? "block" : "none";
-            camposPinos.style.display = selecao == "pinos" ? "block" : "none";
-            camposPrisioneiroEstojo.style.display = selecao == "prisioneiro_estojo" ? "block" : "none";
-            camposRebite.style.display = selecao == "rebite" ? "block" : "none";
+        camposAnel.style.display = selecao == "anel" ? "block" : "none";
+        camposArruelas.style.display = selecao == "arruelas" ? "block" : "none";
+        camposChaveta.style.display = selecao == "chaveta" ? "block" : "none";
+        camposChumbador.style.display = selecao == "chumbador" ? "block" : "none";
+        camposContrapino.style.display = selecao == "contrapino" ? "block" : "none";
+        camposEspecial.style.display = selecao == "especial" ? "block" : "none";
+        camposGrampos.style.display = selecao == "grampos" ? "block" : "none";
+        camposParafusos.style.display = selecao == "parafusos" ? "block" : "none";
+        camposPorcas.style.display = selecao == "porcas" ? "block" : "none";
+        camposPinos.style.display = selecao == "pinos" ? "block" : "none";
+        camposPrisioneiroEstojo.style.display = selecao == "prisioneiro_estojo" ? "block" : "none";
+        camposRebite.style.display = selecao == "rebite" ? "block" : "none";
 
     }
 

@@ -5,31 +5,30 @@
 <!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-  <form method="POST" action="{{ url_for('baixar_certificado_por_id') }}">
+    <form method="POST" action="{{ url_for('baixar_certificado_por_id') }}">
     <div class="py-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <h1 class="text-center">Download Certificados</h1>
-        </div>
-      </div>
-    </div>
-  </div>
-    <div class="">
         <div class="container">
             <div class="row">
-                <div class="col-md-3" style="">
-                  <div class="form-group"><label>Número do Certificado</label><input type="text" class="form-control" id="dc_numero_certificado" name="dc_numero_certificado"></div>
-                </div>
-                <div class="col-md-3" style="">
-                  <div class="form-group"><label>Número Nota de Saída</label><input type="text" class="form-control" id="dc_nota_saida" name="dc_nota_saida"></div>
+                <div class="col-md-12">
+                    <h1 class="text-center">Download Certificados</h1>
                 </div>
             </div>
-            <!-- Botão de envio -->
-            <button type="submit" class="btn btn-secondary w-100 mb-3">Baixar Certificado</button>
         </div>
     </div>
-
-  </form>
+        <div class="">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-3" style="">
+                        <div class="form-group"><label>Número do Certificado</label><input type="text" class="form-control" id="dc_numero_certificado" name="dc_numero_certificado"></div>
+                    </div>
+                    <div class="col-md-3" style="">
+                        <div class="form-group"><label>Número Nota de Saída</label><input type="text" class="form-control" id="dc_nota_saida" name="dc_nota_saida"></div>
+                    </div>
+                </div>
+                <!-- Botão de envio -->
+                <button type="submit" class="btn btn-secondary w-100 mb-3">Baixar Certificado</button>
+            </div>
+        </div>
+    </form>
 
 {% endblock %}

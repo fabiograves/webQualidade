@@ -2,178 +2,176 @@
 
 {% block content %}
 
-<!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-  <form method="POST" action="{{ url_for('cadastro_certificados') }}" enctype="multipart/form-data">
-      <div class="py-5">
-          <div class="container">
-              <div class="row">
-                  <div class="col-md-12">
-                      <h1 class="text-center">Cadastro de Certificados</h1>
+    <form method="POST" action="{{ url_for('cadastro_certificados') }}" enctype="multipart/form-data">
+        <div class="py-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="text-center">Cadastro de Certificados</h1>
                   </div>
               </div>
           </div>
       </div>
-  <div class="">
-      <div class="container">
-          <div class="row">
-            <div class="col-md-12">
-                <div class="form-group">
-                    <label for="arquivo">Certificado do Fornecedor ---> </label>
-                    <label for="arquivo">Escolher arquivo em PDF:</label>
-                    <input type="file" class="form-control-file" id="arquivo" name="arquivo">
+    <div class="">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="arquivo">Certificado do Fornecedor ---> </label>
+                        <label for="arquivo">Escolher arquivo em PDF:</label>
+                        <input type="file" class="form-control-file" id="arquivo" name="arquivo">
+                    </div>
                 </div>
             </div>
-          </div>
-          <div class="row">
-              <div class="col-md-2">
-                  <div class="form-group">
-                      <label for="cc_cq">Número da Nota</label>
-                      <input type="text" class="form-control" id="cc_numero_nota" name="cc_numero_nota" value="{{ cc_numero_nota }}">
-                  </div>
-              </div>
-              <div class="col-md-2">
-                  <div class="form-group">
-                      <label for="cc_cq">Código Produto</label>
-                      <input type="text" class="form-control" id="cc_cod_produto" name="cc_cod_produto" value="{{ cc_cod_produto }}">
-                  </div>
-              </div>
-              <div class="col-md-2">
-                  <button type="submit" id="botao-procurar" name="bt_procurar_nota" value="bt_procurar_nota" class="btn btn-secondary w-100 mb-3">Procurar Nota</button>
-              </div>
-              <div class="col-md-4">
-                  <div class="form-group">
-                      <label for="cc_cq">Descrição do Material</label>
-                      <input type="text" class="form-control" id="cc_descricao" name="cc_descricao">
-                  </div>
-              </div>
-              <div class="col-md-2">
-                  <div class="form-group">
-                      <label for="cc_cq">Código do Fornecedor</label>
-                      <input type="text" class="form-control" id="cc_cod_fornecedor" name="cc_cod_fornecedor">
-                  </div>
-              </div>
-              <div>
-                  <div class="row">
-                      <div class="col-md-3">
-                          <div class="form-group">
-                              <label for="cc_corrida">Corrida</label>
-                              <input type="text" class="form-control" id="cc_corrida" name="cc_corrida">
-                          </div>
-                      </div>
-                      <div class="col-md-3">
-                          <div class="form-group">
-                              <label for="cc_data">Data</label>
-                              <input type="date" class="form-control" id="cc_data" name="cc_data">
-                          </div>
-                      </div>
-                      <div class="col-md-3">
-                          <div class="form-group">
-                              <label for="cc_cq">CQ Nº</label>
-                              <input type="text" class="form-control" id="cc_cq" name="cc_cq">
-                          </div>
-                      </div>
-                      <div class="col-md-3">
-                          <div class="form-group">
-                              <label for="cc_qtd_pedidos">Qtd. Pedido</label>
-                              <input type="text" class="form-control" id="cc_qtd_pedidos" name="cc_qtd_pedidos">
-                          </div>
-                      </div>
-                  </div>
-                  <div class="row mb-3">
-                      <div class="col-md-3">
-                          <div class="form-group">
-                              <div class="form-check">
-                                  <input type="checkbox" class="form-check-input" id="comp_quimica" name="comp_quimica">
-                                  <label class="form-check-label text-center" for="comp_quimica">Composição Química</label>
-                              </div>
-                          </div>
-                      </div>
-                      <div class="col-md-3">
-                          <div class="form-group">
-                              <div class="form-check">
-                                  <input type="checkbox" class="form-check-input" id="prop_mecanicas" name="prop_mecanicas">
-                                  <label class="form-check-label" for="prop_mecanicas">Propriedades Mecânicas</label>
-                              </div>
-                          </div>
-                      </div>
-                      <div class="col-md-3">
-                          <div class="form-group">
-                              <div class="form-check">
-                                  <input type="checkbox" class="form-check-input" id="tratamentos" name="tratamentos">
-                                  <label class="form-check-label" for="tratamentos">Tratamentos</label>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </div>
+            <div class="row">
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="cc_cq">Número da Nota</label>
+                        <input type="text" class="form-control" id="cc_numero_nota" name="cc_numero_nota" value="{{ cc_numero_nota }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="cc_cq">Código Produto</label>
+                        <input type="text" class="form-control" id="cc_cod_produto" name="cc_cod_produto" value="{{ cc_cod_produto }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" id="botao-procurar" name="bt_procurar_nota" value="bt_procurar_nota" class="btn btn-secondary w-100 mb-3">Procurar Nota</button>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="cc_cq">Descrição do Material</label>
+                        <input type="text" class="form-control" id="cc_descricao" name="cc_descricao">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="cc_cq">Código do Fornecedor</label>
+                        <input type="text" class="form-control" id="cc_cod_fornecedor" name="cc_cod_fornecedor">
+                    </div>
+                </div>
+                <div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="cc_corrida">Corrida</label>
+                                <input type="text" class="form-control" id="cc_corrida" name="cc_corrida">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="cc_data">Data</label>
+                                <input type="date" class="form-control" id="cc_data" name="cc_data">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group"><label for="cc_cq">CQ Nº</label>
+                                <input type="text" class="form-control" id="cc_cq" name="cc_cq">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="cc_qtd_pedidos">Qtd. Pedido</label>
+                                <input type="text" class="form-control" id="cc_qtd_pedidos" name="cc_qtd_pedidos">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="comp_quimica" name="comp_quimica">
+                                    <label class="form-check-label text-center" for="comp_quimica">Composição Química</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="prop_mecanicas" name="prop_mecanicas">
+                                    <label class="form-check-label" for="prop_mecanicas">Propriedades Mecânicas</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="tratamentos" name="tratamentos">
+                                    <label class="form-check-label" for="tratamentos">Tratamentos</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-          <div id="camposExtras_comp_quimica" style="display:none;">
-              <div class="container" id="fundo_diferente">
-                  <!-- Primeira Linha de Inputs -->
-                  <div class="row">
-                      <h2 class="text-center">Composição Química</h2>
-                  </div>
-                  <div class="row">
-                      <div class="col text-center"><label>C</label><input type="text" class="form-control" id="cc_c" name="cc_c"></div>
-                      <div class="col text-center"><label>Mn</label><input type="text" class="form-control" id="cc_mn" name="cc_mn"></div>
-                      <div class="col text-center"><label>P</label><input type="text" class="form-control" id="cc_p" name="cc_p"></div>
-                      <div class="col text-center"><label>S</label><input type="text" class="form-control" id="cc_s" name="cc_s"></div>
-                      <div class="col text-center"><label>Si</label><input type="text" class="form-control" id="cc_si" name="cc_si"></div>
-                      <div class="col text-center"><label>Ni</label><input type="text" class="form-control" id="cc_ni" name="cc_ni"></div>
-                      <div class="col text-center"><label>Cr</label><input type="text" class="form-control" id="cc_cr" name="cc_cr"></div>
-                      <div class="col text-center"><label>B</label><input type="text" class="form-control" id="cc_b" name="cc_b"></div>
-                  </div>
-                  <!-- Segunda Linha de Inputs -->
-                  <div class="row">
-                      <div class="col text-center"><label>Cu</label><input type="text" class="form-control" id="cc_cu" name="cc_cu"></div>
-                      <div class="col text-center"><label>Mo</label><input type="text" class="form-control" id="cc_mo" name="cc_mo"></div>
-                      <div class="col text-center"><label>Co</label><input type="text" class="form-control" id="cc_co" name="cc_co"></div>
-                      <div class="col text-center"><label>Fe</label><input type="text" class="form-control" id="cc_fe" name="cc_fe"></div>
-                      <div class="col text-center"><label>Sn</label><input type="text" class="form-control" id="cc_sn" name="cc_sn"></div>
-                      <div class="col text-center"><label>Al</label><input type="text" class="form-control" id="cc_al" name="cc_al"></div>
-                      <div class="col text-center"><label>N</label><input type="text" class="form-control" id="cc_n" name="cc_n"></div>
-                      <div class="col text-center"><label>Nb</label><input type="text" class="form-control" id="cc_nb" name="cc_nb"></div>
-                  </div>
-              </div>
-          </div>
+            <div id="camposExtras_comp_quimica" style="display:none;">
+                <div class="container" id="fundo_diferente">
+                    <!-- Primeira Linha de Inputs -->
+                    <div class="row">
+                        <h2 class="text-center">Composição Química</h2>
+                    </div>
+                    <div class="row">
+                        <div class="col text-center"><label>C</label><input type="text" class="form-control" id="cc_c" name="cc_c"></div>
+                        <div class="col text-center"><label>Mn</label><input type="text" class="form-control" id="cc_mn" name="cc_mn"></div>
+                        <div class="col text-center"><label>P</label><input type="text" class="form-control" id="cc_p" name="cc_p"></div>
+                        <div class="col text-center"><label>S</label><input type="text" class="form-control" id="cc_s" name="cc_s"></div>
+                        <div class="col text-center"><label>Si</label><input type="text" class="form-control" id="cc_si" name="cc_si"></div>
+                        <div class="col text-center"><label>Ni</label><input type="text" class="form-control" id="cc_ni" name="cc_ni"></div>
+                        <div class="col text-center"><label>Cr</label><input type="text" class="form-control" id="cc_cr" name="cc_cr"></div>
+                        <div class="col text-center"><label>B</label><input type="text" class="form-control" id="cc_b" name="cc_b"></div>
+                    </div>
+                    <!-- Segunda Linha de Inputs -->
+                    <div class="row">
+                        <div class="col text-center"><label>Cu</label><input type="text" class="form-control" id="cc_cu" name="cc_cu"></div>
+                        <div class="col text-center"><label>Mo</label><input type="text" class="form-control" id="cc_mo" name="cc_mo"></div>
+                        <div class="col text-center"><label>Co</label><input type="text" class="form-control" id="cc_co" name="cc_co"></div>
+                        <div class="col text-center"><label>Fe</label><input type="text" class="form-control" id="cc_fe" name="cc_fe"></div>
+                        <div class="col text-center"><label>Sn</label><input type="text" class="form-control" id="cc_sn" name="cc_sn"></div>
+                        <div class="col text-center"><label>Al</label><input type="text" class="form-control" id="cc_al" name="cc_al"></div>
+                        <div class="col text-center"><label>N</label><input type="text" class="form-control" id="cc_n" name="cc_n"></div>
+                        <div class="col text-center"><label>Nb</label><input type="text" class="form-control" id="cc_nb" name="cc_nb"></div>
+                    </div>
+                </div>
+            </div>
 
-          <div id="camposExtras_prop_mecanicas" style="display:none;">
-              <div class="container" id="fundo_diferente">
-                  <!-- Primeira Linha de Inputs -->
-                  <div class="row mb-3">
-                      <h2 class="text-center">Propriedades Mecânicas</h2>
-                  </div>
-                  <div class="row">
-                      <div class="col text-center"><label>Escoamento<br>Yield Strength</label><input type="text" class="form-control" id="cc_escoamento" name="cc_escoamento"></div>
-                      <div class="col text-center"><label>Resistência Tração<br>Tensile Strength</label><input type="text" class="form-control" id="cc_tracao" name="cc_tracao"></div>
-                      <div class="col text-center"><label>Redução de Área(%)<br>Reduction of Area(%)</label><input type="text" class="form-control" id="cc_reducao" name="cc_reducao"></div>
-                      <div class="col text-center"><label>Alongamento(%)<br>Elongation(%)</label><input type="text" class="form-control" id="cc_alongamento" name="cc_alongamento"></div>
-                      <div class="col text-center"><label>Dureza<br>Hardness</label><input type="text" class="form-control" id="cc_dureza" name="cc_dureza"></div>
-                      <div class="col text-center"><label>Prova de Carga<br>Load Proof</label><input type="text" class="form-control" id="cc_carga" name="cc_carga"></div>
-                  </div>
-              </div>
-          </div>
+            <div id="camposExtras_prop_mecanicas" style="display:none;">
+                <div class="container" id="fundo_diferente">
+                    <!-- Primeira Linha de Inputs -->
+                    <div class="row mb-3">
+                        <h2 class="text-center">Propriedades Mecânicas</h2>
+                    </div>
+                    <div class="row">
+                        <div class="col text-center"><label>Escoamento<br>Yield Strength</label><input type="text" class="form-control" id="cc_escoamento" name="cc_escoamento"></div>
+                        <div class="col text-center"><label>Resistência Tração<br>Tensile Strength</label><input type="text" class="form-control" id="cc_tracao" name="cc_tracao"></div>
+                        <div class="col text-center"><label>Redução de Área(%)<br>Reduction of Area(%)</label><input type="text" class="form-control" id="cc_reducao" name="cc_reducao"></div>
+                        <div class="col text-center"><label>Alongamento(%)<br>Elongation(%)</label><input type="text" class="form-control" id="cc_alongamento" name="cc_alongamento"></div>
+                        <div class="col text-center"><label>Dureza<br>Hardness</label><input type="text" class="form-control" id="cc_dureza" name="cc_dureza"></div>
+                        <div class="col text-center"><label>Prova de Carga<br>Load Proof</label><input type="text" class="form-control" id="cc_carga" name="cc_carga"></div>
+                    </div>
+                </div>
+            </div>
 
-          <div id="camposExtras_tratamentos" style="display:none;">
-              <div class="container" id="fundo_diferente">
-                  <!-- Primeira Linha de Inputs -->
-                  <div class="row mb-3">
-                      <h2 class="text-center">Tratamentos</h2>
-                  </div>
-                  <div class="row">
-                      <div class="col text-center"><label>Temperatura de Revenimento<br>Tempering Temperature</label><input type="text" class="form-control" id="cc_revenimento" name="cc_revenimento"></div>
-                      <div class="col text-center"><label>Tratamento Térmico<br>Thermal Treatment</label><input type="text" class="form-control" id="cc_termico" name="cc_termico"></div>
-                      <div class="col text-center"><label>Tratamento Superficial<br>Surface Treatment</label><input type="text" class="form-control" id="cc_superficial" name="cc_superficial"></div>
-                      <div class="col text-center"><label>Macrografia<br>Macrography</label><input type="text" class="form-control" id="cc_macrografia" name="cc_macrografia"></div>
-                      <div class="col text-center"><label>Observações<br>Comments</label><input type="text" class="form-control" id="cc_observacao" name="cc_observacao"></div>
-                  </div>
-              </div>
-          </div>
-          <div class="container">
-              <div class="row">
+            <div id="camposExtras_tratamentos" style="display:none;">
+                <div class="container" id="fundo_diferente">
+                    <!-- Primeira Linha de Inputs -->
+                    <div class="row mb-3">
+                        <h2 class="text-center">Tratamentos</h2>
+                    </div>
+                    <div class="row">
+                        <div class="col text-center"><label>Temperatura de Revenimento<br>Tempering Temperature</label><input type="text" class="form-control" id="cc_revenimento" name="cc_revenimento"></div>
+                        <div class="col text-center"><label>Tratamento Térmico<br>Thermal Treatment</label><input type="text" class="form-control" id="cc_termico" name="cc_termico"></div>
+                        <div class="col text-center"><label>Tratamento Superficial<br>Surface Treatment</label><input type="text" class="form-control" id="cc_superficial" name="cc_superficial"></div>
+                        <div class="col text-center"><label>Macrografia<br>Macrography</label><input type="text" class="form-control" id="cc_macrografia" name="cc_macrografia"></div>
+                        <div class="col text-center"><label>Observações<br>Comments</label><input type="text" class="form-control" id="cc_observacao" name="cc_observacao"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
                     {% with messages = get_flashed_messages() %}
                     {% if messages %}
                     <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
@@ -190,40 +188,40 @@
                     {% endif %}
                     {% endwith %}
 
-                  <!-- Limitar botão de acordo com privilegio -->
-                  {% if session['privilegio'] != 0 %}
-                  <!-- Botão de envio -->
-                  <button type="submit" id="botao-registrar" name="bt_registrar_certificado" value="bt_registrar_certificado" class="btn btn-secondary w-100 mb-3 ">Registrar Certificado</button>
-                  {% else %}
-                  <!-- Botão desabilitado se o privilégio for 0 -->
-                  <button type="submit" id="botao-registrar_d" name="bt_registrar_certificado" value="bt_registrar_certificado" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
-                  {% endif %}
-              </div>
-          </div>
-      </div>
-  </div>
+                    <!-- Limitar botão de acordo com privilegio -->
+                    {% if session['privilegio'] == 9 or session['privilegio'] == 7 %}
+                    <!-- Botão de envio -->
+                    <button type="submit" id="botao-registrar" name="bt_registrar_certificado" value="bt_registrar_certificado" class="btn btn-secondary w-100 mb-3 ">Registrar Certificado</button>
+                    {% else %}
+                    <!-- Botão desabilitado se o privilégio for 0 -->
+                    <button type="submit" id="botao-registrar_d" name="bt_registrar_certificado" value="bt_registrar_certificado" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 
 </form>
 
-  <script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
-      const comp_quimicaCheckbox = document.getElementById('comp_quimica');
-      const prop_mecanicasCheckbox = document.getElementById('prop_mecanicas');
-      const tratamentosCheckbox = document.getElementById('tratamentos');
-      const analise_dimensionalCheckbox = document.getElementById('analise_dimensional');
+        const comp_quimicaCheckbox = document.getElementById('comp_quimica');
+        const prop_mecanicasCheckbox = document.getElementById('prop_mecanicas');
+        const tratamentosCheckbox = document.getElementById('tratamentos');
+        const analise_dimensionalCheckbox = document.getElementById('analise_dimensional');
 
-      comp_quimicaCheckbox.addEventListener('change', function() {
-        camposExtras_comp_quimica.style.display = comp_quimicaCheckbox.checked ? 'block' : 'none';
-      });
-      prop_mecanicasCheckbox.addEventListener('change', function() {
-        camposExtras_prop_mecanicas.style.display = prop_mecanicasCheckbox.checked ? 'block' : 'none';
-      });
-      tratamentosCheckbox.addEventListener('change', function() {
-        camposExtras_tratamentos.style.display = tratamentosCheckbox.checked ? 'block' : 'none';
-      });
-      analise_dimensionalCheckbox.addEventListener('change', function() {
-        camposExtras_analise_dimensional.style.display = analise_dimensionalCheckbox.checked ? 'block' : 'none';
-      });
+        comp_quimicaCheckbox.addEventListener('change', function() {
+            camposExtras_comp_quimica.style.display = comp_quimicaCheckbox.checked ? 'block' : 'none';
+        });
+        prop_mecanicasCheckbox.addEventListener('change', function() {
+            camposExtras_prop_mecanicas.style.display = prop_mecanicasCheckbox.checked ? 'block' : 'none';
+        });
+        tratamentosCheckbox.addEventListener('change', function() {
+            camposExtras_tratamentos.style.display = tratamentosCheckbox.checked ? 'block' : 'none';
+        });
+        analise_dimensionalCheckbox.addEventListener('change', function() {
+            camposExtras_analise_dimensional.style.display = analise_dimensionalCheckbox.checked ? 'block' : 'none';
+        });
 
     });
 

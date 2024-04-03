@@ -2,32 +2,34 @@
 
 {% block content %}
 
-<!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-  <form method="POST" action="{{ url_for('pesquisar_certificado') }}">
-    <div class="py-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <h1 class="text-center">Pesquisar Certificados</h1>
+    <form method="POST" action="{{ url_for('pesquisar_certificado') }}">
+      <div class="py-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12">
+            <h1 class="text-center">Pesquisar Certificados</h1>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-    <div class="">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-3" style="">
-                  <div class="form-group"><label>Número da Nota</label><input type="text" class="form-control" id="pc_numero_nota" name="pc_numero_nota"></div>
-                </div>
-            </div>
-            <!-- Botão de envio -->
-            <button type="submit" class="btn btn-secondary w-100 mb-3">Pesquisar Certificado</button>
-        </div>
-    </div>
+      <div class="">
+          <div class="container">
+              <div class="row">
+                  <div class="col-md-3" style="">
+                      <div class="form-group"><label>Número da Nota</label><input type="text" class="form-control" id="pc_numero_nota" name="pc_numero_nota"></div>
+                  </div>
+                  <div class="col-md-3" style="">
+                      <div class="form-group"><label>Cód. Produto</label><input type="text" class="form-control" id="pc_cod_produto" name="pc_cod_produto"></div>
+                  </div>
+              </div>
+              <!-- Botão de envio -->
+              <button type="submit" class="btn btn-secondary w-100 mb-3">Pesquisar Certificado</button>
+          </div>
+      </div>
 
-  </form>
+    </form>
 
 <!-- Resultados da Pesquisa -->
 <div class="container mt-4">

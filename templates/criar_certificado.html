@@ -6,13 +6,13 @@
 
 <form method="POST" action="{{ url_for('criar_certificado') }}">
     <div class="py-5">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1 class="text-center">Criar Certificado</h1>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1 class="text-center">Criar Certificado</h1>
+                </div>
             </div>
         </div>
-    </div>
     </div>
 
 <div class="">
@@ -31,7 +31,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                {% if session['privilegio'] != 0 %}
+                {% if session['privilegio'] == 9 or session['privilegio'] == 7 %}
                 <!-- Botão de envio -->
                 <button type="submit" name="bt_procurar_nota" value="bt_procurar_nota" class="btn btn-secondary w-100 mb-3">Procurar Nota</button>
                 {% else %}
@@ -53,81 +53,79 @@
 <form method="POST" action="{{ url_for('gerar_pdf') }}">
 <div class="">
     <div class="container">
-            <div class="row">
-                <div class="col-md-3" style="">
-                  <div class="form-group"><label>Número do Certificado</label><input type="text" class="form-control" id="criar_numero_certificado" name="criar_numero_certificado"
-                                                                                     value="{{ proximo_numero_certificado }}" readonly></div>
-                </div>
-                <div class="col-md-3" style="">
-                    <div class="form-group"><label>Cliente:</label><input type="text" class="form-control" id="criar_cliente" name="criar_cliente"></div>
-                </div>
-                <div class="col-md-3" style="">
-                    <div class="form-group"><label>Pedido:</label><input type="text" class="form-control" id="criar_pedido" name="criar_pedido"></div>
-                </div>
-                <div class="col-md-3" style="">
-                    <div class="form-group"><label>Pedido ARS:</label><input type="text" class="form-control" id="criar_pedido_ars" name="criar_pedido_ars"></div>
-                </div>
+        <div class="row">
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Número do Certificado</label><input type="text" class="form-control" id="criar_numero_certificado" name="criar_numero_certificado" value="{{ proximo_numero_certificado }}" readonly></div>
             </div>
-            <div class="row">
-                <div class="col-md-3" style="">
-                    <div class="form-group"><label>Número Certificado Fabricante:</label><input type="text" class="form-control" id="criar_numero_fabricante" name="criar_numero_fabricante"></div>
-                </div>
-                <div class="col-md-3" style="">
-                    <div class="form-group"><label>Descrição Material:</label><input type="text" class="form-control" id="criar_desc_material" name="criar_desc_material"
-                    value="{{ resultado['cadastro_certificados']['cc_descricao'] if resultado is defined and resultado['cadastro_certificados'] else '' }}" readonly></div>
-                </div>
-                <div class="col-md-3" style="">
-                    <div class="form-group"><label>Quantidade:</label><input type="text" class="form-control" id="criar_quantidade" name="criar_quantidade"></div>
-                </div>
-                <div class="col-md-3" style="">
-                    <div class="form-group"><label>Material:</label><input type="text" class="form-control" id="criar_material" name="criar_material"></div>
-                </div>
-
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Cliente:</label><input type="text" class="form-control" id="criar_cliente" name="criar_cliente"></div>
             </div>
-            <div class="row">
-                <div class="col-md-3" style="">
-                    <div class="form-group"><label>Data:</label><input type="date" class="form-control" id="criar_data" name="criar_data"></div>
-                </div>
-                <div class="col-md-3" style="">
-                    <div class="form-group"><label>Lote:</label><input type="text" class="form-control" id="criar_lote" name="criar_lote"></div>
-                </div>
-                <div class="col-md-3" style="">
-                    <div class="form-group"><label>Código Fornecedor:</label><input type="text" class="form-control" id="criar_codigo_fornecedor" name="criar_codigo_fornecedor"
-                                                                                    value="{{ resultado['cadastro_certificados']['cc_cod_fornecedor'] if resultado is defined and resultado['cadastro_certificados'] else '' }}" readonly></div>
-                </div>
-                <div class="col-md-3" style="">
-                    <div class="form-group"><label>Nota de Saída:</label><input type="text" class="form-control" id="nota_saida" name="nota_saida"></div>
-                </div>
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Pedido:</label><input type="text" class="form-control" id="criar_pedido" name="criar_pedido"></div>
             </div>
-            {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
-                    <ul>
-                        {% for message in messages %}
-                            {% if 'Nota fiscal e código não encontrados.' in message %}
-                                <li class="flash-error">{{ message }}</li>
-                            {% else %}
-                                <li>{{ message }}</li>
-                            {% endif %}
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-            {% endwith %}
-            <div class="row">
-                <div class="col-md-12" style="">
-                    <!-- Limitar botão de acordo com privilegio -->
-                    {% if session['privilegio'] != 0 %}
-                    <!-- Botão de envio -->
-                    <button type="submit" ID="botao-criar" name="bt_criar_certificado" value="bt_criar_certificado" class="btn btn-secondary w-100 mb-3">Criar Certificado</button>
-                    {% else %}
-                        <!-- Botão desabilitado se o privilégio for 0 -->
-                        <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio Para Criar Certificado</button>
-                    {% endif %}
-                </div>
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Pedido ARS:</label><input type="text" class="form-control" id="criar_pedido_ars" name="criar_pedido_ars"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Número Certificado Fabricante:</label><input type="text" class="form-control" id="criar_numero_fabricante" name="criar_numero_fabricante"></div>
+            </div>
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Descrição Material:</label><input type="text" class="form-control" id="criar_desc_material" name="criar_desc_material"
+                value="{{ resultado['cadastro_certificados']['cc_descricao'] if resultado is defined and resultado['cadastro_certificados'] else '' }}" readonly></div>
+            </div>
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Quantidade:</label><input type="text" class="form-control" id="criar_quantidade" name="criar_quantidade"></div>
+            </div>
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Material:</label><input type="text" class="form-control" id="criar_material" name="criar_material"></div>
             </div>
 
         </div>
+        <div class="row">
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Data:</label><input type="date" class="form-control" id="criar_data" name="criar_data"></div>
+            </div>
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Lote:</label><input type="text" class="form-control" id="criar_lote" name="criar_lote"></div>
+            </div>
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Código Fornecedor:</label><input type="text" class="form-control" id="criar_codigo_fornecedor" name="criar_codigo_fornecedor"
+                                                                                value="{{ resultado['cadastro_certificados']['cc_cod_fornecedor'] if resultado is defined and resultado['cadastro_certificados'] else '' }}" readonly></div>
+            </div>
+            <div class="col-md-3" style="">
+                <div class="form-group"><label>Nota de Saída:</label><input type="text" class="form-control" id="nota_saida" name="nota_saida"></div>
+            </div>
+        </div>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+                <ul>
+                    {% for message in messages %}
+                        {% if 'Nota fiscal e código não encontrados.' in message %}
+                            <li class="flash-error">{{ message }}</li>
+                        {% else %}
+                            <li>{{ message }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        {% endwith %}
+        <div class="row">
+            <div class="col-md-12" style="">
+                <!-- Limitar botão de acordo com privilegio -->
+                {% if session['privilegio'] == 9 or session['privilegio'] == 7 %}
+                <!-- Botão de envio -->
+                <button type="submit" ID="botao-criar" name="bt_criar_certificado" value="bt_criar_certificado" class="btn btn-secondary w-100 mb-3">Criar Certificado</button>
+                {% else %}
+                    <!-- Botão desabilitado se o privilégio for 0 -->
+                    <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio Para Criar Certificado</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 
 </form>

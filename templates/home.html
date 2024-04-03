@@ -2,14 +2,66 @@
 
 {% block content %}
 
-  <div class="container my-5">
-    <div class="bg-body-tertiary p-5 rounded">
-      <div class="col-sm-8 py-5 mx-auto">
-        <h1 class="display-5 fw-normal">Gerador de certificados ARS</h1>
-        <p class="fs-5">Este WebService será o responsável por cadastrar e criar os certificados necessários para o cliente.</p>
-        <p>Por meio dessa aplicação será possível fazer o controle dos certificados fornecidos pela ARS - Qualidade.</p>
+<style>
+.btn-custom {
+    background-color: #122556; /* Azul Bootstrap padrão, ajuste conforme necessário */
+    border-color: #ffffff;
+    color: white;
+}
+.btn-custom:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+</style>
+
+<div class="container-fluid my-5">
+    <div class="row">
+        <div class="col-md-3 p-4">
+            <div class="mb-5">
+                <h5 class="text-center">Inspeção</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-custom rounded-pill" href="/registro_inspecao" role="button">Registrar Inspeção</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/pesquisar_registro_inspecao" role="button">Pesquisar Registro Inspeção</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/avaliacao_diaria.html" role="button">Avaliação Diária</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/plano_controle_inspecao" role="button">Plano de Controle</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_norma" role="button">Cadastro de Normas</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/lista_norma" role="button">Lista de Normas</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-6 p-5">
+            <div class="text-center mb-5">
+                <img src="{{ url_for('static', filename='images/logoGrandePlainSVG.svg') }}" alt="Logo da ARS Qualidade" class="img-fluid">
+            </div>
+            <!--
+            <div class="bg-body-tertiary p-5 rounded">
+              <h1 class="display-5 fw-normal">Título de Alguma Coisa</h1>
+              <p class="fs-5">Sub topico texto.</p>
+              <p>Texto explicativo ou qualquer outra coisa.</p>
+            </div>
+            -->
+        </div>
+
+        <div class="col-md-3 p-4">
+            <div>
+                <h5 class="text-center">Qualidade</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_certificados" role="button">Cadastro de Certificado</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/criar_certificado" role="button">Criar Certificado</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/pesquisar_certificado" role="button">Pesquisar Certificado</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/download_certificado" role="button">Download de Certificado</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_fornecedor" role="button">Cadastro de Fornecedor</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="pesquisar_avaliacao_diaria.html" role="button">IQF</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
     </div>
-    </div>
-  </div>
+</div>
 
 {% endblock %}
