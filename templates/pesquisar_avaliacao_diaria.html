@@ -2,6 +2,8 @@
 
 {% block content %}
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
 <form method="POST" action="{{ url_for('pesquisar_avaliacao_diaria') }}" enctype="multipart/form-data">
@@ -29,12 +31,16 @@
                                 <option value="2027">2027</option>
                             </select>
                         </div>
-                        <div class="form-group col-md-3">
-                            <button onclick="printSection('printableArea')">Imprimir Avaliação</button>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="form-group col-md-12">
+                            <button type="submit" class="btn btn-secondary w-100">Pesquisar</button>
                         </div>
                     </div>
-                    <div class ="form-row">
-                        <button type="submit" class="btn btn-secondary w-100">Pesquisar</button>
+                    <div class="row justify-content-end">
+                        <div class="form-group col-md-3">
+                            <button type="button" onclick="printPDF('printableArea')" class="btn btn-secondary w-100">Gerar PDF</button>
+                        </div>
                     </div>
                     <div class = "form-row">
                         <div class ="form-group col-md-12">
@@ -43,7 +49,7 @@
                                     <div class="flash-messages">
                                         {% for message in messages %}
                                         <div class="alert alert-warning" role="alert">{{ message }}</div>
-                                            {% endfor %}
+                                        {% endfor %}
                                     </div>
                                 {% endif %}
                             {% endwith %}
@@ -154,8 +160,41 @@
     display: inline-block;
     vertical-align: middle;
   }
-</style>
 
+  /* Estilos para impressão */
+@media print {
+    body * {
+        display: none;
+    }
+
+    #printableArea, #printableArea * {
+        display: block;
+    }
+
+    #printableArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .form-group {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .col-md-3 {
+        box-sizing: border-box;
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+}
+</style>
 
 {% set nomes_meses = {
               '1': 'Janeiro', '2': 'Fevereiro', '3': 'Março', '4': 'Abril',
@@ -171,20 +210,19 @@
 
 <div id="printableArea">
     <div class="legenda">
-      <div class="item-legenda"><span class="circulo verde"></span> Aprovado sem restrições</div>
-      <div class="item-legenda"><span class="circulo azul"></span> Aprovado com alerta</div>
-      <div class="item-legenda"><span class="circulo amarelo"></span> Aprovado condicional</div>
-      <div class="item-legenda"><span class="circulo vermelho"></span> Reprovado</div>
+        <div class="item-legenda"><span class="circulo verde"></span> Aprovado sem restrições</div>
+        <div class="item-legenda"><span class="circulo azul"></span> Aprovado com alerta</div>
+        <div class="item-legenda"><span class="circulo amarelo"></span> Aprovado condicional</div>
+        <div class="item-legenda"><span class="circulo vermelho"></span> Reprovado</div>
     </div>
-
     {% if pesquisa_realizada %}
         <div class="container">
-            <h3>Resumo por Trimestre do Fornecedor: {{ fornecedor_escolhido }}</h3>
+            <h3>Resumo por Trimestre do Fornecedor: {{ fornecedor_escolhido }} </h3>
             <div class="row">
                 {% for trimestre in range(1, 5) %}
                     {% set nota_final = notas_finais_trimestres[trimestre] %}
                     {% set class_cor = 'nota-vermelha' %} {# Define o padrão como vermelho #}
-                    {% if nota_final > 70 %}
+                    {% if nota_final >= 70 %}
                       {% set class_cor = 'nota-verde' %}
                     {% elif nota_final >= 55 %}
                       {% set class_cor = 'nota-azul' %}
@@ -223,8 +261,21 @@
                     </div>
                 {% endfor %}
             </div>
+            <div class="row">
+                <div class="form-group col-md-3">
+                    <div>Aprovado 70 - 100</div>
+                </div>
+                <div class="form-group col-md-3">
+                    <div>Aprovado com alerta 55 - 69</div>
+                </div>
+                <div class="form-group col-md-3">
+                    <div >Aprovado condicional 40 - 54</div>
+                </div>
+                <div class="form-group col-md-3">
+                    <div>Reprovado 0 - 39</div>
+                </div>
+            </div>
         </div>
-
 
         <div class="container">
             <h2>Avaliação Diária</h2>
@@ -261,16 +312,52 @@
     {% endif %}
 </div>
 
-
-
 <script>
-    function printSection(divId) {
-        let printContents = document.getElementById(divId).innerHTML;
-        let originalContents = document.body.innerHTML;
+    var logoPath = "{{ url_for('static', filename='images/LogoCertificado.png') }}"; // Isso precisa ser uma URL acessível no lado do cliente
 
-        document.body.innerHTML = printContents;
-        window.print();
-        document.body.innerHTML = originalContents;
+    function printPDF(divId) {
+        event.preventDefault(); // Impede que a página seja recarregada
+        const element = document.getElementById(divId);
+
+        html2canvas(element, {scrollY: -window.scrollY, scale: 1}).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jspdf.jsPDF({
+                orientation: 'portrait',
+                unit: 'px',
+                format: 'a4'
+            });
+
+            const margin = 20; // Margem de 20px em todas as direções
+            const startY = 120; // Ajuste isso conforme necessário para posicionar a imagem abaixo do logotipo
+            const pdfWidth = pdf.internal.pageSize.getWidth() - 2 * margin;
+            const pdfHeight = pdf.internal.pageSize.getHeight() - startY - margin;
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const canvasRatio = canvasWidth / canvasHeight;
+            const pdfRatio = pdfWidth / pdfHeight;
+
+            let finalWidth, finalHeight;
+            if (canvasRatio > pdfRatio) {
+                finalWidth = pdfWidth;
+                finalHeight = pdfWidth / canvasRatio;
+            } else {
+                finalHeight = pdfHeight;
+                finalWidth = pdfHeight * canvasRatio;
+            }
+
+            // Primeiro, carregar a imagem do logotipo
+            var img = new Image();
+            img.onload = function() {
+                pdf.addImage(this, 'PNG', margin, 20, 150, 75);
+
+                pdf.addImage(imgData, 'PNG', margin, startY, finalWidth, finalHeight);
+                pdf.save('IQF.pdf');
+            };
+            img.crossOrigin = "";
+            img.src = logoPath;
+        }).catch(err => {
+            console.error('Erro ao gerar o PDF', err);
+        });
     }
 </script>
 
