@@ -101,14 +101,39 @@ def logout():
     return redirect(url_for('login'))
 
 
-# Context processor para adicionar variáveis a todos os templates
 @app.context_processor
 def inject_aviso():
-    mensagens_aviso = [
-        "Atenção: Vencimento .......",
-        "Lembrete: Calibrar .......",
-        "Aviso: Aviso ........"
-    ]
+    # Conectar ao banco de dados
+    connection = conectar_db()
+    cursor = connection.cursor()
+    mensagens_aviso = []
+
+    try:
+        cursor.execute("SELECT mensagem, data_calibracao, anos_vencimento FROM dbo.teste_mensagem")
+        mensagens_db = cursor.fetchall()
+
+        for mensagem, data_calibracao, anos_vencimento in mensagens_db:
+            data_calibracao_dt = datetime.datetime.strptime(data_calibracao, "%d-%m-%Y").date()
+            data_vencimento = datetime.date(data_calibracao_dt.year + int(anos_vencimento), data_calibracao_dt.month,
+                                            data_calibracao_dt.day)
+            hoje = datetime.date.today()
+            dias_para_vencimento = (data_vencimento - hoje).days
+            data_vencimento_formatada = data_vencimento.strftime("%d/%m/%Y")
+            if dias_para_vencimento <= 60 and dias_para_vencimento >= 0:
+                aviso = f"{mensagem} - Vencimento em {data_vencimento_formatada} - Faltam {dias_para_vencimento} dias"
+                mensagens_aviso.append(aviso)
+            elif dias_para_vencimento < 0:
+                dias_apos_vencimento = abs(dias_para_vencimento)
+                aviso = f"{mensagem} - Venceu em {data_vencimento_formatada} - Vencido há {dias_apos_vencimento} dias"
+                mensagens_aviso.append(aviso)
+
+    except Exception as e:
+        print(f"Erro ao buscar mensagens de aviso: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+
+    # Retornar as mensagens para o template
     return dict(mensagens_aviso=mensagens_aviso)
 
 
