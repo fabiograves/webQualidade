@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
+<style>
+    /* Ajuste o Select2 para combinar com a altura dos campos de formulário do Bootstrap */
+    .select2-container--default .select2-selection--single {
+        height: calc(2.25rem + 2px); /* Ajuste para combinar com a altura dos campos de entrada do Bootstrap 4 */
+        padding: .375rem .75rem; /* Mesmo padding dos campos de entrada do Bootstrap */
+        font-size: 1rem; /* Tamanho de fonte padrão do Bootstrap */
+        line-height: 1.5; /* Altura de linha padrão do Bootstrap */
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 1.5; /* Altura de linha padrão do Bootstrap */
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(2.25rem + 2px); /* Ajuste para combinar com a altura dos campos de entrada do Bootstrap 4 */
+    }
+
+    /* Corrigir a posição da seta para alinhar com os campos de entrada */
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Se necessário, ajustar o foco */
+    .select2-container--focus .select2-selection {
+        border-color: #80bdff;
+        outline: 0;
+        box-shadow: 0 0 0 .2rem rgba(0,123,255,.25);
+    }
+</style>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <form method="POST" action="{{ url_for('cadastro_equipamento') }}" enctype="multipart/form-data">
+        <div class="py-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="text-center">Cadastro de Equipamento</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Número do Instrumento</label>
+                            <select class="form-control" id="cad_numero_instrumento" name="cad_numero_instrumento" onchange="buscarDadosInstrumento(this.value)">
+                                <option value="">Selecione...</option>
+                                {% for numero_instrumento in numeros_instrumentos %}
+                                <option value="{{ numero_instrumento }}">{{ numero_instrumento }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Equipamento</label>
+                            <input type="text" class="form-control" id="cad_equipamento" name="cad_equipamento">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Ultima Calibração</label>
+                            <input type="date" class="form-control" id="cad_ultima_calibracao" name="cad_ultima_calibracao">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Intervalo de Calibração</label>
+                            <input type="text" class="form-control" id="cad_intervalo" name="cad_intervalo">
+                        </div>
+                    </div>
+                </div>
+                <!-- Botão de envio -->
+                <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Equipamento</button>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="alert alert-success" role="alert">
+                            {% for category, message in messages %}
+                                {{ message }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+  </form>
+
+
+<script>
+
+    $(document).ready(function() {
+        $('#cad_numero_instrumento').select2({
+            placeholder: "Número de instrumento",
+            allowClear: true,
+            tags: true
+        });
+    });
+
+    function buscarDadosInstrumento(numeroInstrumento) {
+        if (!numeroInstrumento) {
+            return;
+        }
+        fetch(`/buscar_dados_instrumento/${numeroInstrumento}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data) {
+                    document.getElementById('cad_equipamento').value = data.equipamento || '';
+                    document.getElementById('cad_ultima_calibracao').value = data.ultima_calibracao || '';
+                    document.getElementById('cad_intervalo').value = data.intervalo || '';
+                }
+            })
+            .catch(error => console.error('Erro ao buscar dados do instrumento:', error));
+    }
+</script>
+
+{% endblock %}

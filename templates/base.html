@@ -15,6 +15,18 @@
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
+    <!-- jQuery Versão Completa -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
+    <!-- Incluir CSS do Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Incluir JS do Select2 após o jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
 
     <style>
         @media (min-width: 768px) {
@@ -128,9 +140,6 @@
 
 
 </main>
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script type="application/json" id="mensagensAvisoData">
         {{ mensagens_aviso | tojson | safe }}
@@ -151,8 +160,7 @@
         });
 
         document.getElementById('abrirCalculadora').addEventListener('click', function(event) {
-            event.preventDefault(); // Previne o comportamento padrão do link
-            // Abre uma nova janela pop-up com a calculadora
+            event.preventDefault();
             window.open('https://www.calculator.net/', 'Calculadora', 'width=400,height=400');
         });
 

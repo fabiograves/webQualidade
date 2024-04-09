@@ -2,6 +2,16 @@
 
 {% block content %}
 
+<!-- Correção para a inclusão do jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Incluindo o CSS do Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+
+<!-- Incluindo o JavaScript do Select2 após o jQuery -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
+
     <div class="py-5">
         <div class="container">
             <div class="row">
@@ -334,33 +344,52 @@
 
 
 <script>
-    function exibirCampos() {
-        var selecao = document.getElementById("selecaoTipo").value;
-        var camposAnel = document.getElementById("camposAnel");
-        var camposArruelas = document.getElementById("camposArruelas");
-        var camposChaveta = document.getElementById("camposChaveta");
-        var camposChumbador = document.getElementById("camposChumbador");
-        var camposContrapino = document.getElementById("camposContrapino");
-        var camposEspecial = document.getElementById("camposEspecial");
-        var camposGrampos = document.getElementById("camposGrampos");
-        var camposParafusos = document.getElementById("camposParafusos");
-        var camposPorcas = document.getElementById("camposPorcas");
-        var camposPinos = document.getElementById("camposPinos");
-        var camposPrisioneiroEstojo = document.getElementById("camposPrisioneiroEstojo");
-        var camposRebite = document.getElementById("camposRebite");
 
-        camposAnel.style.display = selecao == "anel" ? "block" : "none";
-        camposArruelas.style.display = selecao == "arruelas" ? "block" : "none";
-        camposChaveta.style.display = selecao == "chaveta" ? "block" : "none";
-        camposChumbador.style.display = selecao == "chumbador" ? "block" : "none";
-        camposContrapino.style.display = selecao == "contrapino" ? "block" : "none";
-        camposEspecial.style.display = selecao == "especial" ? "block" : "none";
-        camposGrampos.style.display = selecao == "grampos" ? "block" : "none";
-        camposParafusos.style.display = selecao == "parafusos" ? "block" : "none";
-        camposPorcas.style.display = selecao == "porcas" ? "block" : "none";
-        camposPinos.style.display = selecao == "pinos" ? "block" : "none";
-        camposPrisioneiroEstojo.style.display = selecao == "prisioneiro_estojo" ? "block" : "none";
-        camposRebite.style.display = selecao == "rebite" ? "block" : "none";
+    $(document).ready(function() {
+        if ($.fn.select2) {
+            $('#ri_desenho').select2({
+                placeholder: "Pesquisar...",
+                allowClear: true,
+                minimumInputLength: 0,
+                language: {
+                    inputTooShort: function() {
+                        return "Digite para pesquisar...";
+                    },
+                    noResults: function() {
+                    return "Nenhum resultado encontrado";
+                }
+                }
+            });
+        }
+    });
+
+    function exibirCampos() {
+        const selecao = document.getElementById("selecaoTipo").value;
+        const camposAnel = document.getElementById("camposAnel");
+        const camposArruelas = document.getElementById("camposArruelas");
+        const camposChaveta = document.getElementById("camposChaveta");
+        const camposChumbador = document.getElementById("camposChumbador");
+        const camposContrapino = document.getElementById("camposContrapino");
+        const camposEspecial = document.getElementById("camposEspecial");
+        const camposGrampos = document.getElementById("camposGrampos");
+        const camposParafusos = document.getElementById("camposParafusos");
+        const camposPorcas = document.getElementById("camposPorcas");
+        const camposPinos = document.getElementById("camposPinos");
+        const camposPrisioneiroEstojo = document.getElementById("camposPrisioneiroEstojo");
+        const camposRebite = document.getElementById("camposRebite");
+
+        camposAnel.style.display = selecao === "anel" ? "block" : "none";
+        camposArruelas.style.display = selecao === "arruelas" ? "block" : "none";
+        camposChaveta.style.display = selecao === "chaveta" ? "block" : "none";
+        camposChumbador.style.display = selecao === "chumbador" ? "block" : "none";
+        camposContrapino.style.display = selecao === "contrapino" ? "block" : "none";
+        camposEspecial.style.display = selecao === "especial" ? "block" : "none";
+        camposGrampos.style.display = selecao === "grampos" ? "block" : "none";
+        camposParafusos.style.display = selecao === "parafusos" ? "block" : "none";
+        camposPorcas.style.display = selecao === "porcas" ? "block" : "none";
+        camposPinos.style.display = selecao === "pinos" ? "block" : "none";
+        camposPrisioneiroEstojo.style.display = selecao === "prisioneiro_estojo" ? "block" : "none";
+        camposRebite.style.display = selecao === "rebite" ? "block" : "none";
 
     }
 
@@ -388,6 +417,9 @@
         })
         .catch(error => console.error('Erro ao buscar imagem:', error));
     }
+
+
+
 
 </script>
 

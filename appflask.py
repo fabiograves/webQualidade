@@ -20,7 +20,6 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from collections import defaultdict
 
-
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
 
@@ -35,7 +34,8 @@ def conectar_db():
     database = "dbQualidade"
     username = "Qualidade"
     password = "y2%:ff4G4A>7"
-    connectionString = f'DRIVER={driver};SERVER={server},1433;DATABASE={database};UID={username};PWD={password};Encrypt=yes;TrustServerCertificate=yes;'
+    connectionString = (f'DRIVER={driver};SERVER={server},1433;DATABASE={database};UID={username};'
+                        f'PWD={password};Encrypt=yes;TrustServerCertificate=yes;')
 
     try:
         connection = pyodbc.connect(connectionString)
@@ -45,7 +45,7 @@ def conectar_db():
 
 
 def is_logged_in():
-    """Verifica se o usuário está logado."""
+    """Verifica se o utilizador está logado."""
     return 'logged_in' in session
 
 
@@ -58,7 +58,8 @@ def login():
         try:
             connection = conectar_db()
             cursor = connection.cursor()
-            cursor.execute('SELECT * FROM dbo.usuarios WHERE nome_usuario = ? AND senha_usuario = ?', (username, password))
+            cursor.execute('SELECT * FROM dbo.usuarios WHERE nome_usuario = ? AND senha_usuario = ?',
+                           (username, password))
             user = cursor.fetchone()
 
             if user:
@@ -109,22 +110,23 @@ def inject_aviso():
     mensagens_aviso = []
 
     try:
-        cursor.execute("SELECT mensagem, data_calibracao, anos_vencimento FROM dbo.teste_mensagem")
+        cursor.execute("SELECT numero_instrumento, equipamento, ultima_calibracao, intervalo "
+                       "FROM dbo.cadastro_equipamento")
         mensagens_db = cursor.fetchall()
 
-        for mensagem, data_calibracao, anos_vencimento in mensagens_db:
-            data_calibracao_dt = datetime.datetime.strptime(data_calibracao, "%d-%m-%Y").date()
-            data_vencimento = datetime.date(data_calibracao_dt.year + int(anos_vencimento), data_calibracao_dt.month,
+        for numero_instrumento, equipamento, ultima_calibracao, intervalo in mensagens_db:
+            data_calibracao_dt = datetime.datetime.strptime(ultima_calibracao, "%Y-%m-%d").date()
+            data_vencimento = datetime.date(data_calibracao_dt.year + int(intervalo), data_calibracao_dt.month,
                                             data_calibracao_dt.day)
             hoje = datetime.date.today()
             dias_para_vencimento = (data_vencimento - hoje).days
             data_vencimento_formatada = data_vencimento.strftime("%d/%m/%Y")
             if dias_para_vencimento <= 60 and dias_para_vencimento >= 0:
-                aviso = f"{mensagem} - Vencimento em {data_vencimento_formatada} - Faltam {dias_para_vencimento} dias"
+                aviso = f"{numero_instrumento} - {equipamento} - Vencimento em {data_vencimento_formatada} - Faltam {dias_para_vencimento} dias"
                 mensagens_aviso.append(aviso)
             elif dias_para_vencimento < 0:
                 dias_apos_vencimento = abs(dias_para_vencimento)
-                aviso = f"{mensagem} - Venceu em {data_vencimento_formatada} - Vencido há {dias_apos_vencimento} dias"
+                aviso = f"{numero_instrumento} - {equipamento} - Venceu em {data_vencimento_formatada} - Vencido há {dias_apos_vencimento} dias"
                 mensagens_aviso.append(aviso)
 
     except Exception as e:
@@ -133,7 +135,7 @@ def inject_aviso():
         cursor.close()
         connection.close()
 
-    # Retornar as mensagens para o template
+    # Retornar as mensagens para o modelo
     return dict(mensagens_aviso=mensagens_aviso)
 
 
@@ -148,8 +150,85 @@ def home():
 
 @app.route('/download_certificado', methods=['GET', 'POST'])
 def download_certificado():
-
     return render_template('download_certificado.html')
+
+
+@app.route('/cadastro_equipamento', methods=['GET', 'POST'])
+def cadastro_equipamento():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    username = session['username']
+    print(f"Ação realizada por: {username}, Entrou em Cadastro de Equipamento")
+    numeros_instrumentos = []
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            # Busca todos os números de instrumentos existentes
+            cursor.execute("SELECT DISTINCT numero_instrumento FROM dbo.cadastro_equipamento ORDER BY numero_instrumento ASC")
+            numeros_instrumentos = [row[0] for row in cursor.fetchall()]
+
+    except Exception as e:
+        print(f"Erro ao buscar números de instrumentos: {e}")
+
+    if request.method == 'POST':
+        numero_instrumento = request.form.get('cad_numero_instrumento')
+        equipamento = request.form.get('cad_equipamento')
+        ultima_calibracao = request.form.get('cad_ultima_calibracao')
+        intervalo = request.form.get('cad_intervalo')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT COUNT(*) FROM dbo.cadastro_equipamento WHERE numero_instrumento = ?", (numero_instrumento,))
+                (count,) = cursor.fetchone()
+                if count > 0:
+                    sql_update = ("UPDATE dbo.cadastro_equipamento SET equipamento = ?, ultima_calibracao = ?, intervalo = ? "
+                                  "WHERE numero_instrumento = ?")
+                    cursor.execute(sql_update, (equipamento, ultima_calibracao, intervalo, numero_instrumento))
+                    print(f"Ação realizada por: {username}, Atualizou: {equipamento}")
+                    flash('Atualização de equipamento com sucesso!')
+                else:
+                    sql_insert = ("INSERT INTO dbo.cadastro_equipamento (numero_instrumento, equipamento, "
+                                  "ultima_calibracao, intervalo) VALUES (?, ?, ?, ?)")
+                    cursor.execute(sql_insert, (numero_instrumento, equipamento, ultima_calibracao, intervalo))
+                    print(f"Ação realizada por: {username}, Cadastrou: {equipamento}")
+                    flash('Cadastro de equipamento com sucesso!')
+                connection.commit()
+
+        except Exception as e:
+            print(f"Erro ao buscar números de instrumentos ou ao cadastrar/atualizar equipamento: {e}")
+            flash('Ocorreu um erro ao processar sua solicitação.', 'error')
+            return render_template('cadastro_equipamento.html', numeros_instrumentos=numeros_instrumentos), 500
+
+        finally:
+            if connection:
+                connection.close()
+
+    return render_template('cadastro_equipamento.html', numeros_instrumentos=numeros_instrumentos)
+
+
+
+@app.route('/buscar_dados_instrumento/<numero_instrumento>')
+def buscar_dados_instrumento(numero_instrumento):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT equipamento, ultima_calibracao, intervalo FROM dbo.cadastro_equipamento WHERE numero_instrumento = ?", (numero_instrumento,))
+            resultado = cursor.fetchone()
+            if resultado:
+                return jsonify({
+                    "equipamento": resultado[0],
+                    "ultima_calibracao": resultado[1] if resultado[1] else '',
+                    "intervalo": resultado[2]
+                })
+            else:
+                return jsonify({}), 404
+    except Exception as e:
+        print(f"Erro ao buscar dados do instrumento: {e}")
+        return "Erro ao buscar dados", 500
+    finally:
+        if connection:
+            connection.close()
 
 
 @app.route('/baixar_certificado_por_id', methods=['POST'])
@@ -164,6 +243,7 @@ def baixar_certificado_por_id():
     cursor = connection.cursor()
 
     try:
+        arquivos = None
         if numero_certificado:
             cursor.execute("SELECT arquivo FROM dbo.certificados_gerados WHERE id = ?", (numero_certificado,))
             arquivos = cursor.fetchall()
@@ -226,7 +306,7 @@ def cadastro_fornecedor():
         try:
             with connection.cursor() as cursor:
                 sql = "INSERT INTO dbo.cadastro_fornecedor (nome_fornecedor) VALUES (?)"
-                cursor.execute(sql, (nome_fornecedor))
+                cursor.execute(sql, nome_fornecedor)
                 connection.commit()
             flash('Formulário enviado com sucesso!')
             username = session['username']
@@ -270,20 +350,24 @@ def avaliacao_diaria():
 
                 # Agora, insira o novo registro
                 sql_insert = """
-                    INSERT INTO dbo.avaliacao_diaria (id_fornecedor, data, nao_conformidade, atraso_entrega, observacao)
+                    INSERT INTO dbo.avaliacao_diaria (id_fornecedor, data, nao_conformidade, atraso_entrega, 
+                    observacao)
                     VALUES (?, ?, ?, ?, ?)
                 """
                 cursor.execute(sql_insert, (id_fornecedor, data, nao_conformidade, atraso_entrega, observacao))
                 connection.commit()
 
                 username = session['username']
-                print(f"Ação realizada por: {username}, Avaliação Diária Data: {data} - ID:{id_fornecedor} - NC:{nao_conformidade} - AE:{atraso_entrega}")
+                print(
+                    f"Ação realizada por: {username}, Avaliação Diária Data: {data} - ID:{id_fornecedor}"
+                    f" - NC:{nao_conformidade} - AE:{atraso_entrega}")
                 flash('Registro inserido com sucesso!')
                 return redirect(url_for('avaliacao_diaria'))
 
             else:
                 # Se o método não for POST, apenas mostre a página com os fornecedores
-                sql_fornecedores = "SELECT id, nome_fornecedor FROM dbo.cadastro_fornecedor ORDER BY nome_fornecedor ASC"
+                sql_fornecedores = ("SELECT id, nome_fornecedor FROM dbo.cadastro_fornecedor "
+                                    "ORDER BY nome_fornecedor ASC")
                 cursor.execute(sql_fornecedores)
                 fornecedores = cursor.fetchall()
     except Exception as e:
@@ -350,16 +434,16 @@ def pesquisar_avaliacao_diaria():
             soma_atraso_entrega = sum(dia.get('atraso_entrega', 0) for dia in dias.values())
             qtd_dias_com_valor = sum(1 for dia in dias.values())
 
-            resumo_trimestral[mes] = {
-                'soma_nao_conformidade': soma_nao_conformidade,
-                'soma_atraso_entrega': soma_atraso_entrega,
-                'qtd_dias_com_valor': qtd_dias_com_valor
-            }
+            resumo_trimestral[mes] = {'soma_nao_conformidade': soma_nao_conformidade,
+                                      'soma_atraso_entrega': soma_atraso_entrega,
+                                      'qtd_dias_com_valor': qtd_dias_com_valor
+                                      }
 
         # Agrupa os dados por trimestre e calcula o valor final para cada mês
         for mes, dados in resumo_trimestral.items():
             trimestre = (mes - 1) // 3 + 1
-            dados['valor_final'] = ((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega']) / max(dados['qtd_dias_com_valor'], 1)) * 5
+            dados['valor_final'] = ((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega']) / max(
+                dados['qtd_dias_com_valor'], 1)) * 5
             resumo_por_trimestre[trimestre].append((mes, dados))
 
         notas_finais_trimestres = {}
@@ -487,7 +571,6 @@ def tratar_formulario():
     if not is_logged_in():
         return redirect(url_for('login'))
 
-    resultado = None
     proximo_numero_certificado = None
 
     if 'bt_procurar_nota' in request.form:
@@ -513,7 +596,7 @@ def tratar_formulario():
             print(f"Ação realizada por: {username}, Criar Certificado")
             return redirect(url_for('gerar_pdf'))
         else:
-            # Se os dados não estão disponíveis, fornece feedback e não redireciona para 'gerar_pdf'
+            # Se os dados não estão disponíveis, fornecer opinião e não redireciona para 'gerar_pdf'
             flash('Os dados para criar o PDF não estão disponíveis. Por favor, procure a nota fiscal novamente.')
             return redirect(url_for(
                 'criar_certificado'))
@@ -523,7 +606,7 @@ def tratar_formulario():
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT MAX(id) AS ultimo_id FROM dbo.certificados_gerados")
-            ultimo_id = cursor.fetchone()[0] or 0  # Usa 0 como fallback se não encontrar nenhum id
+            ultimo_id = cursor.fetchone()[0] or 0
             proximo_numero_certificado = ultimo_id + 1
     except Exception as e:
         print(f"Erro ao buscar o último ID: {e}")
@@ -570,7 +653,8 @@ def gerar_pdf():
         tem_dados_ad_grampos = dados_pdf.get('ad_grampos') and any(dados_pdf['ad_grampos'].values())
         tem_dados_ad_arruelas = dados_pdf.get('ad_arruelas') and any(dados_pdf['ad_arruelas'].values())
         tem_dados_ad_anel = dados_pdf.get('ad_anel') and any(dados_pdf['ad_anel'].values())
-        tem_dados_ad_prisioneiro_estojo = dados_pdf.get('ad_prisioneiro_estojo') and any(dados_pdf['ad_prisioneiro_estojo'].values())
+        tem_dados_ad_prisioneiro_estojo = dados_pdf.get('ad_prisioneiro_estojo') and any(
+            dados_pdf['ad_prisioneiro_estojo'].values())
         tem_dados_ad_chumbador = dados_pdf.get('ad_chumbador') and any(dados_pdf['ad_chumbador'].values())
         tem_dados_ad_rebite = dados_pdf.get('ad_rebite') and any(dados_pdf['ad_rebite'].values())
         tem_dados_ad_chaveta = dados_pdf.get('ad_chaveta') and any(dados_pdf['ad_chaveta'].values())
@@ -651,15 +735,21 @@ def gerar_pdf():
         elements.append(Spacer(0.1, 0.1 * inch))
 
         data = [
-            [Paragraph(f"<font size='6'>Cliente<br/>Customer: </font><font size='10'>{criar_cliente}</font>", getSampleStyleSheet()['Normal']),
-             Paragraph(f"<font size='6'>Pedido<br/>Customer Order: </font><font size='10'>{criar_pedido}</font>", getSampleStyleSheet()['Normal'])],
-            [Paragraph(f"<font size='6'>Nº Certificado do Fabricante<br/>Nº Certificate Supplier:      </font><font size='10'>{criar_numero_fabricante}</font>", getSampleStyleSheet()['Normal']),
-             Paragraph(f"<font size='6'>Pedido<br/>ARS:     </font><font size='10'>{criar_pedido_ars}</font>", getSampleStyleSheet()['Normal'])],
+            [Paragraph(f"<font size='6'>Cliente<br/>Customer: </font><font size='10'>{criar_cliente}</font>",
+                       getSampleStyleSheet()['Normal']),
+             Paragraph(f"<font size='6'>Pedido<br/>Customer Order: </font><font size='10'>{criar_pedido}</font>",
+                       getSampleStyleSheet()['Normal'])],
+            [Paragraph(
+                f"<font size='6'>Nº Certificado do Fabricante<br/>Nº Certificate Supplier:      </font><font size='10'>{criar_numero_fabricante}</font>",
+                getSampleStyleSheet()['Normal']),
+             Paragraph(f"<font size='6'>Pedido<br/>ARS:     </font><font size='10'>{criar_pedido_ars}</font>",
+                       getSampleStyleSheet()['Normal'])],
             [Paragraph(
                 f"<font size='6'>Descrição do Material<br/>Description of Material: </font><font size='10'>{criar_desc_material}</font>",
                 getSampleStyleSheet()['Normal']),
-             Paragraph(f"<font size='6'>Quantidade de Peças<br/>Quantity of Parts: </font><font size='10'>{criar_quantidade}</font>",
-                       getSampleStyleSheet()['Normal'])],
+                Paragraph(
+                    f"<font size='6'>Quantidade de Peças<br/>Quantity of Parts: </font><font size='10'>{criar_quantidade}</font>",
+                    getSampleStyleSheet()['Normal'])],
             [Paragraph(
                 f"<font size='6'>Material<br/>Material: </font><font size='10'>{criar_material}</font>",
                 getSampleStyleSheet()['Normal']),
@@ -676,7 +766,7 @@ def gerar_pdf():
         ]
 
         # Defina a largura das colunas (em polegadas)
-        colWidths = [(2/3) * effective_page_width, (1/3) * effective_page_width]
+        colWidths = [(2 / 3) * effective_page_width, (1 / 3) * effective_page_width]
 
         # Crie a tabela
         table = Table(data, colWidths=colWidths)
@@ -786,7 +876,8 @@ def gerar_pdf():
                  Paragraph("Tratamento Superficial<br/>Surface Treatment", estilo_centralizado),
                  Paragraph("Macrografia<br/>Macrography", estilo_centralizado),
                  Paragraph("Observação<br/>Comments", estilo_centralizado)],
-                [Paragraph(revenimento, estilo_centralizado), Paragraph(termico, estilo_centralizado), Paragraph(superficial, estilo_centralizado),
+                [Paragraph(revenimento, estilo_centralizado), Paragraph(termico, estilo_centralizado),
+                 Paragraph(superficial, estilo_centralizado),
                  Paragraph(macrografia, estilo_centralizado), Paragraph(observacao, estilo_centralizado)]
             ]
 
@@ -1356,7 +1447,6 @@ def gerar_pdf():
         telefone_assinatura = session.get('telefone_assinatura')
         email_assinatura = session.get('email_assinatura')
 
-
         # Defina o tamanho da fonte que você deseja para as células da tabela
         tamanho_da_fonte = 8
 
@@ -1390,7 +1480,7 @@ def gerar_pdf():
 
         session.pop('dados_pdf', None)
 
-        #buffer numero_nota cod produto
+        # buffer numero_nota cod produto
         #
         inserir_certificado_gerado(buffer, nota_saida, cod_produto)
 
@@ -1410,7 +1500,7 @@ def inserir_certificado_gerado(arquivo_pdf, nota_saida, cod_produto):
     connection = conectar_db()
     try:
         with connection.cursor() as cursor:
-            # Convertendo o arquivo PDF para um objeto Binary para inserção no SQL Server
+            # Convertendo o arquivo PDF para um objeto Binary para inserção no SQL
             arquivo_binario = arquivo_pdf.getvalue()
 
             sql = "INSERT INTO dbo.certificados_gerados (arquivo, numero_nota, cod_produto) VALUES (?, ?, ?)"
@@ -1488,62 +1578,74 @@ def buscar_certificado_nota(numero_nota, cod_produto):
             if registro_inspecao_aprovado:
                 pedido_compra = registro_inspecao_aprovado['ri_pedido_compra']
 
-                sql_ad_porcas = "SELECT * FROM dbo.ad_porcas WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql_ad_porcas = ("SELECT * FROM dbo.ad_porcas WHERE cc_numero_nota = ? "
+                                 "AND cc_cod_produto = ? AND cc_pedido_compra = ?")
                 cursor.execute(sql_ad_porcas, (numero_nota, cod_produto, pedido_compra))
                 ad_porcas = fetch_dict(cursor)
                 resultado['ad_porcas'] = ad_porcas if ad_porcas else None
 
-                sql = "SELECT * FROM dbo.ad_pinos WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql = ("SELECT * FROM dbo.ad_pinos WHERE cc_numero_nota = ? AND cc_cod_produto = ? "
+                       "AND cc_pedido_compra = ?")
                 cursor.execute(sql, (numero_nota, cod_produto, pedido_compra))
                 ad_pinos = fetch_dict(cursor)
                 resultado['ad_pinos'] = ad_pinos if ad_pinos else None
 
-                sql = "SELECT * FROM dbo.ad_parafusos WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql = ("SELECT * FROM dbo.ad_parafusos WHERE cc_numero_nota = ? AND cc_cod_produto = ? "
+                       "AND cc_pedido_compra = ?")
                 cursor.execute(sql, (numero_nota, cod_produto, pedido_compra))
                 ad_parafusos = fetch_dict(cursor)
                 resultado['ad_parafusos'] = ad_parafusos if ad_parafusos else None
 
-                sql = "SELECT * FROM dbo.ad_grampos WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql = ("SELECT * FROM dbo.ad_grampos WHERE cc_numero_nota = ? AND cc_cod_produto = ? "
+                       "AND cc_pedido_compra = ?")
                 cursor.execute(sql, (numero_nota, cod_produto, pedido_compra))
                 ad_grampos = fetch_dict(cursor)
                 resultado['ad_grampos'] = ad_grampos if ad_grampos else None
 
-                sql = "SELECT * FROM dbo.ad_arruelas WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql = ("SELECT * FROM dbo.ad_arruelas WHERE cc_numero_nota = ? AND cc_cod_produto = ? "
+                       "AND cc_pedido_compra = ?")
                 cursor.execute(sql, (numero_nota, cod_produto, pedido_compra))
                 ad_arruelas = fetch_dict(cursor)
                 resultado['ad_arruelas'] = ad_arruelas if ad_arruelas else None
 
-                sql = "SELECT * FROM dbo.ad_anel WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql = ("SELECT * FROM dbo.ad_anel WHERE cc_numero_nota = ? AND cc_cod_produto = ? "
+                       "AND cc_pedido_compra = ?")
                 cursor.execute(sql, (numero_nota, cod_produto, pedido_compra))
                 ad_anel = fetch_dict(cursor)
                 resultado['ad_anel'] = ad_anel if ad_anel else None
 
-                sql = "SELECT * FROM dbo.ad_prisioneiro_estojo WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql = ("SELECT * FROM dbo.ad_prisioneiro_estojo WHERE cc_numero_nota = ? "
+                       "AND cc_cod_produto = ? AND cc_pedido_compra = ?")
                 cursor.execute(sql, (numero_nota, cod_produto, pedido_compra))
                 ad_prisioneiro_estojo = fetch_dict(cursor)
                 resultado['ad_prisioneiro_estojo'] = ad_prisioneiro_estojo if ad_prisioneiro_estojo else None
 
-                sql = "SELECT * FROM dbo.ad_chumbador WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql = ("SELECT * FROM dbo.ad_chumbador WHERE cc_numero_nota = ? AND cc_cod_produto = ? "
+                       "AND cc_pedido_compra = ?")
                 cursor.execute(sql, (numero_nota, cod_produto, pedido_compra))
                 ad_chumbador = fetch_dict(cursor)
                 resultado['ad_chumbador'] = ad_chumbador if ad_chumbador else None
 
-                sql = "SELECT * FROM dbo.ad_rebite WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql = ("SELECT * FROM dbo.ad_rebite WHERE cc_numero_nota = ? AND cc_cod_produto = ? "
+                       "AND cc_pedido_compra = ?")
                 cursor.execute(sql, (numero_nota, cod_produto, pedido_compra))
                 ad_rebite = fetch_dict(cursor)
                 resultado['ad_rebite'] = ad_rebite if ad_rebite else None
 
-                sql = "SELECT * FROM dbo.ad_chaveta WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql = ("SELECT * FROM dbo.ad_chaveta WHERE cc_numero_nota = ? AND cc_cod_produto = ? "
+                       "AND cc_pedido_compra = ?")
                 cursor.execute(sql, (numero_nota, cod_produto, pedido_compra))
                 ad_chaveta = fetch_dict(cursor)
                 resultado['ad_chaveta'] = ad_chaveta if ad_chaveta else None
 
-                sql = "SELECT * FROM dbo.ad_contrapino WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql = ("SELECT * FROM dbo.ad_contrapino WHERE cc_numero_nota = ? AND cc_cod_produto = ? "
+                       "AND cc_pedido_compra = ?")
                 cursor.execute(sql, (numero_nota, cod_produto, pedido_compra))
                 ad_contrapino = fetch_dict(cursor)
                 resultado['ad_contrapino'] = ad_contrapino if ad_contrapino else None
 
-                sql = "SELECT * FROM dbo.ad_especial WHERE cc_numero_nota = ? AND cc_cod_produto = ? AND cc_pedido_compra = ?"
+                sql = ("SELECT * FROM dbo.ad_especial WHERE cc_numero_nota = ? AND cc_cod_produto = ? "
+                       "AND cc_pedido_compra = ?")
                 cursor.execute(sql, (numero_nota, cod_produto, pedido_compra))
                 ad_especial = fetch_dict(cursor)
                 resultado['ad_especial'] = ad_especial if ad_especial else None
@@ -1579,14 +1681,15 @@ def download_arquivo(numero_nota, cod_produto):
 
 def buscar_certificados(numero_nota, codigo_produto):
     connection = conectar_db()
+    cursor = None
     try:
         resultados_agrupados = {}
         cursor = connection.cursor()
 
         # Modificada para buscar registros que correspondam ao número da nota OU código do produto
         sql = """
-                SELECT cc_numero_nota, cc_descricao, cc_cod_fornecedor, cc_cod_produto, cc_corrida, cc_data, cc_cq, cc_qtd_pedidos
-                FROM dbo.cadastro_certificados 
+                SELECT cc_numero_nota, cc_descricao, cc_cod_fornecedor, cc_cod_produto, 
+                cc_corrida, cc_data, cc_cq, cc_qtd_pedidos FROM dbo.cadastro_certificados 
                 WHERE cc_numero_nota = ? OR cc_cod_produto = ?
               """
         cursor.execute(sql, (numero_nota, codigo_produto))
@@ -1598,9 +1701,10 @@ def buscar_certificados(numero_nota, codigo_produto):
         for cadastro in cadastros:
             chave = f"{cadastro['cc_numero_nota']}-{cadastro['cc_cod_produto']}"
             resultados_agrupados[chave] = {'cadastro_certificados': cadastro}
-            for tipo in ('comp_quimica', 'prop_mecanicas', 'tratamentos', 'ad_porcas', 'ad_pinos', 'ad_parafusos', 'ad_grampos',
-                         'ad_rebite', 'ad_prisioneiro_estojo', 'ad_chumbador', 'ad_chaveta', 'ad_arruelas', 'ad_anel',
-                         'ad_contrapino', 'ad_especial'):
+            for tipo in ('comp_quimica', 'prop_mecanicas', 'tratamentos', 'ad_porcas', 'ad_pinos',
+                         'ad_parafusos', 'ad_grampos', 'ad_rebite', 'ad_prisioneiro_estojo',
+                         'ad_chumbador', 'ad_chaveta', 'ad_arruelas', 'ad_anel', 'ad_contrapino',
+                         'ad_especial'):
                 resultados_agrupados[chave][tipo] = []
 
         tipos_relacionados = {
@@ -1612,7 +1716,8 @@ def buscar_certificados(numero_nota, codigo_produto):
             'ad_parafusos': "SELECT * FROM dbo.ad_parafusos WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
             'ad_grampos': "SELECT * FROM dbo.ad_grampos WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
             'ad_rebite': "SELECT * FROM dbo.ad_rebite WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
-            'ad_prisioneiro_estojo': "SELECT * FROM dbo.ad_prisioneiro_estojo WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
+            'ad_prisioneiro_estojo': "SELECT * FROM dbo.ad_prisioneiro_estojo WHERE cc_numero_nota = ? AND "
+                                     "cc_cod_produto = ?",
             'ad_chumbador': "SELECT * FROM dbo.ad_chumbador WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
             'ad_chaveta': "SELECT * FROM dbo.ad_chaveta WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
             'ad_arruelas': "SELECT * FROM dbo.ad_arruelas WHERE cc_numero_nota = ? AND cc_cod_produto = ?",
@@ -1626,7 +1731,8 @@ def buscar_certificados(numero_nota, codigo_produto):
             numero_nota, codigo_produto = chave.split('-')
             for tipo, sql in tipos_relacionados.items():
                 # Ajuste na query para incluir o código do produto na condição
-                sql_ajustada = sql.replace("WHERE cc_numero_nota IN (?)", "WHERE cc_numero_nota = ? AND cc_cod_produto = ?")
+                sql_ajustada = sql.replace("WHERE cc_numero_nota IN (?)",
+                                           "WHERE cc_numero_nota = ? AND cc_cod_produto = ?")
                 cursor.execute(sql_ajustada, (numero_nota, codigo_produto))
                 itens_relacionados = cursor.fetchall()
                 itens_relacionados = [dict_factory(cursor, item) for item in itens_relacionados]
@@ -1673,7 +1779,7 @@ def buscar_registro_inspecao(numero_nota, ri_data):
 
         # Verifica quais campos foram preenchidos e ajusta a consulta SQL
         if numero_nota and ri_data:
-            # Ambos número da nota e data são fornecidos
+            # Ambos números da nota e data são fornecidos
             sql = "SELECT * FROM dbo.registro_inspecao WHERE ri_numero_nota = ? AND ri_data = ?"
             cursor.execute(sql, (numero_nota, ri_data))
         elif numero_nota:
@@ -1700,8 +1806,9 @@ def buscar_registro_inspecao(numero_nota, ri_data):
                 resultados_agrupados[chave] = {'registro_inspecao': cadastro}
 
                 # Inicializa listas para cada tipo de informação relacionada
-                for tipo in ('ad_porcas', 'ad_pinos', 'ad_parafusos', 'ad_grampos', 'ad_rebite', 'ad_prisioneiro_estojo',
-                             'ad_chumbador', 'ad_chaveta', 'ad_arruelas', 'ad_anel', 'ad_contrapino', 'ad_especial'):
+                for tipo in ('ad_porcas', 'ad_pinos', 'ad_parafusos', 'ad_grampos', 'ad_rebite',
+                             'ad_prisioneiro_estojo', 'ad_chumbador', 'ad_chaveta', 'ad_arruelas',
+                             'ad_anel', 'ad_contrapino', 'ad_especial'):
                     resultados_agrupados[chave][tipo] = []
 
         # Para cada tipo de dados relacionados, realizar uma busca e organizar os resultados
@@ -1798,7 +1905,6 @@ def cadastro_certificados():
 
             # Composição Química
             comp_quimica = request.form.get('comp_quimica') == 'on'
-            elementos_quimicos = {}
             if comp_quimica:
                 elementos_quimicos = {
                     'nota_fiscal': nota_fiscal,
@@ -1824,7 +1930,6 @@ def cadastro_certificados():
 
             # Propriedades Mecânicas
             prop_mecanicas = request.form.get('prop_mecanicas') == 'on'
-            propriedades_mec = {}
             if prop_mecanicas:
                 propriedades_mec = {
                     'nota_fiscal': nota_fiscal,
@@ -1840,7 +1945,6 @@ def cadastro_certificados():
 
             # Tratamentos
             tratamentos = request.form.get('tratamentos') == 'on'
-            dados_tratamentos = {}
             if tratamentos:
                 dados_tratamentos = {
                     'nota_fiscal': nota_fiscal,
@@ -1886,7 +1990,6 @@ def cadastro_certificados():
                 print(f"Ocorreu um erro bt_registrar_certificado: {e}")
             finally:
                 connection.close()
-            # flash('Botão "Registrar Certificado" clicado.')
 
     return render_template('cadastro_certificados.html')
 
@@ -1912,7 +2015,8 @@ def inserir_cadastro_certificados(dados):
         with connection.cursor() as cursor:
             # SQL query updated for clarity
             sql = """INSERT INTO dbo.cadastro_certificados 
-                     (cc_numero_nota, cc_descricao, cc_cod_fornecedor, cc_cod_produto, cc_corrida, cc_data, cc_cq, cc_qtd_pedidos, cc_arquivo)
+                     (cc_numero_nota, cc_descricao, cc_cod_fornecedor, cc_cod_produto, cc_corrida, 
+                     cc_data, cc_cq, cc_qtd_pedidos, cc_arquivo)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"""
             cursor.execute(sql, (
                 dados['nota_fiscal'],
@@ -1930,6 +2034,7 @@ def inserir_cadastro_certificados(dados):
         print(f"Ocorreu um erro ao inserir o certificado: {e}")
     finally:
         connection.close()
+
 
 def inserir_cadastro_composicao_quimica(dados):
     connection = conectar_db()
@@ -2025,8 +2130,9 @@ def inserir_cadastro_adparafusos(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_parafusos
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adparafusos_dureza, cc_adparafusos_altura, cc_adparafusos_chave, cc_adparafusos_comprimento, 
-            cc_adparafusos_diametro, cc_adparafusos_diametro_cabeca, cc_adparafusos_comprimento_rosca, 
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adparafusos_dureza, cc_adparafusos_altura, 
+            cc_adparafusos_chave, cc_adparafusos_comprimento, cc_adparafusos_diametro, 
+            cc_adparafusos_diametro_cabeca, cc_adparafusos_comprimento_rosca, 
             cc_adparafusos_diametro_ponta, cc_adparafusos_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
@@ -2057,8 +2163,9 @@ def inserir_cadastro_adporcas(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_porcas
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adporcas_dureza, cc_adporcas_altura, cc_adporcas_chave, cc_adporcas_diametro, 
-            cc_adporcas_diametro_estrutura, cc_adporcas_diametro_interno, cc_adporcas_diametro_externo, cc_adporcas_norma)
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adporcas_dureza, cc_adporcas_altura, 
+            cc_adporcas_chave, cc_adporcas_diametro, cc_adporcas_diametro_estrutura, 
+            cc_adporcas_diametro_interno, cc_adporcas_diametro_externo, cc_adporcas_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
@@ -2087,8 +2194,8 @@ def inserir_cadastro_adarruelas(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_arruelas
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adarruelas_dureza, cc_adarruelas_altura, cc_adarruelas_diametro_interno, 
-            cc_adarruelas_diametro_externo, cc_adarruelas_norma)
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adarruelas_dureza, cc_adarruelas_altura, 
+            cc_adarruelas_diametro_interno, cc_adarruelas_diametro_externo, cc_adarruelas_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
@@ -2114,8 +2221,8 @@ def inserir_cadastro_adanel(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_anel
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adanel_dureza, cc_adanel_altura, cc_adanel_diametro_interno, 
-            cc_adanel_diametro_externo, cc_adanel_norma)
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adanel_dureza, cc_adanel_altura, 
+            cc_adanel_diametro_interno, cc_adanel_diametro_externo, cc_adanel_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
@@ -2141,8 +2248,9 @@ def inserir_cadastro_adgrampos(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_grampos
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adgrampos_dureza, cc_adgrampos_comprimento, cc_adgrampos_diametro, 
-            cc_adgrampos_comprimento_rosca, cc_adgrampos_diametro_interno, cc_adgrampos_norma)
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adgrampos_dureza, cc_adgrampos_comprimento, 
+            cc_adgrampos_diametro, cc_adgrampos_comprimento_rosca, cc_adgrampos_diametro_interno, 
+            cc_adgrampos_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
@@ -2169,8 +2277,9 @@ def inserir_cadastro_adpinos(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_pinos
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adpinos_dureza, cc_adpinos_espessura, cc_adpinos_comprimento, cc_adpinos_diametro, 
-            cc_adpinos_diametro_cabeca, cc_adpinos_diametro_interno, cc_adpinos_diametro_externo, cc_adpinos_norma)
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adpinos_dureza, cc_adpinos_espessura, 
+            cc_adpinos_comprimento, cc_adpinos_diametro, cc_adpinos_diametro_cabeca, 
+            cc_adpinos_diametro_interno, cc_adpinos_diametro_externo, cc_adpinos_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
@@ -2199,8 +2308,9 @@ def inserir_cadastro_adprisioneiro_estojo(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_prisioneiro_estojo
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adprisioneiroestojo_dureza, cc_adprisioneiroestojo_comprimento, 
-            cc_adprisioneiroestojo_diametro, cc_adprisioneiroestojo_comprimento_rosca, cc_adprisioneiroestojo_norma)
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adprisioneiroestojo_dureza, 
+            cc_adprisioneiroestojo_comprimento, cc_adprisioneiroestojo_diametro, 
+            cc_adprisioneiroestojo_comprimento_rosca, cc_adprisioneiroestojo_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
@@ -2226,7 +2336,8 @@ def inserir_cadastro_adespecial(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_especial
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adespecial_dureza, cc_adespecial_altura, cc_adespecial_chave, cc_adespecial_comprimento, 
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adespecial_dureza, 
+            cc_adespecial_altura, cc_adespecial_chave, cc_adespecial_comprimento, 
             cc_adespecial_diametro, cc_adespecial_diametro_cabeca, cc_adespecial_comprimento_rosca,
             cc_adespecial_diametro_interno, cc_adespecial_diametro_externo, cc_adespecial_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -2259,7 +2370,8 @@ def inserir_cadastro_adcontrapino(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_contrapino
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adcontrapino_dureza, cc_adcontrapino_comprimento, cc_adcontrapino_diametro, cc_adcontrapino_norma)
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adcontrapino_dureza, 
+            cc_adcontrapino_comprimento, cc_adcontrapino_diametro, cc_adcontrapino_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
@@ -2284,7 +2396,8 @@ def inserir_cadastro_adchaveta(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_chaveta
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adchaveta_dureza, cc_adchaveta_comprimento, cc_adchaveta_diametro, cc_adchaveta_altura, cc_adchaveta_norma)
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adchaveta_dureza, cc_adchaveta_comprimento, 
+            cc_adchaveta_diametro, cc_adchaveta_altura, cc_adchaveta_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
@@ -2310,7 +2423,8 @@ def inserir_cadastro_adrebite(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_rebite
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adrebite_dureza, cc_adrebite_comprimento, cc_adrebite_bitola, cc_adrebite_diametro_cabeca, cc_adrebite_norma)
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adrebite_dureza, cc_adrebite_comprimento, 
+            cc_adrebite_bitola, cc_adrebite_diametro_cabeca, cc_adrebite_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
@@ -2336,7 +2450,8 @@ def inserir_cadastro_adchumbador(dados):
         with connection.cursor() as cursor:
             sql = """
             INSERT INTO dbo.ad_chumbador
-            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adchumbador_dureza, cc_adchumbador_comprimento, cc_adchumbador_bitola, cc_adchumbador_norma)
+            (cc_numero_nota, cc_cod_produto, cc_pedido_compra, cc_adchumbador_dureza, 
+            cc_adchumbador_comprimento, cc_adchumbador_bitola, cc_adchumbador_norma)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             cursor.execute(sql, (
@@ -2362,7 +2477,7 @@ def verifica_produto_reprovado():
     try:
         with connection.cursor() as cursor:
             cursor.execute("""SELECT COUNT(*) FROM dbo.registro_inspecao
-                              WHERE ri_cod_produto = ? AND ri_opcao = 'Reprovado'""", (codProduto))
+                              WHERE ri_cod_produto = ? AND ri_opcao = 'Reprovado'""", codProduto)
             resultado = cursor.fetchone()
             reprovado = resultado[0] > 0
             return jsonify(reprovado=reprovado)
@@ -2431,7 +2546,7 @@ def cadastro_norma():
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
+        filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
 
 
 @app.route('/registro_inspecao', methods=['GET', 'POST'])
@@ -2490,16 +2605,20 @@ def registro_inspecao():
                 # Verifica se já existe um registro
                 if verificar_existencia_registro(nota_fiscal, cod_produto, pedido_compra):
                     # Se existe, deleta o antigo
-                    cursor.execute("DELETE FROM dbo.registro_inspecao WHERE ri_numero_nota = ? AND ri_cod_produto = ? AND ri_pedido_compra = ?",
-                                   (nota_fiscal, cod_produto, pedido_compra))
+                    cursor.execute(
+                        "DELETE FROM dbo.registro_inspecao WHERE ri_numero_nota = ? AND ri_cod_produto = ? "
+                        "AND ri_pedido_compra = ?",
+                        (nota_fiscal, cod_produto, pedido_compra))
                     flash('Registro existente será substituído pelo novo.', 'warning')
 
-            sql = """INSERT INTO dbo.registro_inspecao (ri_numero_nota, ri_cod_produto, ri_fornecedor, ri_pedido_compra, ri_quantidade_total, ri_volume, ri_desenho,
-             ri_acabamento, ri_opcao, ri_resp_inspecao, ri_data, ri_data_inspecao, ri_item, ri_observacao) 
+            sql = """INSERT INTO dbo.registro_inspecao (ri_numero_nota, ri_cod_produto,
+            ri_fornecedor, ri_pedido_compra, ri_quantidade_total, ri_volume, 
+            ri_desenho, ri_acabamento, ri_opcao, ri_resp_inspecao, ri_data, 
+            ri_data_inspecao, ri_item, ri_observacao) 
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
             cursor.execute(sql, (nota_fiscal, cod_produto, fornecedor, pedido_compra, quantidade_total,
-                                 volume, desenho, acabamento, ri_opcao, resp_inspecao, data, data_inspecao, ri_item,
-                                 ri_observacao))
+                                 volume, desenho, acabamento, ri_opcao, resp_inspecao, data, data_inspecao,
+                                 ri_item, ri_observacao))
 
             if tipo_analise == 'parafusos':
                 medidas_dimensionais = {
@@ -2687,7 +2806,8 @@ def verificar_existencia_registro(nota_fiscal, cod_produto, pedido_compra):
     connection = conectar_db()
     try:
         with connection.cursor() as cursor:
-            sql = "SELECT COUNT(1) FROM dbo.registro_inspecao WHERE ri_numero_nota = ? AND ri_cod_produto = ? AND ri_pedido_compra = ?"
+            sql = ("SELECT COUNT(1) FROM dbo.registro_inspecao WHERE ri_numero_nota = ? AND ri_cod_produto = ? "
+                   "AND ri_pedido_compra = ?")
             cursor.execute(sql, (nota_fiscal, cod_produto, pedido_compra))
             resultado = cursor.fetchone()
             if resultado and resultado[0] > 0:  # Verifica resultado contagem é maior que zero
