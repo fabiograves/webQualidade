@@ -1,5 +1,6 @@
 import base64
 import datetime
+import tempfile
 
 import pyodbc
 from PyPDF2 import PdfMerger
@@ -338,7 +339,6 @@ def avaliacao_diaria():
                 atraso_entrega = request.form['ad_atraso_entrega']
                 observacao = request.form['ad_observacao']
 
-                # Primeiro, verifique se já existe um registro para este fornecedor e data
                 sql_verifica = "SELECT COUNT(*) FROM dbo.avaliacao_diaria WHERE id_fornecedor = ? AND data = ?"
                 cursor.execute(sql_verifica, (id_fornecedor, data))
                 if cursor.fetchone()[0] > 0:
@@ -391,6 +391,7 @@ def pesquisar_avaliacao_diaria():
     resumo_por_trimestre = {1: [], 2: [], 3: [], 4: []}
     pesquisa_realizada = False
     fornecedor_escolhido = None
+    id_fornecedor = None
 
     try:
         with connection.cursor() as cursor:
@@ -462,7 +463,7 @@ def pesquisar_avaliacao_diaria():
 
     meses_ordenados = sorted(dados_organizados.items(), key=lambda x: x[0], reverse=True)
     username = session['username']
-    print(f"Ação realizada por: {username}, fornecedor escolhido: {fornecedor_escolhido}")
+    print(f"Ação realizada por: {username}, fornecedor escolhido: {fornecedor_escolhido}, id:{id_fornecedor}")
 
     return render_template('pesquisar_avaliacao_diaria.html',
                            fornecedores=fornecedores,
@@ -619,15 +620,25 @@ def tratar_formulario():
 
 @app.route('/gerar_pdf', methods=['POST'])
 def gerar_pdf():
-    # Recuperando os dados da sessão
     dados_pdf = session.get('dados_pdf')
-    # print("session.get(dados_pdf)")
-    # print(session.get('dados_pdf'))
+    imagens = []
 
-    # Verifica se os dados necessários estão presentes
+    if 'imagem1' in request.files:
+        imagem1 = request.files['imagem1']
+        if imagem1.filename != '':
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(imagem1.filename)[1])
+            imagem1.save(temp_file.name)
+            imagens.append(temp_file.name)
+
+    if 'imagem2' in request.files:
+        imagem2 = request.files['imagem2']
+        if imagem2.filename != '':
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(imagem2.filename)[1])
+            imagem2.save(temp_file.name)
+            imagens.append(temp_file.name)
+
     if dados_pdf:
 
-        # Extrai número da nota e código do produto
         numero_nota = dados_pdf.get('cadastro_certificados', {}).get('cc_numero_nota', 'desconhecido')
         cod_produto = dados_pdf.get('cadastro_certificados', {}).get('cc_cod_produto', 'desconhecido')
 
@@ -670,10 +681,10 @@ def gerar_pdf():
         estilo_centralizado = ParagraphStyle(name='Centralizado', alignment=TA_CENTER, fontSize=8)
 
         # Defina as margens da página
-        left_margin = 0.5 * inch
-        right_margin = 0.5 * inch
-        top_margin = 0.5 * inch
-        bottom_margin = 0.5 * inch
+        left_margin = 0.2 * inch
+        right_margin = 0.2 * inch
+        top_margin = 0.2 * inch
+        bottom_margin = 0.2 * inch
 
         # Remove cabeçalho e rodapé
         doc.topMargin = top_margin
@@ -683,7 +694,6 @@ def gerar_pdf():
         effective_page_width = page_width - left_margin - right_margin
         effective_page_height = page_height - top_margin - bottom_margin
 
-        # Lista para armazenar elementos do PDF
         elements = []
 
         # Estilo para o título
@@ -696,9 +706,8 @@ def gerar_pdf():
         # Cria o parágrafo do texto com o estilo personalizado
         texto_paragraph = Paragraph(texto_tabela, texto_style1)
 
-        # Cria uma tabela com 2 colunas para posicionar a imagem e o texto
         data = [
-            [Image(os.path.join(app.static_folder, 'images', 'LogoCertificado.png'), width=2 * inch, height=1 * inch),
+            [Image(os.path.join(app.static_folder, 'images', 'LogoCertificado.png'), width=120, height=60),
              texto_paragraph]
         ]
 
@@ -711,14 +720,11 @@ def gerar_pdf():
 
         elements.append(table)
 
-        # Adiciona espaço entre a imagem e o texto
         elements.append(Spacer(0.1, 0.1 * inch))
 
-        # Estilos para o texto
         styles = getSampleStyleSheet()
         normal_style = styles['Normal']
 
-        # Cria uma tabela com 3 colunas para posicionar os textos lado a lado
         data = [
             ["REG:7.1b - Revisao.04", "01/04/2010", f"Nº Certificado / Nº Certificate Nº{numero_certificado}"]
         ]
@@ -731,7 +737,6 @@ def gerar_pdf():
 
         elements.append(table)
 
-        # Adiciona espaço entre as linhas de texto
         elements.append(Spacer(0.1, 0.1 * inch))
 
         data = [
@@ -765,23 +770,19 @@ def gerar_pdf():
 
         ]
 
-        # Defina a largura das colunas (em polegadas)
         colWidths = [(2 / 3) * effective_page_width, (1 / 3) * effective_page_width]
 
-        # Crie a tabela
         table = Table(data, colWidths=colWidths)
 
-        # Defina o estilo da tabela
         table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Alinhar o texto à esquerda
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adicionar grade
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ]))
 
         elements.append(table)
 
         elements.append(Spacer(0.1, 0.1 * inch))
 
-        # Se tem dados em 'comp_quimica', adiciona uma tabela ao PDF
         if tem_dados_comp_quimica:
             c = dados_pdf['comp_quimica'].get('cc_c', '')
             mn = dados_pdf['comp_quimica'].get('cc_mn', '')
@@ -800,9 +801,7 @@ def gerar_pdf():
             n = dados_pdf['comp_quimica'].get('cc_n', '')
             nb = dados_pdf['comp_quimica'].get('cc_nb', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Composição Química / Chemical Analysis"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
@@ -814,13 +813,12 @@ def gerar_pdf():
             comp_quimica_table = Table(data, colWidths=effective_page_width / 8)
 
             comp_quimica_table.setStyle(TableStyle([
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ]))
             elements.append(comp_quimica_table)
             elements.append(Spacer(0.1, 0.1 * inch))
 
-        # Se tem dados em 'prop_mecanicas', adiciona uma tabela ao PDF
         if tem_dados_prop_mecanicas:
             escoamento = dados_pdf['prop_mecanicas'].get('cc_escoamento', '')
             tracao = dados_pdf['prop_mecanicas'].get('cc_tracao', '')
@@ -828,9 +826,7 @@ def gerar_pdf():
             alongamento = dados_pdf['prop_mecanicas'].get('cc_alongamento', '')
             carga = dados_pdf['prop_mecanicas'].get('cc_carga', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Mecânicas / Mechanical Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
@@ -846,13 +842,12 @@ def gerar_pdf():
             prop_mecanicas_table = Table(data, colWidths=effective_page_width / 5)
 
             prop_mecanicas_table.setStyle(TableStyle([
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ]))
             elements.append(prop_mecanicas_table)
             elements.append(Spacer(0.1, 0.1 * inch))
 
-        # Se tem dados em 'tratamentos', adiciona uma tabela ao PDF
         if tem_dados_tratamentos:
             revenimento = dados_pdf['tratamentos'].get('cc_revenimento', '')
             termico = dados_pdf['tratamentos'].get('cc_termico', '')
@@ -860,14 +855,11 @@ def gerar_pdf():
             macrografia = dados_pdf['tratamentos'].get('cc_macrografia', '')
             observacao = dados_pdf['tratamentos'].get('cc_observacao', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Tratamentos / Treatments"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -881,12 +873,11 @@ def gerar_pdf():
                  Paragraph(macrografia, estilo_centralizado), Paragraph(observacao, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             tratamentos_table = Table(data, colWidths=effective_page_width / 5)
@@ -905,14 +896,11 @@ def gerar_pdf():
             diametro_externo = dados_pdf['ad_porcas'].get('cc_adporcas_diametro_externo', '')
             norma = dados_pdf['ad_porcas'].get('cc_adporcas_norma', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -934,12 +922,11 @@ def gerar_pdf():
                  Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adporcas_table = Table(data, colWidths=effective_page_width / 4)
@@ -958,14 +945,11 @@ def gerar_pdf():
             diametro_externo = dados_pdf['ad_pinos'].get('cc_adpinos_diametro_externo', '')
             norma = dados_pdf['ad_pinos'].get('cc_adpinos_norma', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -987,12 +971,11 @@ def gerar_pdf():
                  Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adpinos_table = Table(data, colWidths=effective_page_width / 4)
@@ -1012,14 +995,11 @@ def gerar_pdf():
             diametro_ponta = dados_pdf['ad_parafusos'].get('cc_adparafusos_diametro_ponta', "")
             norma = dados_pdf['ad_parafusos'].get('cc_adparafusos_norma', "")
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -1039,12 +1019,11 @@ def gerar_pdf():
                  Paragraph(diametro_ponta, estilo_centralizado), Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adparafusos_table = Table(data, colWidths=effective_page_width / 5)
@@ -1061,14 +1040,11 @@ def gerar_pdf():
             diametro_interno = dados_pdf['ad_grampos'].get('cc_adgrampos_diametro_interno', '')
             norma = dados_pdf['ad_grampos'].get('cc_adgrampos_norma', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -1083,12 +1059,11 @@ def gerar_pdf():
                  Paragraph(diametro_interno, estilo_centralizado), Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adgrampos_table = Table(data, colWidths=effective_page_width / 6)
@@ -1104,14 +1079,11 @@ def gerar_pdf():
             diametro_externo = dados_pdf['ad_arruelas'].get('cc_adarruelas_diametro_externo', '')
             norma = dados_pdf['ad_arruelas'].get('cc_adarruelas_norma', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -1125,12 +1097,11 @@ def gerar_pdf():
                  Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adarruelas_table = Table(data, colWidths=effective_page_width / 5)
@@ -1146,14 +1117,11 @@ def gerar_pdf():
             diametro_externo = dados_pdf['ad_anel'].get('cc_adanel_diametro_externo', '')
             norma = dados_pdf['ad_anel'].get('cc_adanel_norma', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -1167,12 +1135,11 @@ def gerar_pdf():
                  Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adanel_table = Table(data, colWidths=effective_page_width / 5)
@@ -1188,14 +1155,11 @@ def gerar_pdf():
             comprimento_rosca = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_comprimento_rosca', '')
             norma = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_norma', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -1209,12 +1173,11 @@ def gerar_pdf():
                  Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adprisioneiroestojo_table = Table(data, colWidths=effective_page_width / 5)
@@ -1235,14 +1198,11 @@ def gerar_pdf():
             diametro_externo = dados_pdf['ad_especial'].get('cc_adespecial_diametro_externo', '')
             norma = dados_pdf['ad_especial'].get('cc_adespecial_norma', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -1264,12 +1224,11 @@ def gerar_pdf():
                  Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adespecial_table = Table(data, colWidths=effective_page_width / 5)
@@ -1284,14 +1243,11 @@ def gerar_pdf():
             bitola = dados_pdf['ad_chumbador'].get('cc_adchumbador_bitola', '')
             norma = dados_pdf['ad_chumbador'].get('cc_adchumbador_norma', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -1303,12 +1259,11 @@ def gerar_pdf():
                  Paragraph(bitola, estilo_centralizado), Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adchumbador_table = Table(data, colWidths=effective_page_width / 4)
@@ -1324,14 +1279,11 @@ def gerar_pdf():
             diametro_cabeca = dados_pdf['ad_rebite'].get('cc_adrebite_diametro_cabeca', '')
             norma = dados_pdf['ad_rebite'].get('cc_adrebite_norma', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -1345,12 +1297,11 @@ def gerar_pdf():
                  Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adrebite_table = Table(data, colWidths=effective_page_width / 5)
@@ -1366,14 +1317,11 @@ def gerar_pdf():
             altura = dados_pdf['ad_chaveta'].get('cc_adchaveta_altura', '')
             norma = dados_pdf['ad_chaveta'].get('cc_adchaveta_norma', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -1389,12 +1337,11 @@ def gerar_pdf():
                  Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adchaveta_table = Table(data, colWidths=effective_page_width / 5)
@@ -1409,14 +1356,11 @@ def gerar_pdf():
             diametro = dados_pdf['ad_contrapino'].get('cc_adcontrapino_diametro', '')
             norma = dados_pdf['ad_contrapino'].get('cc_adcontrapino_norma', '')
 
-            # Texto dentro da tabela
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
-            # Cria o parágrafo do texto com o estilo personalizado
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
 
-            # Defina o tamanho da fonte que você deseja para as células da tabela
             tamanho_da_fonte = 8
 
             data = [
@@ -1428,12 +1372,11 @@ def gerar_pdf():
                  Paragraph(diametro, estilo_centralizado), Paragraph(norma, estilo_centralizado)]
             ]
 
-            # Crie uma lista de estilos de célula com o tamanho da fonte definido
             cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
             adcontrapino_table = Table(data, colWidths=effective_page_width / 4)
@@ -1442,12 +1385,28 @@ def gerar_pdf():
             elements.append(adcontrapino_table)
             elements.append(Spacer(0.1, 0.1 * inch))
 
+        if imagens:
+            imagem_cells = []
+
+            for imagem_path in imagens:
+                imagem_cells.append(Image(imagem_path, 2 * inch, 1 * inch))
+
+            imagem_table = Table([imagem_cells], colWidths=effective_page_width / 2)
+
+            imagem_table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('INNERGRID', (0, 0), (-1, -1), 0, colors.white),
+                ('BOX', (0, 0), (-1, -1), 0, colors.white),
+            ]))
+
+            elements.append(imagem_table)
+
         nome_assinatura = session.get('nome_assinatura')
         setor_assinatura = session.get('setor_assinatura')
         telefone_assinatura = session.get('telefone_assinatura')
         email_assinatura = session.get('email_assinatura')
 
-        # Defina o tamanho da fonte que você deseja para as células da tabela
         tamanho_da_fonte = 8
 
         data = [
@@ -1461,12 +1420,11 @@ def gerar_pdf():
              ]
         ]
 
-        # Crie uma lista de estilos de célula com o tamanho da fonte definido
         cell_styles = [
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Centraliza o texto
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Adiciona linhas de grade
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Escolha a fonte desejada (no exemplo, usei Helvetica)
-            ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),  # Defina o tamanho da fonte
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
         ]
 
         rodape_table = Table(data, colWidths=effective_page_width / 2)
@@ -1475,18 +1433,15 @@ def gerar_pdf():
         elements.append(rodape_table)
         elements.append(Spacer(0.1, 0.1 * inch))
 
-        # Constrói o PDF
         doc.build(elements)
 
         session.pop('dados_pdf', None)
 
-        # buffer numero_nota cod produto
-        #
         inserir_certificado_gerado(buffer, nota_saida, cod_produto)
 
         # Define o nome do arquivo PDF
         nome_arquivo_pdf = f"{numero_nota}-{cod_produto}.pdf"
-        # Retorna o PDF como resposta
+
         buffer.seek(0)
         return Response(buffer.getvalue(), mimetype='application/pdf',
                         headers={"Content-Disposition": f"attachment;filename={nome_arquivo_pdf}"})

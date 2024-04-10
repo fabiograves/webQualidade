@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['appflask.py'],
-             pathex=['path/to/your/app'],
+             pathex=['C:/Users/fabio/PycharmProjects/teste01'],
              binaries=[],
              datas=[('templates', 'templates'), ('static', 'static'), ('.venv', '.')],
              hiddenimports=[],
