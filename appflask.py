@@ -784,22 +784,22 @@ def gerar_pdf():
         elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_comp_quimica:
-            c = dados_pdf['comp_quimica'].get('cc_c', '')
-            mn = dados_pdf['comp_quimica'].get('cc_mn', '')
-            p = dados_pdf['comp_quimica'].get('cc_p', '')
-            s = dados_pdf['comp_quimica'].get('cc_s', '')
-            si = dados_pdf['comp_quimica'].get('cc_si', '')
-            ni = dados_pdf['comp_quimica'].get('cc_ni', '')
-            cr = dados_pdf['comp_quimica'].get('cc_cr', '')
-            b = dados_pdf['comp_quimica'].get('cc_b', '')
-            cu = dados_pdf['comp_quimica'].get('cc_cu', '')
-            mo = dados_pdf['comp_quimica'].get('cc_mo', '')
-            co = dados_pdf['comp_quimica'].get('cc_co', '')
-            fe = dados_pdf['comp_quimica'].get('cc_fe', '')
-            sn = dados_pdf['comp_quimica'].get('cc_sn', '')
-            al = dados_pdf['comp_quimica'].get('cc_al', '')
-            n = dados_pdf['comp_quimica'].get('cc_n', '')
-            nb = dados_pdf['comp_quimica'].get('cc_nb', '')
+            c = dados_pdf['comp_quimica'].get('cc_c', '') or '---'
+            mn = dados_pdf['comp_quimica'].get('cc_mn', '') or '---'
+            p = dados_pdf['comp_quimica'].get('cc_p', '') or '---'
+            s = dados_pdf['comp_quimica'].get('cc_s', '') or '---'
+            si = dados_pdf['comp_quimica'].get('cc_si', '') or '---'
+            ni = dados_pdf['comp_quimica'].get('cc_ni', '') or '---'
+            cr = dados_pdf['comp_quimica'].get('cc_cr', '') or '---'
+            b = dados_pdf['comp_quimica'].get('cc_b', '') or '---'
+            cu = dados_pdf['comp_quimica'].get('cc_cu', '') or '---'
+            mo = dados_pdf['comp_quimica'].get('cc_mo', '') or '---'
+            co = dados_pdf['comp_quimica'].get('cc_co', '') or '---'
+            fe = dados_pdf['comp_quimica'].get('cc_fe', '') or '---'
+            sn = dados_pdf['comp_quimica'].get('cc_sn', '') or '---'
+            al = dados_pdf['comp_quimica'].get('cc_al', '') or '---'
+            n = dados_pdf['comp_quimica'].get('cc_n', '') or '---'
+            nb = dados_pdf['comp_quimica'].get('cc_nb', '') or '---'
 
             texto_subtitulo = "Composição Química / Chemical Analysis"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -820,11 +820,11 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_prop_mecanicas:
-            escoamento = dados_pdf['prop_mecanicas'].get('cc_escoamento', '')
-            tracao = dados_pdf['prop_mecanicas'].get('cc_tracao', '')
-            reducao = dados_pdf['prop_mecanicas'].get('cc_reducao', '')
-            alongamento = dados_pdf['prop_mecanicas'].get('cc_alongamento', '')
-            carga = dados_pdf['prop_mecanicas'].get('cc_carga', '')
+            escoamento = dados_pdf['prop_mecanicas'].get('cc_escoamento', '') or '---'
+            tracao = dados_pdf['prop_mecanicas'].get('cc_tracao', '') or '---'
+            reducao = dados_pdf['prop_mecanicas'].get('cc_reducao', '') or '---'
+            alongamento = dados_pdf['prop_mecanicas'].get('cc_alongamento', '') or '---'
+            carga = dados_pdf['prop_mecanicas'].get('cc_carga', '') or '---'
 
             texto_subtitulo = "Propriedades Mecânicas / Mechanical Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -849,11 +849,11 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_tratamentos:
-            revenimento = dados_pdf['tratamentos'].get('cc_revenimento', '')
-            termico = dados_pdf['tratamentos'].get('cc_termico', '')
-            superficial = dados_pdf['tratamentos'].get('cc_superficial', '')
-            macrografia = dados_pdf['tratamentos'].get('cc_macrografia', '')
-            observacao = dados_pdf['tratamentos'].get('cc_observacao', '')
+            revenimento = dados_pdf['tratamentos'].get('cc_revenimento', '') or '---'
+            termico = dados_pdf['tratamentos'].get('cc_termico', '') or '---'
+            superficial = dados_pdf['tratamentos'].get('cc_superficial', '') or '---'
+            macrografia = dados_pdf['tratamentos'].get('cc_macrografia', '') or '---'
+            observacao = dados_pdf['tratamentos'].get('cc_observacao', '') or '---'
 
             texto_subtitulo = "Tratamentos / Treatments"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -887,14 +887,14 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_porcas:
-            dureza = dados_pdf['ad_porcas'].get('cc_adporcas_dureza', '')
-            altura = dados_pdf['ad_porcas'].get('cc_adporcas_altura', '')
-            chave = dados_pdf['ad_porcas'].get('cc_adporcas_chave', '')
-            diametro = dados_pdf['ad_porcas'].get('cc_adporcas_diametro', '')
-            diametro_estrutura = dados_pdf['ad_porcas'].get('cc_adporcas_diametro_estrutura', '')
-            diametro_interno = dados_pdf['ad_porcas'].get('cc_adporcas_diamentro_interno', '')
-            diametro_externo = dados_pdf['ad_porcas'].get('cc_adporcas_diametro_externo', '')
-            norma = dados_pdf['ad_porcas'].get('cc_adporcas_norma', '')
+            dureza = dados_pdf['ad_porcas'].get('cc_adporcas_dureza', '') or '---'
+            altura = dados_pdf['ad_porcas'].get('cc_adporcas_altura', '') or '---'
+            chave = dados_pdf['ad_porcas'].get('cc_adporcas_chave', '') or '---'
+            diametro = dados_pdf['ad_porcas'].get('cc_adporcas_diametro', '') or '---'
+            diametro_estrutura = dados_pdf['ad_porcas'].get('cc_adporcas_diametro_estrutura', '') or '---'
+            diametro_interno = dados_pdf['ad_porcas'].get('cc_adporcas_diamentro_interno', '') or '---'
+            diametro_externo = dados_pdf['ad_porcas'].get('cc_adporcas_diametro_externo', '') or '---'
+            norma = dados_pdf['ad_porcas'].get('cc_adporcas_norma', '') or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -936,14 +936,14 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_pinos:
-            dureza = dados_pdf['ad_pinos'].get('cc_adpinos_dureza', '')
-            espessura = dados_pdf['ad_pinos'].get('cc_adpinos_espeddura', '')
-            comprimento = dados_pdf['ad_pinos'].get('cc_adpinos_comprimento', '')
-            diametro = dados_pdf['ad_pinos'].get('cc_adpinos_diametro', '')
-            diametro_cabeca = dados_pdf['ad_pinos'].get('cc_adpinos_diametro_cabeca', '')
-            diametro_interno = dados_pdf['ad_pinos'].get('cc_adpinos_diametro_interno', '')
-            diametro_externo = dados_pdf['ad_pinos'].get('cc_adpinos_diametro_externo', '')
-            norma = dados_pdf['ad_pinos'].get('cc_adpinos_norma', '')
+            dureza = dados_pdf['ad_pinos'].get('cc_adpinos_dureza', '') or '---'
+            espessura = dados_pdf['ad_pinos'].get('cc_adpinos_espeddura', '') or '---'
+            comprimento = dados_pdf['ad_pinos'].get('cc_adpinos_comprimento', '') or '---'
+            diametro = dados_pdf['ad_pinos'].get('cc_adpinos_diametro', '') or '---'
+            diametro_cabeca = dados_pdf['ad_pinos'].get('cc_adpinos_diametro_cabeca', '') or '---'
+            diametro_interno = dados_pdf['ad_pinos'].get('cc_adpinos_diametro_interno', '') or '---'
+            diametro_externo = dados_pdf['ad_pinos'].get('cc_adpinos_diametro_externo', '') or '---'
+            norma = dados_pdf['ad_pinos'].get('cc_adpinos_norma', '') or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -985,15 +985,15 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_parafusos:
-            dureza = dados_pdf['ad_parafusos'].get('cc_adparafusos_dureza', "")
-            altura = dados_pdf['ad_parafusos'].get('cc_adparafusos_altura', "")
-            chave = dados_pdf['ad_parafusos'].get('cc_adparafusos_chave', "")
-            comprimento = dados_pdf['ad_parafusos'].get('cc_adparafusos_comprimento', "")
-            diametro = dados_pdf['ad_parafusos'].get('cc_adparafusos_diametro', "")
-            diametro_cabeca = dados_pdf['ad_parafusos'].get('cc_adparafusos_diametro_cabeca', "")
-            comprimento_rosca = dados_pdf['ad_parafusos'].get('cc_adparafusos_comprimento_rosca', "")
-            diametro_ponta = dados_pdf['ad_parafusos'].get('cc_adparafusos_diametro_ponta', "")
-            norma = dados_pdf['ad_parafusos'].get('cc_adparafusos_norma', "")
+            dureza = dados_pdf['ad_parafusos'].get('cc_adparafusos_dureza', "") or '---'
+            altura = dados_pdf['ad_parafusos'].get('cc_adparafusos_altura', "") or '---'
+            chave = dados_pdf['ad_parafusos'].get('cc_adparafusos_chave', "") or '---'
+            comprimento = dados_pdf['ad_parafusos'].get('cc_adparafusos_comprimento', "") or '---'
+            diametro = dados_pdf['ad_parafusos'].get('cc_adparafusos_diametro', "") or '---'
+            diametro_cabeca = dados_pdf['ad_parafusos'].get('cc_adparafusos_diametro_cabeca', "") or '---'
+            comprimento_rosca = dados_pdf['ad_parafusos'].get('cc_adparafusos_comprimento_rosca', "") or '---'
+            diametro_ponta = dados_pdf['ad_parafusos'].get('cc_adparafusos_diametro_ponta', "") or '---'
+            norma = dados_pdf['ad_parafusos'].get('cc_adparafusos_norma', "") or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -1033,12 +1033,12 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_grampos:
-            dureza = dados_pdf['ad_grampos'].get('cc_adgrampos_dureza', '')
-            comprimento = dados_pdf['ad_grampos'].get('cc_adgrampos_comprimento', '')
-            diametro = dados_pdf['ad_grampos'].get('cc_adgrampos_diametro', '')
-            comprimento_rosca = dados_pdf['ad_grampos'].get('cc_adgrampos_comprimento_rosca', '')
-            diametro_interno = dados_pdf['ad_grampos'].get('cc_adgrampos_diametro_interno', '')
-            norma = dados_pdf['ad_grampos'].get('cc_adgrampos_norma', '')
+            dureza = dados_pdf['ad_grampos'].get('cc_adgrampos_dureza', '') or '---'
+            comprimento = dados_pdf['ad_grampos'].get('cc_adgrampos_comprimento', '') or '---'
+            diametro = dados_pdf['ad_grampos'].get('cc_adgrampos_diametro', '') or '---'
+            comprimento_rosca = dados_pdf['ad_grampos'].get('cc_adgrampos_comprimento_rosca', '') or '---'
+            diametro_interno = dados_pdf['ad_grampos'].get('cc_adgrampos_diametro_interno', '') or '---'
+            norma = dados_pdf['ad_grampos'].get('cc_adgrampos_norma', '') or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -1073,11 +1073,11 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_arruelas:
-            dureza = dados_pdf['ad_arruelas'].get('cc_adarruelas_dureza', '')
-            altura = dados_pdf['ad_arruelas'].get('cc_adarruelas_altura', '')
-            diametro_interno = dados_pdf['ad_arruelas'].get('cc_adarruelas_diametro_interno', '')
-            diametro_externo = dados_pdf['ad_arruelas'].get('cc_adarruelas_diametro_externo', '')
-            norma = dados_pdf['ad_arruelas'].get('cc_adarruelas_norma', '')
+            dureza = dados_pdf['ad_arruelas'].get('cc_adarruelas_dureza', '') or '---'
+            altura = dados_pdf['ad_arruelas'].get('cc_adarruelas_altura', '') or '---'
+            diametro_interno = dados_pdf['ad_arruelas'].get('cc_adarruelas_diametro_interno', '') or '---'
+            diametro_externo = dados_pdf['ad_arruelas'].get('cc_adarruelas_diametro_externo', '') or '---'
+            norma = dados_pdf['ad_arruelas'].get('cc_adarruelas_norma', '') or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -1111,11 +1111,11 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_anel:
-            dureza = dados_pdf['ad_anel'].get('cc_adanel_dureza', '')
-            altura = dados_pdf['ad_anel'].get('cc_adanel_altura', '')
-            diametro_interno = dados_pdf['ad_anel'].get('cc_adanel_diametro_interno', '')
-            diametro_externo = dados_pdf['ad_anel'].get('cc_adanel_diametro_externo', '')
-            norma = dados_pdf['ad_anel'].get('cc_adanel_norma', '')
+            dureza = dados_pdf['ad_anel'].get('cc_adanel_dureza', '') or '---'
+            altura = dados_pdf['ad_anel'].get('cc_adanel_altura', '') or '---'
+            diametro_interno = dados_pdf['ad_anel'].get('cc_adanel_diametro_interno', '') or '---'
+            diametro_externo = dados_pdf['ad_anel'].get('cc_adanel_diametro_externo', '') or '---'
+            norma = dados_pdf['ad_anel'].get('cc_adanel_norma', '') or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -1149,11 +1149,11 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_prisioneiro_estojo:
-            dureza = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_dureza', '')
-            comprimento = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_comprimento', '')
-            diametro = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_diametro', '')
-            comprimento_rosca = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_comprimento_rosca', '')
-            norma = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_norma', '')
+            dureza = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_dureza', '') or '---'
+            comprimento = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_comprimento', '') or '---'
+            diametro = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_diametro', '') or '---'
+            comprimento_rosca = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_comprimento_rosca', '') or '---'
+            norma = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_norma', '') or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -1187,16 +1187,16 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_especial:
-            dureza = dados_pdf['ad_especial'].get('cc_adespecial_dureza', '')
-            altura = dados_pdf['ad_especial'].get('cc_adespecial_altura', '')
-            chave = dados_pdf['ad_especial'].get('cc_adespecial_chave', '')
-            comprimento = dados_pdf['ad_especial'].get('cc_adespecial_comprimento', '')
-            diametro = dados_pdf['ad_especial'].get('cc_adespecial_diametro', '')
-            diametro_cabeca = dados_pdf['ad_especial'].get('cc_adespecial_diametro_cabeca', '')
-            comprimento_rosca = dados_pdf['ad_especial'].get('cc_adespecial_comprimento_rosca', '')
-            diametro_interno = dados_pdf['ad_especial'].get('cc_adespecial_diametro_interno', '')
-            diametro_externo = dados_pdf['ad_especial'].get('cc_adespecial_diametro_externo', '')
-            norma = dados_pdf['ad_especial'].get('cc_adespecial_norma', '')
+            dureza = dados_pdf['ad_especial'].get('cc_adespecial_dureza', '') or '---'
+            altura = dados_pdf['ad_especial'].get('cc_adespecial_altura', '') or '---'
+            chave = dados_pdf['ad_especial'].get('cc_adespecial_chave', '') or '---'
+            comprimento = dados_pdf['ad_especial'].get('cc_adespecial_comprimento', '') or '---'
+            diametro = dados_pdf['ad_especial'].get('cc_adespecial_diametro', '') or '---'
+            diametro_cabeca = dados_pdf['ad_especial'].get('cc_adespecial_diametro_cabeca', '') or '---'
+            comprimento_rosca = dados_pdf['ad_especial'].get('cc_adespecial_comprimento_rosca', '') or '---'
+            diametro_interno = dados_pdf['ad_especial'].get('cc_adespecial_diametro_interno', '') or '---'
+            diametro_externo = dados_pdf['ad_especial'].get('cc_adespecial_diametro_externo', '') or '---'
+            norma = dados_pdf['ad_especial'].get('cc_adespecial_norma', '') or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -1238,10 +1238,10 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_chumbador:
-            dureza = dados_pdf['ad_chumbador'].get('cc_adchumbador_dureza', '')
-            comprimento = dados_pdf['ad_chumbador'].get('cc_adchumbador_comprimento', '')
-            bitola = dados_pdf['ad_chumbador'].get('cc_adchumbador_bitola', '')
-            norma = dados_pdf['ad_chumbador'].get('cc_adchumbador_norma', '')
+            dureza = dados_pdf['ad_chumbador'].get('cc_adchumbador_dureza', '') or '---'
+            comprimento = dados_pdf['ad_chumbador'].get('cc_adchumbador_comprimento', '') or '---'
+            bitola = dados_pdf['ad_chumbador'].get('cc_adchumbador_bitola', '') or '---'
+            norma = dados_pdf['ad_chumbador'].get('cc_adchumbador_norma', '') or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -1273,11 +1273,11 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_rebite:
-            dureza = dados_pdf['ad_rebite'].get('cc_adrebite_dureza', '')
-            comprimento = dados_pdf['ad_rebite'].get('cc_adrebite_comprimento', '')
-            bitola = dados_pdf['ad_rebite'].get('cc_adrebite_bitola', '')
-            diametro_cabeca = dados_pdf['ad_rebite'].get('cc_adrebite_diametro_cabeca', '')
-            norma = dados_pdf['ad_rebite'].get('cc_adrebite_norma', '')
+            dureza = dados_pdf['ad_rebite'].get('cc_adrebite_dureza', '') or '---'
+            comprimento = dados_pdf['ad_rebite'].get('cc_adrebite_comprimento', '') or '---'
+            bitola = dados_pdf['ad_rebite'].get('cc_adrebite_bitola', '') or '---'
+            diametro_cabeca = dados_pdf['ad_rebite'].get('cc_adrebite_diametro_cabeca', '') or '---'
+            norma = dados_pdf['ad_rebite'].get('cc_adrebite_norma', '') or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -1311,11 +1311,11 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_chaveta:
-            dureza = dados_pdf['ad_chaveta'].get('cc_adchaveta_dureza', '')
-            comprimento = dados_pdf['ad_chaveta'].get('cc_adchaveta_comprimento', '')
-            diametro = dados_pdf['ad_chaveta'].get('cc_adchaveta_diametro', '')
-            altura = dados_pdf['ad_chaveta'].get('cc_adchaveta_altura', '')
-            norma = dados_pdf['ad_chaveta'].get('cc_adchaveta_norma', '')
+            dureza = dados_pdf['ad_chaveta'].get('cc_adchaveta_dureza', '') or '---'
+            comprimento = dados_pdf['ad_chaveta'].get('cc_adchaveta_comprimento', '') or '---'
+            diametro = dados_pdf['ad_chaveta'].get('cc_adchaveta_diametro', '') or '---'
+            altura = dados_pdf['ad_chaveta'].get('cc_adchaveta_altura', '') or '---'
+            norma = dados_pdf['ad_chaveta'].get('cc_adchaveta_norma', '') or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -1351,10 +1351,10 @@ def gerar_pdf():
             elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_contrapino:
-            dureza = dados_pdf['ad_contrapino'].get('cc_adcontrapino_dureza', '')
-            comprimento = dados_pdf['ad_contrapino'].get('cc_adcontrapino_comprimento', '')
-            diametro = dados_pdf['ad_contrapino'].get('cc_adcontrapino_diametro', '')
-            norma = dados_pdf['ad_contrapino'].get('cc_adcontrapino_norma', '')
+            dureza = dados_pdf['ad_contrapino'].get('cc_adcontrapino_dureza', '') or '---'
+            comprimento = dados_pdf['ad_contrapino'].get('cc_adcontrapino_comprimento', '') or '---'
+            diametro = dados_pdf['ad_contrapino'].get('cc_adcontrapino_diametro', '') or '---'
+            norma = dados_pdf['ad_contrapino'].get('cc_adcontrapino_norma', '') or '---'
 
             texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -1629,6 +1629,7 @@ def download_arquivo(numero_nota, cod_produto):
         response = make_response(file_like.getvalue())
         response.headers['Content-Disposition'] = f'attachment; filename={nome_arquivo}'
         response.mimetype = 'application/pdf'
+
         return response
     else:
         return "Arquivo não encontrado", 404
