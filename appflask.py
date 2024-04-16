@@ -556,6 +556,7 @@ def pesquisar_certificado():
     if not is_logged_in():
         return redirect(url_for('login'))
 
+
     resultados = None
     if request.method == 'POST':
         numero_nota = request.form.get('pc_numero_nota')
@@ -1957,7 +1958,7 @@ def verificar_existencia_nota(nota_fiscal):
             sql = "SELECT COUNT(1) FROM dbo.cadastro_certificados WHERE cc_numero_nota = ?"
             cursor.execute(sql, (nota_fiscal,))
             resultado = cursor.fetchone()
-            return resultado['COUNT(1)'] > 0  # Verifique o nome da coluna retornado pelo cursor.
+            return resultado['COUNT(1)'] > 0
     except Exception as e:
         print(f"Erro ao verificar existência da nota: {e}")
     finally:
@@ -1969,7 +1970,6 @@ def inserir_cadastro_certificados(dados):
     connection = conectar_db()
     try:
         with connection.cursor() as cursor:
-            # SQL query updated for clarity
             sql = """INSERT INTO dbo.cadastro_certificados 
                      (cc_numero_nota, cc_descricao, cc_cod_fornecedor, cc_cod_produto, cc_corrida, 
                      cc_data, cc_cq, cc_qtd_pedidos, cc_arquivo)
@@ -2451,7 +2451,6 @@ EXTENSION_TO_MIME_TYPE = {
 @app.route('/buscar-imagem')
 def buscar_imagem():
     norma = request.args.get('norma')
-    # Conexão ao banco de dados
     connection = conectar_db()
     cursor = connection.cursor()
 
@@ -2459,7 +2458,6 @@ def buscar_imagem():
     row = cursor.fetchone()
     if row:
         imagem, formato_imagem = row
-        # Obtém o tipo MIME baseado na extensão do arquivo
         mime_type = EXTENSION_TO_MIME_TYPE.get(formato_imagem.lower(), 'application/octet-stream')
         return send_file(io.BytesIO(imagem), mimetype=mime_type)
     else:
@@ -2481,7 +2479,6 @@ def cadastro_norma():
             extensao = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''  # Extrai a extensão do arquivo
             imagem_data = imagem.read()
 
-            # Conexão com o banco de dados e inserção da norma, imagem e extensão
             connection = conectar_db()
             cursor = connection.cursor()
             cursor.execute("""INSERT INTO dbo.imagem_norma (norma, imagem, extensao, descricao) VALUES (?, ?, ?, ?)""",
@@ -2766,9 +2763,9 @@ def verificar_existencia_registro(nota_fiscal, cod_produto, pedido_compra):
                    "AND ri_pedido_compra = ?")
             cursor.execute(sql, (nota_fiscal, cod_produto, pedido_compra))
             resultado = cursor.fetchone()
-            if resultado and resultado[0] > 0:  # Verifica resultado contagem é maior que zero
-                return True  # Existe um registro
-            return False  # Não existe registro
+            if resultado and resultado[0] > 0:
+                return True
+            return False
     except Exception as e:
         print(f"Erro ao verificar existência do registro de inspeção: {e}")
     finally:
