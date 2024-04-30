@@ -105,7 +105,6 @@ def logout():
 
 @app.context_processor
 def inject_aviso():
-    # Conectar ao banco de dados
     connection = conectar_db()
     cursor = connection.cursor()
     mensagens_aviso = []
@@ -136,7 +135,6 @@ def inject_aviso():
         cursor.close()
         connection.close()
 
-    # Retornar as mensagens para o modelo
     return dict(mensagens_aviso=mensagens_aviso)
 
 
@@ -206,7 +204,6 @@ def cadastro_equipamento():
                 connection.close()
 
     return render_template('cadastro_equipamento.html', numeros_instrumentos=numeros_instrumentos)
-
 
 
 @app.route('/buscar_dados_instrumento/<numero_instrumento>')
@@ -298,11 +295,9 @@ def cadastro_fornecedor():
         return redirect(url_for('login'))
 
     if request.method == 'POST':
-        # Extrair os dados do formulário
         nome_fornecedor = request.form['cad_nome_fornecedor']
         dados_complementares = request.form['cad_dados_fornecedor']
 
-        # Conexão com o banco de dados
         connection = conectar_db()
         try:
             with connection.cursor() as cursor:
@@ -348,7 +343,6 @@ def avaliacao_diaria():
                     flash('Avaliação substituida.')
                     print(f"Registro apagado.")
 
-                # Agora, insira o novo registro
                 sql_insert = """
                     INSERT INTO dbo.avaliacao_diaria (id_fornecedor, data, nao_conformidade, atraso_entrega, 
                     observacao)
@@ -1723,7 +1717,7 @@ def pesquisar_registro_inspecao():
         resultados = buscar_registro_inspecao(numero_nota, ri_data)
 
     username = session['username']
-    print(f"Ação realizada por: {username}, Pesquisa Registro Inspeção")
+    print(f"Ação realizada por: {username}, Entrou Pesquisa Registro Inspeção")
     return render_template('pesquisar_registro_inspecao.html', resultados=resultados)
 
 
@@ -1805,7 +1799,7 @@ def buscar_registro_inspecao(numero_nota, ri_data):
 
     username = session['username']
     print(f"Ação realizada por: {username}, Buscou Registro Inspecao NF:{numero_nota} - Data:{ri_data}")
-    print("resultados_agrupado: ", resultados_agrupados)
+    # print("resultados_agrupado: ", resultados_agrupados)
     return resultados_agrupados
 
 
@@ -1833,15 +1827,11 @@ def cadastro_certificados():
             qtd_pedido = request.form.get('cc_qtd_pedidos')
             cod_produto = request.form.get('cc_cod_produto')
 
-            # Capturar o arquivo enviado
             arquivo = request.files['arquivo']
 
-            # Verificar se um arquivo foi enviado
             if arquivo:
-                # Ler o conteúdo do arquivo
                 arquivo_binario = arquivo.read()
             else:
-                # Se nenhum arquivo foi enviado, definir arquivo_binario como None
                 arquivo_binario = None
 
             # Montar o dicionário de dados com o arquivo (pode ser None se nenhum arquivo foi enviado)
@@ -1854,10 +1844,9 @@ def cadastro_certificados():
                 'cod_fornecedor': cod_fornecedor,
                 'qtd_pedido': qtd_pedido,
                 'cod_produto': cod_produto,
-                'arquivo': arquivo_binario  # Adicionar o arquivo binário (pode ser None)
+                'arquivo': arquivo_binario
             }
 
-            # Chamando a função para inserir os dados no banco de dados
             inserir_cadastro_certificados(dados_certificado)
 
             # Composição Química
