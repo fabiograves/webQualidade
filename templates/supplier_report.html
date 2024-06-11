@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">Gráfico Fornecedor</h2>
+    <form id="supplierReportForm">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Fornecedor</label>
+                    <select class="form-control" id="filter_fornecedor">
+                        <option value="">Selecione um fornecedor</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-primary mt-4" id="generateReport">Gráfico</button>
+            </div>
+        </div>
+    </form>
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <canvas id="supplierChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Include Moment.js library -->
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1"></script>
+<!-- Include date adapter for Chart.js using Moment.js -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
+<!-- Include Moment.js locale for Portuguese -->
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/locale/pt-br.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const filterFornecedor = document.getElementById('filter_fornecedor');
+    let chartInstance = null;
+
+    // Função para carregar fornecedores
+    function loadFornecedores() {
+        fetch('/api/fornecedores')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(fornecedor => {
+                    const option = document.createElement('option');
+                    option.value = fornecedor.nome;
+                    option.textContent = fornecedor.nome;
+                    filterFornecedor.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error loading fornecedores:', error));
+    }
+
+    // Carregar fornecedores no filtro
+    loadFornecedores();
+
+    document.getElementById('generateReport').addEventListener('click', function() {
+        const fornecedor = filterFornecedor.value;
+
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        fetch('/generate_supplier_report', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ fornecedor: fornecedor })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Prepare data for the chart
+            const dates = data.dates.map(date => moment(date));
+            const times = data.times;
+            const statuses = data.statuses;
+
+            const ctx = document.getElementById('supplierChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Dias',
+                        data: times,
+                        borderColor: statuses.map(status => status === 'Finalizado' ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 0, 0, 1)'),
+                        borderWidth: 2,
+                        fill: false,
+                        spanGaps: true // Connect gaps in the data
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                tooltipFormat: 'DD/MM/YYYY',
+                                displayFormats: {
+                                    day: 'DD/MM/YYYY'
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Data de Notificação'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Tempo de Resolução (dias)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (times[context.dataIndex] === null) {
+                                        return 'Pending';
+                                    }
+                                    return context.raw + ' dias';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
+</script>
+{% endblock %}

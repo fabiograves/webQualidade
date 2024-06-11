@@ -1,0 +1,528 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<style>
+    .bordered {
+        border: 1px solid #000;
+        padding: 10px;
+        border-radius: 15px
+    }
+    .compact-row {
+            margin-bottom: 1px;
+            margin-top: 1px;
+            padding: 1px;
+        }
+    .compact-row td {
+            padding: 1px;
+        margin-bottom: 1px;
+        }
+</style>
+
+<form method="POST" id="relatorioForm">
+    <div class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1 class="text-center">Criar Relatório de Torque</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="">
+        <div class="container bordered">
+            <div class="row compact-row">
+                <div class="col-md-12">
+                    <div class="form-group"><label>Cliente:</label><input type="text" class="form-control" id="relatorio_cliente" name="relatorio_cliente"></div>
+                </div>
+            </div>
+            <div class="row compact-row">
+                <div class="col-md-3">
+                    <div class="form-group"><label>Pedido:</label><input type="text" class="form-control" id="relatorio_pedido" name="relatorio_pedido"></div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group"><label>Data:</label><input type="text" class="form-control" id="relatorio_data" name="relatorio_data"></div>
+                </div>
+            </div>
+            <div class="row compact-row">
+                <div class="col-md-12">
+                    <div class="form-group"><label>OBS:</label><input type="text" class="form-control" id="relatorio_obs" name="relatorio_obs"></div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 bordered">
+                    <div class="form-group"><label>Imagem 1:</label><input type="text" class="form-control" id="relatorio_texto_imagem1" name="relatorio_texto_imagem1"></div>
+                    <div class="form-group"><label>Imagem 1:</label><input type="file" id="imagem1" name="imagem1" onchange="mostrarImagem(this, 'miniatura1')"></div>
+                    <img id="miniatura1" src="" alt="Miniatura da imagem 1" style="width: 200px; height: auto; display: none;">
+                </div>
+                <div class="col-md-4 bordered">
+                    <div class="form-group"><label>Imagem 2:</label><input type="text" class="form-control" id="relatorio_texto_imagem2" name="relatorio_texto_imagem2"></div>
+                    <div class="form-group"><label>Imagem 2:</label><input type="file" id="imagem2" name="imagem2" onchange="mostrarImagem(this, 'miniatura2')"></div>
+                    <img id="miniatura2" src="" alt="Miniatura da imagem 2" style="width: 200px; height: auto; display: none;">
+                </div>
+                <div class="col-md-4 bordered">
+                    <div class="form-group"><label>Imagem 3:</label><input type="text" class="form-control" id="relatorio_texto_imagem3" name="relatorio_texto_imagem3"></div>
+                    <div class="form-group"><label>Imagem 3:</label><input type="file" id="imagem3" name="imagem3" onchange="mostrarImagem(this, 'miniatura3')"></div>
+                    <img id="miniatura3" src="" alt="Miniatura da imagem 3" style="width: 200px; height: auto; display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 bordered">
+                    <div class="form-group"><label>Imagem 4:</label><input type="text" class="form-control" id="relatorio_texto_imagem4" name="relatorio_texto_imagem4"></div>
+                    <div class="form-group"><label>Imagem 4:</label><input type="file" id="imagem4" name="imagem4" onchange="mostrarImagem(this, 'miniatura4')"></div>
+                    <img id="miniatura4" src="" alt="Miniatura da imagem 4" style="width: 200px; height: auto; display: none;">
+                </div>
+                <div class="col-md-4 bordered">
+                    <div class="form-group"><label>Imagem 5:</label><input type="text" class="form-control" id="relatorio_texto_imagem5" name="relatorio_texto_imagem5"></div>
+                    <div class="form-group"><label>Imagem 5:</label><input type="file" id="imagem5" name="imagem5" onchange="mostrarImagem(this, 'miniatura5')"></div>
+                    <img id="miniatura5" src="" alt="Miniatura da imagem 5" style="width: 200px; height: auto; display: none;">
+                </div>
+                <div class="col-md-4 bordered">
+                    <div class="form-group"><label>Imagem 6:</label><input type="text" class="form-control" id="relatorio_texto_imagem6" name="relatorio_texto_imagem6"></div>
+                    <div class="form-group"><label>Imagem 6:</label><input type="file" id="imagem6" name="imagem6" onchange="mostrarImagem(this, 'miniatura6')"></div>
+                    <img id="miniatura6" src="" alt="Miniatura da imagem 6" style="width: 200px; height: auto; display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group"><label>Observação:</label><input type="text" class="form-control" id="relatorio_obs_final" name="relatorio_obs_final"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 d-flex align-items-center">
+                <button type="button" class="btn btn-primary mr-2" onclick="addTable(1)">+</button>
+                <div class="form-group mb-0">
+                    <input type="text" class="form-control" id="bt_table1" name="bt_table1" placeholder="Tabela 1">
+                </div>
+            </div>
+            <div class="col-md-3 d-flex align-items-center">
+                <button type="button" class="btn btn-primary mr-2" onclick="addTable(2)">+</button>
+                <div class="form-group mb-0">
+                    <input type="text" class="form-control" id="bt_table2" name="bt_table2" placeholder="Tabela 2">
+                </div>
+            </div>
+            <div class="col-md-3 d-flex align-items-center">
+                <button type="button" class="btn btn-primary mr-2" onclick="addTable(3)">+</button>
+                <div class="form-group mb-0">
+                    <input type="text" class="form-control" id="bt_table3" name="bt_table3" placeholder="Tabela 3">
+                </div>
+            </div>
+            <div class="col-md-3 d-flex align-items-center">
+                <button type="button" class="btn btn-primary mr-2" onclick="addTable(4)">+</button>
+                <div class="form-group mb-0">
+                    <input type="text" class="form-control" id="bt_table4" name="bt_table4" placeholder="Tabela 4">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-3" id="tablesContainer">
+        <!-- Dynamic tables will be added here -->
+    </div>
+
+    <div class="container mt-3">
+        <div class="row">
+            <div class="col-md-10">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="button" class="btn btn-success" onclick="generatePDF()">Gerar PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" id="table_types" name="table_types">
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+            <ul>
+                {% for message in messages %}
+                    {% if 'Nota fiscal e código não encontrados.' in message %}
+                        <li class="flash-error">{{ message }}</li>
+                    {% else %}
+                        <li>{{ message }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    {% endwith %}
+
+</form>
+
+<script>
+    const tableTypes = [];
+
+    function addTable(type) {
+        const container = document.getElementById('tablesContainer');
+        let tableHTML = '';
+        const tableId = 'table-' + Date.now();
+        const tableHeader1 = document.getElementById('bt_table1').value;
+        const tableHeader2 = document.getElementById('bt_table2').value;
+        const tableHeader3 = document.getElementById('bt_table3').value;
+        const tableHeader4 = document.getElementById('bt_table4').value;
+        let tableHeader = '';
+        let rows = '';
+
+        switch(type) {
+            case 1:
+                tableHeader = tableHeader1;
+                rows = `
+                    <tr>
+                        <td>DIMENSIONAL DE PARTIDA</td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 271 Nm (CONF.TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_271_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_271_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_271_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_271_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_271_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_271_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 298,1 Nm (10% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_298_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_298_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_298_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_298_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_298_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_298_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 318,1 Nm (20% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_318_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_318_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_318_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_318_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_318_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_318_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 338,1 Nm (30% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_338_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_338_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_338_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_338_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_338_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_338_${tableId}_3" readonly></td>
+                    </tr>`;
+                break;
+            case 2:
+                tableHeader = tableHeader2;
+                rows = `
+                    <tr>
+                        <td>DIMENSIONAL DE PARTIDA</td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 422 Nm (CONF.TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_422_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_422_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_422_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_422_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_422_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_422_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 464,2 Nm (10% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_464_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_464_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_464_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_464_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_464_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_464_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 510,62 Nm (20% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_510_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_510_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_510_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_510_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_510_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_510_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 561,66 Nm (30% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_561_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_561_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_561_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_561_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_561_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_561_${tableId}_3" readonly></td>
+                    </tr>`;
+                break;
+            case 3:
+                tableHeader = tableHeader3;
+                rows = `
+                    <tr>
+                        <td>DIMENSIONAL DE PARTIDA</td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 741 Nm (CONF.TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_741_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_741_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_741_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_741_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_741_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_741_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 815,1 Nm (10% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_815_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_815_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_815_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_815_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_815_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_815_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 896,61 Nm (20% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_896_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_896_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_896_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_896_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_896_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_896_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 986,27 Nm (30% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_986_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_986_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_986_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_986_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_986_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_986_${tableId}_3" readonly></td>
+                    </tr>`;
+                break;
+            case 4:
+                tableHeader = tableHeader4;
+                rows = `
+                    <tr>
+                        <td>DIMENSIONAL DE PARTIDA</td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 1071 Nm (CONF.TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_1071_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_1071_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_1071_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_1071_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_1071_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_1071_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 1091 Nm (10% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_1091_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_1091_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_1091_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_1091_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_1091_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_1091_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 1111 Nm (20% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_1111_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_1111_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_1111_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_1111_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_1111_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_1111_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 1131 Nm (30% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_1131_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_1131_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_1131_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_1131_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_1131_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_1131_${tableId}_3" readonly></td>
+                    </tr>`;
+                break;
+        }
+
+        tableHTML = `
+            <div class="table-responsive" id="${tableId}">
+                <button type="button" class="btn btn-danger" onclick="removeTable('${tableId}')">Remove</button>
+                <input type="hidden" name="table_type_${tableId}" value="${type}">
+                <input type="hidden" name="table_header_${tableId}" value="${tableHeader}">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Ø ${tableHeader}</th>
+                            <th>1</th>
+                            <th>2</th>
+                            <th>3</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+            </div>`;
+
+        container.insertAdjacentHTML('beforeend', tableHTML);
+        tableTypes.push(tableId);
+        document.getElementById('table_types').value = JSON.stringify(tableTypes);
+    }
+
+    function removeTable(tableId) {
+        const table = document.getElementById(tableId);
+        if (table) {
+            table.remove();
+            const index = tableTypes.indexOf(tableId);
+            if (index !== -1) {
+                tableTypes.splice(index, 1);
+                document.getElementById('table_types').value = JSON.stringify(tableTypes);
+            }
+        }
+    }
+
+    function calculateAlongamento(tableId, column) {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+
+        const partidaInput = table.querySelector(`input[name="dimensional_partida_${tableId}_${column}"]`);
+        const torqueInputs = table.querySelectorAll(`input[name^="torque_"][name$="_${tableId}_${column}"]`);
+        const alongamentoInputs = table.querySelectorAll(`input[name^="alongamento_"][name$="_${tableId}_${column}"]`);
+
+        if (!partidaInput) return;
+        const partidaValue = parseFloat(partidaInput.value);
+
+        if (!isNaN(partidaValue)) {
+            torqueInputs.forEach((torqueInput, index) => {
+                const torqueValue = parseFloat(torqueInput.value);
+                const alongamentoInput = alongamentoInputs[index];
+                if (!isNaN(torqueValue) && alongamentoInput) {
+                    const alongamentoValue = ((torqueValue - partidaValue) / partidaValue) * 100;
+                    alongamentoInput.value = alongamentoValue.toFixed(2);
+                } else {
+                    alongamentoInput.value = '';
+                }
+            });
+        } else {
+            alongamentoInputs.forEach(alongamentoInput => alongamentoInput.value = '');
+        }
+    }
+
+    document.getElementById('botao-criar').addEventListener('click', function(event) {
+        var confirmacao = confirm('Tem certeza que deseja criar o certificado?');
+        if (!confirmacao) {
+            event.preventDefault();
+        }
+    });
+
+    function mostrarImagem(input, idMiniatura) {
+        var file = input.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var miniatura = document.getElementById(idMiniatura);
+                miniatura.src = e.target.result;
+                miniatura.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function generatePDF() {
+        const form = document.getElementById('relatorioForm');
+        const formData = new FormData(form);
+        fetch('/generate_pdf', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'relatorio_torque.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+</script>
+
+{% endblock %}

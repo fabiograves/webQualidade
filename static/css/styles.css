@@ -81,3 +81,8 @@
 .navbar-dark .navbar-brand, .navbar-dark .navbar-nav .nav-link.active {
   color: #fff; /* Mantém o texto branco para marcas e links ativos */
 }
+
+.card-border-thick {
+  border-width: 3px; /* Ajuste a espessura conforme necessário */
+}
+

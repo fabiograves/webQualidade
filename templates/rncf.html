@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<form id="rncfForm" method="POST" action="{{ url_for('rncf') }}" enctype="multipart/form-data">
+  <div class="py-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h1 class="text-center">Relatório de Não Conformidade Fornecedor - RNCF</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Nº Relatório</label>
+            <input type="text" class="form-control" id="rncf_numero_relatorio" name="rncf_numero_relatorio" value="{{ data.rncf_numero_relatorio if data else '' }}" required>
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div class="form-group">
+            <label>Fornecedor</label>
+            <input type="text" class="form-control" id="rncf_fornecedor" name="rncf_fornecedor" value="{{ data.rncf_fornecedor if data else '' }}" required>
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div class="form-group">
+            <label>Nota Fiscal</label>
+            <input type="text" class="form-control" id="rncf_nota_fiscal" name="rncf_nota_fiscal" value="{{ data.rncf_nota_fiscal if data else '' }}" required>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="form-group">
+            <label>Descrição do material</label>
+            <input type="text" class="form-control" id="rncf_descricao_material" name="rncf_descricao_material" value="{{ data.rncf_descricao_material if data else '' }}" required>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Tratativa final</label>
+            <input type="text" class="form-control" id="rncf_tratativa_final" name="rncf_tratativa_final" value="{{ data.rncf_tratativa_final if data else '' }}" required>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Data de notificação</label>
+            <input type="date" class="form-control" id="rncf_data_notificacao" name="rncf_data_notificacao" value="{{ data.rncf_data_notificacao if data else '' }}" required>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Prazo responder (dias)</label>
+            <input type="number" class="form-control" id="rncf_prazo_responder" name="rncf_prazo_responder" value="{{ data.rncf_prazo_responder if data else '' }}" required>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <div class="form-group">
+            <label>Data final</label>
+            <input type="text" class="form-control" id="rncf_data_final" name="rncf_data_final" value="{{ data.rncf_data_final if data else '' }}" readonly>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label>Status</label>
+            <select class="form-control" id="rncf_status" name="rncf_status" required>
+              <option value="Selecione" {% if not data or data.rncf_status=='Selecione' %} selected {% endif %}>Selecione</option>
+              <option value="Pendente" {% if data and data.rncf_status=='Pendente' %} selected {% endif %}>Pendente</option>
+              <option value="Finalizado" {% if data and data.rncf_status=='Finalizado' %} selected {% endif %}>Finalizado</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-7">
+          <div class="form-group">
+            <label>Relatório preenchido - Somente arquivo .PDF</label>
+            <input type="file" class="form-control" id="rncf_relatorio_pdf" name="rncf_relatorio_pdf" accept=".pdf">
+          </div>
+        </div>
+      </div>
+      <!-- Botão de envio -->
+      {% if data %}
+      <button type="submit" formaction="{{ url_for('update_rncf_view') }}" class="btn btn-secondary w-100 mb-3" onclick="return confirm('Tem certeza que deseja atualizar o relatório?')">Atualizar Relatório</button>
+      {% else %}
+      <button type="submit" class="btn btn-secondary w-100 mb-3" onclick="return confirm('Tem certeza que deseja cadastrar o relatório?')">Cadastrar Relatório</button>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+  <!-- Bloco de filtro -->
+<div class="container mt-5">
+  <h2 class="text-center">Filtrar Registros</h2>
+  <div class="row">
+    <div class="col-md-2">
+      <div class="form-group">
+        <label>Fornecedor</label>
+        <select class="form-control" id="filter_fornecedor">
+          <option value="">Selecione um fornecedor</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="form-group">
+        <label>Data Início</label>
+        <input type="date" class="form-control" id="filter_data_inicio">
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="form-group">
+        <label>Data Fim</label>
+        <input type="date" class="form-control" id="filter_data_fim">
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="form-group">
+        <label>Registros por página</label>
+        <select class="form-control" id="records_per_page">
+          <option value="6">6</option>
+          <option value="12">12</option>
+          <option value="24">24</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-secondary w-100 mb-3" id="apply_filter">Aplicar Filtro</button>
+    </div>
+    <div class="col-md-2">
+      <a href="{{ url_for('supplier_report') }}" class="btn btn-secondary w-100 mb-3">Gráfico</a>
+    </div>
+  </div>
+</div>
+
+<!-- Bloco de registros -->
+<div id="recordsContainer" class="container mt-5">
+  <h2 class="text-center">Registros Cadastrados</h2>
+  <div class="row" id="recordsRow">
+    <!-- Registros serão inseridos aqui pelo JavaScript -->
+  </div>
+  <nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center" id="pagination">
+      <!-- Paginação será inserida aqui pelo JavaScript -->
+    </ul>
+  </nav>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const dataNotificacao = document.getElementById('rncf_data_notificacao');
+    const prazoResponder = document.getElementById('rncf_prazo_responder');
+    const dataFinal = document.getElementById('rncf_data_final');
+    const rncfNumeroRelatorio = document.getElementById('rncf_numero_relatorio');
+    const recordsPerPageSelect = document.getElementById('records_per_page');
+    const filterFornecedor = document.getElementById('filter_fornecedor');
+
+    let currentPage = 1;
+    let recordsPerPage = parseInt(recordsPerPageSelect.value);
+
+    function calculateFinalDate() {
+      const dataNotificacaoValue = dataNotificacao.value;
+      const prazoResponderValue = parseInt(prazoResponder.value);
+
+      if (dataNotificacaoValue && !isNaN(prazoResponderValue)) {
+        const data = new Date(dataNotificacaoValue);
+        data.setDate(data.getDate() + prazoResponderValue +1);
+
+        const day = String(data.getDate()).padStart(2, '0');
+        const month = String(data.getMonth() + 1).padStart(2, '0');
+        const year = data.getFullYear();
+
+        dataFinal.value = `${day}-${month}-${year}`;
+      }
+    }
+
+    dataNotificacao.addEventListener('change', calculateFinalDate);
+    prazoResponder.addEventListener('input', calculateFinalDate);
+
+    rncfNumeroRelatorio.addEventListener('change', function() {
+      const numeroRelatorio = rncfNumeroRelatorio.value;
+      if (numeroRelatorio) {
+        fetch('{{ url_for("get_rncf_data") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ rncf_numero_relatorio: numeroRelatorio })
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          document.getElementById('rncf_fornecedor').value = data.rncf_fornecedor;
+          document.getElementById('rncf_nota_fiscal').value = data.rncf_nota_fiscal;
+          document.getElementById('rncf_descricao_material').value = data.rncf_descricao_material;
+          document.getElementById('rncf_data_notificacao').value = data.rncf_data_notificacao;
+          document.getElementById('rncf_prazo_responder').value = data.rncf_prazo_responder;
+          document.getElementById('rncf_tratativa_final').value = data.rncf_tratativa_final;
+          document.getElementById('rncf_status').value = data.rncf_status;
+          calculateFinalDate();
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Número de relatório não existe no banco de dados.');
+        });
+      }
+    });
+
+    // Função para carregar o próximo número
+    function loadNextRncfNumero() {
+        fetch('{{ url_for("get_next_rncf_numero") }}')
+            .then(response => response.json())
+            .then(data => {
+                rncfNumeroRelatorio.value = data.next_numero;
+            })
+            .catch(error => {
+                console.error('Error fetching next RNCF number:', error);
+            });
+    }
+
+    //if (!rncfNumeroRelatorio.value) {
+    //    loadNextRncfNumero();
+    //}
+
+    // Função para calcular a cor com base no tempo restante
+    function calculateColor(dataFinal, dataNotificacao, prazo, status) {
+      const hoje = new Date();
+      const dataFinalDate = new Date(dataFinal.split('-').reverse().join('-'));
+      const diferencaDias = (dataFinalDate - hoje) / (1000 * 60 * 60 * 24);
+      const prazoTotal = parseInt(prazo);
+
+      if (status === 'Finalizado') {
+        return 'black';
+      }
+      else {
+        if (diferencaDias > (2 / 3) * prazoTotal) {
+          return 'green';
+        } else if (diferencaDias <= (2 / 3) * prazoTotal && diferencaDias > (1 / 3) * prazoTotal) {
+          return 'yellow';
+        } else if (diferencaDias <= (1 / 3) * prazoTotal && diferencaDias >= 0) {
+          return 'orange';
+        } else {
+          return 'red';
+        }
+      }
+    }
+
+    // Função para carregar registros
+    function loadRecords(filters = {}, page = 1, perPage = 5) {
+      const params = new URLSearchParams(filters);
+      params.append('page', page);
+      params.append('per_page', perPage);
+      fetch(`{{ url_for('rncf_records') }}?${params.toString()}`, {
+          method: 'GET',
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      })
+      .then(response => response.json())
+      .then(data => {
+          const records = data.records;
+          const totalRecords = data.total;
+          const totalPages = Math.ceil(totalRecords / perPage);
+
+          const recordsRow = document.getElementById('recordsRow');
+          recordsRow.innerHTML = '';
+          records.forEach(record => {
+              const color = calculateColor(record.rncf_data_final, record.rncf_data_notificacao, record.rncf_prazo, record.rncf_status);
+              const recordBlock = document.createElement('div');
+              recordBlock.classList.add('col-md-12', 'mb-4');
+              recordBlock.innerHTML = `
+                  <div class="card card-border-thick" style="border-color: ${color};">
+                      <div class="card-body">
+                          <h5 class="card-title">Relatório Nº: ${record.rncf_numero} - Status: ${record.rncf_status}</h5>
+                          <div class="row">
+                              <div class="col-md-12">
+                                  <p class="card-text"><strong>Data Finalizado:</strong> ${record.rncf_data_finalizado ? record.rncf_data_finalizado : 'Em Aberto'}</p>
+                              </div>
+                          </div>
+                          <div class="row">
+                              <div class="col-md-7">
+                                  <p class="card-text"><strong>Fornecedor:</strong> ${record.rncf_fornecedor}</p>
+                              </div>
+                              <div class="col-md-5">
+                                  <p class="card-text"><strong>Nota Fiscal:</strong> ${record.rncf_nota_fiscal}</p>
+                              </div>
+                          </div>
+                          <div class="row">
+                              <div class="col-md-12">
+                                  <p class="card-text"><strong>Descrição do material:</strong> ${record.rncf_descricao_material}</p>
+                              </div>
+                          </div>
+                          <div class="row">
+                              <div class="col-md-7">
+                                  <p class="card-text"><strong>Data de notificação:</strong> ${record.rncf_data_notificacao}</p>
+                              </div>
+                              <div class="col-md-5">
+                                  <p class="card-text"><strong>Prazo responder:</strong> ${record.rncf_prazo} dias</p>
+                              </div>
+                          </div>
+                          <div class="row">
+                              <div class="col-md-7">
+                                  <p class="card-text"><strong>Tratativa final:</strong> ${record.rncf_tratativa_final}</p>
+                              </div>
+                              <div class="col-md-5">
+                                  <p class="card-text"><strong>Data Final:</strong> ${record.rncf_data_final}</p>
+                              </div>
+                          </div>
+                          <div class="row">
+                              <div class="col-md-10">
+                                  <p class="card-text"><strong>Status:</strong> ${record.rncf_status}</p>
+                              </div>
+                              <div class="col-md-2 text-right">
+                                  <a href="/download_pdf/${record.rncf_numero}" class="btn btn-primary">Baixar PDF</a>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              `;
+              recordsRow.appendChild(recordBlock);
+          });
+
+          // Atualizar paginação
+          const pagination = document.getElementById('pagination');
+          pagination.innerHTML = '';
+          for (let i = 1; i <= totalPages; i++) {
+              const pageItem = document.createElement('li');
+              pageItem.classList.add('page-item');
+              if (i === page) {
+                  pageItem.classList.add('active');
+              }
+              pageItem.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+              pageItem.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  currentPage = i;
+                  loadRecords(filters, currentPage, recordsPerPage);
+              });
+              pagination.appendChild(pageItem);
+          }
+      })
+      .catch(error => console.error('Error loading records:', error));
+  }
+
+  document.getElementById('apply_filter').addEventListener('click', function() {
+      const filterFornecedor = document.getElementById('filter_fornecedor').value;
+      const filterDataInicio = document.getElementById('filter_data_inicio').value;
+      const filterDataFim = document.getElementById('filter_data_fim').value;
+
+      const filters = {
+          fornecedor: filterFornecedor,
+          data_inicio: filterDataInicio,
+          data_fim: filterDataFim
+      };
+
+      currentPage = 1;
+      loadRecords(filters, currentPage, recordsPerPage);
+  });
+
+  recordsPerPageSelect.addEventListener('change', function() {
+      recordsPerPage = parseInt(recordsPerPageSelect.value);
+      currentPage = 1;
+      loadRecords({}, currentPage, recordsPerPage);
+  });
+
+  // Função para carregar fornecedores
+  function loadFornecedores() {
+      fetch('/api/fornecedores')
+          .then(response => response.json())
+          .then(data => {
+              data.forEach(fornecedor => {
+                  const option = document.createElement('option');
+                  option.value = fornecedor.nome;
+                  option.textContent = fornecedor.nome;
+                  filterFornecedor.appendChild(option);
+              });
+          })
+          .catch(error => console.error('Error loading fornecedores:', error));
+  }
+
+  // Carregar fornecedores no filtro
+  loadFornecedores();
+
+  // Carregar todos os registros inicialmente
+  loadRecords({}, currentPage, recordsPerPage);
+  });
+</script>
+
+{% endblock %}

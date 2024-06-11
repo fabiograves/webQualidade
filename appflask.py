@@ -1,10 +1,15 @@
 import base64
 import datetime
+import json
 import tempfile
 
 import pyodbc
+import logging
+from datetime import timedelta
 from PyPDF2 import PdfMerger
 from flask import Flask, render_template, request, redirect, url_for, flash, session, make_response, jsonify
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen import canvas
 from werkzeug.utils import secure_filename
 from flask_session import Session
 from flask import send_file, Response
@@ -20,6 +25,7 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from collections import defaultdict
+from io import BytesIO
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -145,6 +151,214 @@ def home():
     username = session['username']
     print(f"Ação realizada por: {username}, Clicou Home")
     return render_template('home.html')
+
+
+@app.route('/relatorio_teste')
+def relatorio_teste():
+    return render_template('/relatorio_teste.html')
+
+
+@app.route('/generate_pdf', methods=['POST'])
+def generate_pdf():
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    def add_header(p):
+        logo_path = "static/images/LogoCertificado.png"
+        p.drawImage(logo_path, 30, height - 80, width=150, height=60)
+        p.setFont("Helvetica-Bold", 30)
+        p.drawString(225, height - 55, "Relatório de Torque")
+
+        p.setFont("Helvetica", 10)
+        p.drawString(30, height - 100, f"Cliente: {cliente}")
+        p.drawString(30, height - 115, f"Pedido: {pedido}")
+        p.drawString(300, height - 115, f"Data: {data_relatorio}")
+        p.drawString(30, height - 130, f"OBS: {obs}")
+
+    def draw_images(p):
+        styles = getSampleStyleSheet()
+        centered_style = styles['Normal']
+        centered_style.alignment = 1  # Center alignment
+
+        image_texts = [
+            request.form.get('relatorio_texto_imagem1', ''),
+            request.form.get('relatorio_texto_imagem2', ''),
+            request.form.get('relatorio_texto_imagem3', ''),
+            request.form.get('relatorio_texto_imagem4', ''),
+            request.form.get('relatorio_texto_imagem5', ''),
+            request.form.get('relatorio_texto_imagem6', '')
+        ]
+        image_files = [
+            request.files.get('imagem1'),
+            request.files.get('imagem2'),
+            request.files.get('imagem3'),
+            request.files.get('imagem4'),
+            request.files.get('imagem5'),
+            request.files.get('imagem6')
+        ]
+
+        table_data = []
+        for i in range(0, 6, 3):
+            row = []
+            for j in range(3):
+                index = i + j
+                if index < len(image_texts):
+                    text = image_texts[index]
+                    image_file = image_files[index]
+                    if image_file:
+                        image_buffer = BytesIO(image_file.read())
+                        img = Image(image_buffer, width=2 * inch, height=1.5 * inch)
+                        paragraph = Paragraph(text, centered_style)
+                        cell_content = [paragraph, Spacer(1, 10), img]
+                        row.append(cell_content)
+                    else:
+                        row.append([Paragraph("", centered_style), Spacer(1, 12), Paragraph("", centered_style)])
+                else:
+                    row.append([Paragraph("", centered_style), Spacer(1, 12), Paragraph("", centered_style)])
+            table_data.append(row)
+
+        table = Table(table_data, colWidths=[2.5 * inch, 2.5 * inch, 2.5 * inch], rowHeights=[2.5 * inch, 2.5 * inch])
+        table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black)
+        ]))
+
+        table.wrapOn(p, width, height)
+        table.drawOn(p, 30, height - 500)
+
+        # Add observation below images
+        obs_final = request.form.get('relatorio_obs_final', '')
+        obs_y_position = height - 520
+
+        p.drawString(30, obs_y_position, "Observação:")
+        p.drawString(100, obs_y_position, obs_final)
+
+    # Draw the form fields data
+    cliente = request.form.get('relatorio_cliente', '')
+    pedido = request.form.get('relatorio_pedido', '')
+    data_relatorio = request.form.get('relatorio_data', '')
+    obs = request.form.get('relatorio_obs', '')
+
+    table_types = json.loads(request.form.get('table_types', '[]'))
+    tables_data = []
+
+    for table_id in table_types:
+        table_type = request.form.get(f'table_type_{table_id}')
+        table_header = request.form.get(f'table_header_{table_id}')
+        rows = []
+
+        if table_type == '1':
+            rows = [
+                ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
+                ["TORQUE 271 Nm (CONF.TABELA)", request.form.get(f'torque_271_{table_id}_1', ''), request.form.get(f'torque_271_{table_id}_2', ''), request.form.get(f'torque_271_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_271_{table_id}_1', ''), request.form.get(f'alongamento_271_{table_id}_2', ''), request.form.get(f'alongamento_271_{table_id}_3', '')],
+                ["TORQUE 298,1 Nm (10% A MAIS TABELA)", request.form.get(f'torque_298_{table_id}_1', ''), request.form.get(f'torque_298_{table_id}_2', ''), request.form.get(f'torque_298_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_298_{table_id}_1', ''), request.form.get(f'alongamento_298_{table_id}_2', ''), request.form.get(f'alongamento_298_{table_id}_3', '')],
+                ["TORQUE 318,1 Nm (20% A MAIS TABELA)", request.form.get(f'torque_318_{table_id}_1', ''), request.form.get(f'torque_318_{table_id}_2', ''), request.form.get(f'torque_318_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_318_{table_id}_1', ''), request.form.get(f'alongamento_318_{table_id}_2', ''), request.form.get(f'alongamento_318_{table_id}_3', '')],
+                ["TORQUE 338,1 Nm (30% A MAIS TABELA)", request.form.get(f'torque_338_{table_id}_1', ''), request.form.get(f'torque_338_{table_id}_2', ''), request.form.get(f'torque_338_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_338_{table_id}_1', ''), request.form.get(f'alongamento_338_{table_id}_2', ''), request.form.get(f'alongamento_338_{table_id}_3', '')]
+            ]
+        elif table_type == '2':
+            rows = [
+                ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
+                ["TORQUE 422 Nm (CONF.TABELA)", request.form.get(f'torque_422_{table_id}_1', ''), request.form.get(f'torque_422_{table_id}_2', ''), request.form.get(f'torque_422_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_422_{table_id}_1', ''), request.form.get(f'alongamento_422_{table_id}_2', ''), request.form.get(f'alongamento_422_{table_id}_3', '')],
+                ["TORQUE 464,2 Nm (10% A MAIS TABELA)", request.form.get(f'torque_464_{table_id}_1', ''), request.form.get(f'torque_464_{table_id}_2', ''), request.form.get(f'torque_464_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_464_{table_id}_1', ''), request.form.get(f'alongamento_464_{table_id}_2', ''), request.form.get(f'alongamento_464_{table_id}_3', '')],
+                ["TORQUE 510,62 Nm (20% A MAIS TABELA)", request.form.get(f'torque_510_{table_id}_1', ''), request.form.get(f'torque_510_{table_id}_2', ''), request.form.get(f'torque_510_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_510_{table_id}_1', ''), request.form.get(f'alongamento_510_{table_id}_2', ''), request.form.get(f'alongamento_510_{table_id}_3', '')],
+                ["TORQUE 561,66 Nm (30% A MAIS TABELA)", request.form.get(f'torque_561_{table_id}_1', ''), request.form.get(f'torque_561_{table_id}_2', ''), request.form.get(f'torque_561_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_561_{table_id}_1', ''), request.form.get(f'alongamento_561_{table_id}_2', ''), request.form.get(f'alongamento_561_{table_id}_3', '')]
+            ]
+        elif table_type == '3':
+            rows = [
+                ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
+                ["TORQUE 741 Nm (CONF.TABELA)", request.form.get(f'torque_741_{table_id}_1', ''), request.form.get(f'torque_741_{table_id}_2', ''), request.form.get(f'torque_741_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_741_{table_id}_1', ''), request.form.get(f'alongamento_741_{table_id}_2', ''), request.form.get(f'alongamento_741_{table_id}_3', '')],
+                ["TORQUE 815,1 Nm (10% A MAIS TABELA)", request.form.get(f'torque_815_{table_id}_1', ''), request.form.get(f'torque_815_{table_id}_2', ''), request.form.get(f'torque_815_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_815_{table_id}_1', ''), request.form.get(f'alongamento_815_{table_id}_2', ''), request.form.get(f'alongamento_815_{table_id}_3', '')],
+                ["TORQUE 896,61 Nm (20% A MAIS TABELA)", request.form.get(f'torque_896_{table_id}_1', ''), request.form.get(f'torque_896_{table_id}_2', ''), request.form.get(f'torque_896_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_896_{table_id}_1', ''), request.form.get(f'alongamento_896_{table_id}_2', ''), request.form.get(f'alongamento_896_{table_id}_3', '')],
+                ["TORQUE 986,27 Nm (30% A MAIS TABELA)", request.form.get(f'torque_986_{table_id}_1', ''), request.form.get(f'torque_986_{table_id}_2', ''), request.form.get(f'torque_986_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_986_{table_id}_1', ''), request.form.get(f'alongamento_986_{table_id}_2', ''), request.form.get(f'alongamento_986_{table_id}_3', '')]
+            ]
+        elif table_type == '4':
+            rows = [
+                ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
+                ["TORQUE 1071 Nm (CONF.TABELA)", request.form.get(f'torque_1071_{table_id}_1', ''), request.form.get(f'torque_1071_{table_id}_2', ''), request.form.get(f'torque_1071_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_1071_{table_id}_1', ''), request.form.get(f'alongamento_1071_{table_id}_2', ''), request.form.get(f'alongamento_1071_{table_id}_3', '')],
+                ["TORQUE 1091 Nm (10% A MAIS TABELA)", request.form.get(f'torque_1091_{table_id}_1', ''), request.form.get(f'torque_1091_{table_id}_2', ''), request.form.get(f'torque_1091_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_1091_{table_id}_1', ''), request.form.get(f'alongamento_1091_{table_id}_2', ''), request.form.get(f'alongamento_1091_{table_id}_3', '')],
+                ["TORQUE 1111 Nm (20% A MAIS TABELA)", request.form.get(f'torque_1111_{table_id}_1', ''), request.form.get(f'torque_1111_{table_id}_2', ''), request.form.get(f'torque_1111_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_1111_{table_id}_1', ''), request.form.get(f'alongamento_1111_{table_id}_2', ''), request.form.get(f'alongamento_1111_{table_id}_3', '')],
+                ["TORQUE 1131 Nm (30% A MAIS TABELA)", request.form.get(f'torque_1131_{table_id}_1', ''), request.form.get(f'torque_1131_{table_id}_2', ''), request.form.get(f'torque_1131_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_1131_{table_id}_1', ''), request.form.get(f'alongamento_1131_{table_id}_2', ''), request.form.get(f'alongamento_1131_{table_id}_3', '')]
+            ]
+        tables_data.append((table_header, rows))
+
+    add_header(p)
+    draw_images(p)
+
+    username = session.get('username', 'N/A')
+    nome_assinatura = session.get('nome_assinatura', 'N/A')
+    setor_assinatura = session.get('setor_assinatura', 'N/A')
+    telefone_assinatura = session.get('telefone_assinatura', 'N/A')
+    email_assinatura = session.get('email_assinatura', 'N/A')
+
+    user_info = [
+        f"Nome: {nome_assinatura}",
+        f"Setor: {setor_assinatura}",
+        f"{telefone_assinatura}",
+        f"{email_assinatura}"
+    ]
+
+    p.setFont("Helvetica", 10)
+    text_y = 100
+    for info in user_info:
+        p.drawRightString(width - 30, text_y, info)
+        text_y -= 12
+
+    p.showPage()
+
+    add_header(p)
+    # Draw tables in the PDF
+    y_position = height - 150
+    for table_header, rows in tables_data:
+        data = [[f"Ø {table_header}", "1", "2", "3"]]
+        data.extend(rows)
+
+        row_heights = [0.25 * inch] * len(data)
+
+        t = Table(data, colWidths=[2.0 * inch, 1 * inch, 1 * inch, 1 * inch], rowHeights=row_heights)
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 2),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ])
+        t.setStyle(style)
+
+        table_width, table_height = t.wrap(0, height)
+
+        if y_position - table_height < 0:
+            p.showPage()
+            add_header(p)
+            y_position = height - 150
+
+        t.drawOn(p, 125, y_position - table_height)
+        y_position -= table_height + 10  # Espaço entre as tabelas
+
+    p.save()
+
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name='relatorio_torque.pdf', mimetype='application/pdf')
 
 
 @app.route('/download_certificado', methods=['GET', 'POST'])
@@ -2759,6 +2973,318 @@ def verificar_existencia_registro(nota_fiscal, cod_produto, pedido_compra):
         print(f"Erro ao verificar existência do registro de inspeção: {e}")
     finally:
         connection.close()
+
+
+def allowed_file_pdf(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'pdf'
+
+
+logging.basicConfig(level=logging.DEBUG)
+
+
+@app.route('/rncf', methods=['GET', 'POST'])
+def rncf():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        rncf_numero_relatorio = request.form.get('rncf_numero_relatorio')
+        rncf_fornecedor = request.form['rncf_fornecedor']
+        rncf_nota_fiscal = request.form['rncf_nota_fiscal']
+        rncf_descricao_material = request.form['rncf_descricao_material']
+        rncf_data_notificacao = request.form['rncf_data_notificacao']
+        rncf_prazo_responder = request.form['rncf_prazo_responder']
+        rncf_tratativa_final = request.form['rncf_tratativa_final']
+        rncf_status = request.form['rncf_status']
+        rncf_relatorio_pdf = request.files['rncf_relatorio_pdf']
+
+        logging.debug(f"Received POST data: {request.form}")
+
+        connection = conectar_db()
+        cursor = connection.cursor()
+
+        if rncf_status == "Finalizado":
+            rncf_data_finalizado = datetime.datetime.now()
+        else:
+            rncf_data_finalizado = None
+
+        cursor.execute("SELECT * FROM dbo.rncf WHERE rncf_numero = ?", (rncf_numero_relatorio,))
+        existing_report = cursor.fetchone()
+
+        if existing_report:
+            logging.debug(f"Existing report found: {existing_report}")
+            if rncf_relatorio_pdf and allowed_file_pdf(rncf_relatorio_pdf.filename):
+                relatorio_pdf_data = rncf_relatorio_pdf.read()
+                cursor.execute("""
+                    UPDATE dbo.rncf SET
+                        rncf_fornecedor = ?, rncf_nota_fiscal = ?, rncf_descricao_material = ?,
+                        rncf_data_notificacao = ?, rncf_prazo = ?, rncf_tratativa_final = ?, rncf_status = ?, rncf_relatorio_pdf = ?, rncf_data_finalizado = ?
+                    WHERE rncf_numero = ?
+                """, (
+                    rncf_fornecedor, rncf_nota_fiscal, rncf_descricao_material,
+                    rncf_data_notificacao, rncf_prazo_responder, rncf_tratativa_final, rncf_status, relatorio_pdf_data,
+                    rncf_data_finalizado, rncf_numero_relatorio
+                ))
+            else:
+                cursor.execute("""
+                    UPDATE dbo.rncf SET
+                        rncf_fornecedor = ?, rncf_nota_fiscal = ?, rncf_descricao_material = ?,
+                        rncf_data_notificacao = ?, rncf_prazo = ?, rncf_tratativa_final = ?, rncf_status = ?, rncf_data_finalizado = ?
+                    WHERE rncf_numero = ?
+                """, (
+                    rncf_fornecedor, rncf_nota_fiscal, rncf_descricao_material,
+                    rncf_data_notificacao, rncf_prazo_responder, rncf_tratativa_final, rncf_status,
+                    rncf_data_finalizado, rncf_numero_relatorio
+                ))
+            connection.commit()
+            connection.close()
+
+            flash('Relatório atualizado com sucesso!')
+        else:
+            cursor.execute("SELECT COALESCE(MAX(rncf_numero), 0) + 1 FROM dbo.rncf")
+            rncf_numero_relatorio = cursor.fetchone()[0]
+
+            if rncf_relatorio_pdf and allowed_file_pdf(rncf_relatorio_pdf.filename):
+                relatorio_pdf_data = rncf_relatorio_pdf.read()
+                cursor.execute("""
+                    INSERT INTO dbo.rncf (
+                        rncf_numero, rncf_fornecedor, rncf_nota_fiscal,
+                        rncf_descricao_material, rncf_data_notificacao,
+                        rncf_prazo, rncf_tratativa_final, rncf_status, rncf_relatorio_pdf, rncf_data_finalizado
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    rncf_numero_relatorio, rncf_fornecedor, rncf_nota_fiscal,
+                    rncf_descricao_material, rncf_data_notificacao,
+                    rncf_prazo_responder, rncf_tratativa_final, rncf_status, relatorio_pdf_data, rncf_data_finalizado
+                ))
+            else:
+                cursor.execute("""
+                    INSERT INTO dbo.rncf (
+                        rncf_numero, rncf_fornecedor, rncf_nota_fiscal,
+                        rncf_descricao_material, rncf_data_notificacao,
+                        rncf_prazo, rncf_tratativa_final, rncf_status, rncf_data_finalizado
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    rncf_numero_relatorio, rncf_fornecedor, rncf_nota_fiscal,
+                    rncf_descricao_material, rncf_data_notificacao,
+                    rncf_prazo_responder, rncf_tratativa_final, rncf_status, rncf_data_finalizado
+                ))
+
+            connection.commit()
+            connection.close()
+
+            flash('Relatório cadastrado com sucesso!')
+        return redirect(url_for('rncf'))
+
+    return render_template('rncf.html')
+
+
+@app.route('/get_rncf_data', methods=['POST'])
+def get_rncf_data():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    rncf_numero_relatorio = request.json.get('rncf_numero_relatorio')
+    connection = conectar_db()
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM dbo.rncf WHERE rncf_numero = ?", (rncf_numero_relatorio,))
+    existing_report = cursor.fetchone()
+    connection.close()
+
+    if existing_report:
+        return {
+            'rncf_numero_relatorio': existing_report.rncf_numero,
+            'rncf_fornecedor': existing_report.rncf_fornecedor,
+            'rncf_nota_fiscal': existing_report.rncf_nota_fiscal,
+            'rncf_descricao_material': existing_report.rncf_descricao_material,
+            'rncf_data_notificacao': existing_report.rncf_data_notificacao.strftime('%Y-%m-%d'),
+            'rncf_prazo_responder': existing_report.rncf_prazo,
+            'rncf_tratativa_final': existing_report.rncf_tratativa_final,
+            'rncf_status': existing_report.rncf_status
+        }
+    else:
+        return {}, 404
+
+
+@app.route('/rncf_records', methods=['GET'])
+def rncf_records():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    fornecedor = request.args.get('fornecedor')
+    data_inicio = request.args.get('data_inicio')
+    data_fim = request.args.get('data_fim')
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    query = """
+        SELECT rncf_numero, rncf_fornecedor, rncf_nota_fiscal, rncf_descricao_material,
+               rncf_data_notificacao, rncf_prazo, rncf_tratativa_final, rncf_status, rncf_data_finalizado
+        FROM dbo.rncf WHERE 1=1
+    """
+    count_query = "SELECT COUNT(*) FROM dbo.rncf WHERE 1=1"
+
+    params = []
+    if fornecedor:
+        query += " AND rncf_fornecedor LIKE ?"
+        count_query += " AND rncf_fornecedor LIKE ?"
+        params.append(f"%{fornecedor}%")
+    if data_inicio:
+        query += " AND rncf_data_notificacao >= ?"
+        count_query += " AND rncf_data_notificacao >= ?"
+        params.append(data_inicio)
+    if data_fim:
+        query += " AND rncf_data_notificacao <= ?"
+        count_query += " AND rncf_data_notificacao <= ?"
+        params.append(data_fim)
+
+    # Executar a consulta de contagem
+    cursor.execute(count_query, params)
+    total_records = cursor.fetchone()[0]
+
+    # Adicionar ordenação e limitação para paginação
+    query += """
+            ORDER BY 
+                CASE 
+                    WHEN rncf_status = 'Pendente' THEN 1 
+                    WHEN rncf_status = 'Finalizado' THEN 2 
+                    ELSE 3 
+                END,
+                rncf_data_notificacao DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """
+    params.append((page - 1) * per_page)
+    params.append(per_page)
+
+    cursor.execute(query, params)
+    records = cursor.fetchall()
+    connection.close()
+
+    records_list = []
+    for record in records:
+        data_notificacao = record.rncf_data_notificacao
+        prazo = record.rncf_prazo
+        data_final = data_notificacao + datetime.timedelta(days=prazo)
+        records_list.append({
+            'rncf_numero': record.rncf_numero,
+            'rncf_fornecedor': record.rncf_fornecedor,
+            'rncf_nota_fiscal': record.rncf_nota_fiscal,
+            'rncf_descricao_material': record.rncf_descricao_material,
+            'rncf_data_notificacao': data_notificacao.strftime('%d-%m-%Y'),
+            'rncf_prazo': prazo,
+            'rncf_tratativa_final': record.rncf_tratativa_final,
+            'rncf_status': record.rncf_status,
+            'rncf_data_final': data_final.strftime('%d-%m-%Y'),
+            'rncf_data_finalizado': record.rncf_data_finalizado.strftime('%d-%m-%Y') if record.rncf_data_finalizado else None
+        })
+
+    return jsonify({
+        'records': records_list,
+        'total': total_records
+    })
+
+
+@app.route('/get_next_rncf_numero', methods=['GET'])
+def get_next_rncf_numero():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+    cursor.execute("SELECT COALESCE(MAX(rncf_numero), 0) + 1 FROM dbo.rncf")
+    next_numero = cursor.fetchone()[0]
+    connection.close()
+
+    return jsonify({'next_numero': next_numero})
+
+
+@app.route('/download_pdf/<rncf_numero>')
+def download_pdf(rncf_numero):
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+    cursor.execute("SELECT rncf_relatorio_pdf FROM dbo.rncf WHERE rncf_numero = ?", (rncf_numero,))
+    record = cursor.fetchone()
+    connection.close()
+
+    if record and record.rncf_relatorio_pdf:
+        return send_file(
+            io.BytesIO(record.rncf_relatorio_pdf),
+            download_name=f'relatorio_{rncf_numero}.pdf',
+            as_attachment=True
+        )
+    else:
+        flash('Arquivo PDF não encontrado.')
+        return redirect(url_for('rncf'))
+
+
+@app.route('/supplier_report')
+def supplier_report():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+    return render_template('supplier_report.html')
+
+
+@app.route('/generate_supplier_report', methods=['POST'])
+def generate_supplier_report():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    data = request.json
+    fornecedor = data.get('fornecedor')
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT rncf_data_notificacao, rncf_data_finalizado, rncf_status
+        FROM dbo.rncf 
+        WHERE rncf_fornecedor = ?
+    """, (fornecedor,))
+
+    results = cursor.fetchall()
+    connection.close()
+
+    dates = []
+    times = []
+    statuses = []
+
+    for result in results:
+        data_notificacao = result.rncf_data_notificacao
+        data_finalizado = result.rncf_data_finalizado
+        status = result.rncf_status
+
+        dates.append(data_notificacao)
+        if status == 'Finalizado':
+            resolution_time = (data_finalizado - data_notificacao).days
+        else:
+            resolution_time = None  # Indicates pending status
+
+        times.append(resolution_time)
+        statuses.append(status)
+
+    return jsonify({'dates': dates, 'times': times, 'statuses': statuses})
+
+
+@app.route('/api/fornecedores', methods=['GET'])
+def get_fornecedores():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    query = "SELECT DISTINCT rncf_fornecedor FROM dbo.rncf"
+    cursor.execute(query)
+    fornecedores = cursor.fetchall()
+    connection.close()
+
+    fornecedores_list = [{'id': index, 'nome': fornecedor[0]} for index, fornecedor in enumerate(fornecedores)]
+    return jsonify(fornecedores_list)
 
 
 if __name__ == '__main__':

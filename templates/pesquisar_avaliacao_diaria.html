@@ -330,7 +330,7 @@
             });
 
             const margin = 20; // Margem de 20px em todas as direções
-            const startY = 120; // Ajuste isso conforme necessário para posicionar a imagem abaixo do logotipo
+            const startY = 80;
             const pdfWidth = pdf.internal.pageSize.getWidth() - 2 * margin;
             const pdfHeight = pdf.internal.pageSize.getHeight() - startY - margin;
             const canvasWidth = canvas.width;
@@ -350,7 +350,7 @@
             // Primeiro, carregar a imagem do logotipo
             var img = new Image();
             img.onload = function() {
-                pdf.addImage(this, 'PNG', margin, 20, 150, 75);
+                pdf.addImage(this, 'PNG', margin, 20, 75, 35);
 
                 pdf.addImage(imgData, 'PNG', margin, startY, finalWidth, finalHeight);
                 pdf.save('IQF.pdf');
