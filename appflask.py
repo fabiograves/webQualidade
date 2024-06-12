@@ -3237,14 +3237,26 @@ def generate_supplier_report():
 
     data = request.json
     fornecedor = data.get('fornecedor')
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
 
     connection = conectar_db()
     cursor = connection.cursor()
-    cursor.execute("""
-        SELECT rncf_data_notificacao, rncf_data_finalizado, rncf_status
-        FROM dbo.rncf 
-        WHERE rncf_fornecedor = ?
-    """, (fornecedor,))
+
+    if start_date and end_date:
+        query = """
+            SELECT rncf_data_notificacao, rncf_data_finalizado, rncf_status
+            FROM dbo.rncf 
+            WHERE rncf_fornecedor = ? AND rncf_data_notificacao BETWEEN ? AND ?
+        """
+        cursor.execute(query, (fornecedor, start_date, end_date))
+    else:
+        query = """
+            SELECT rncf_data_notificacao, rncf_data_finalizado, rncf_status
+            FROM dbo.rncf 
+            WHERE rncf_fornecedor = ?
+        """
+        cursor.execute(query, (fornecedor,))
 
     results = cursor.fetchall()
     connection.close()
@@ -3260,6 +3272,7 @@ def generate_supplier_report():
 
         dates.append(data_notificacao)
         if status == 'Finalizado':
+            # Calculate the resolution time correctly
             resolution_time = (data_finalizado - data_notificacao).days
         else:
             resolution_time = None  # Indicates pending status

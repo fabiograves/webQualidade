@@ -14,6 +14,7 @@
     <orderEntry type="library" name="date-fns" level="application" />
     <orderEntry type="library" name="moment" level="application" />
     <orderEntry type="library" name="chartjs-adapter-moment" level="application" />
+    <orderEntry type="library" name="chartjs-plugin-zoom" level="application" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_FOLDERS">
