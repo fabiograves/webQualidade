@@ -1,4 +1,10 @@
-{% extends "base.html" %}
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+
+{% else %}
+    {% extends "base.html" %}
+
+{% endif %}
 
 {% block content %}
 
@@ -327,7 +333,7 @@
                         {% endwith %}
 
                         <!-- Limitar botão de acordo com privilégio -->
-                        {% if session['privilegio'] == 9 or session['privilegio'] == 8 %}
+                        {% if session['privilegio'] == 9 or session['privilegio'] == 8 or session['privilegio'] == 1 %}
                         <!-- Botão de envio com confirmação -->
                         <button type="submit" class="btn btn-secondary w-100 mb-3" onclick="return confirm('Tem certeza que deseja registrar a inspeção?')">Registrar Inspeção</button>
                         {% else %}

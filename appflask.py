@@ -26,6 +26,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from collections import defaultdict
 from io import BytesIO
+import pdfplumber
+import re
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -149,8 +151,22 @@ def home():
     if not is_logged_in():
         return redirect(url_for('login'))
     username = session['username']
+    privilegio = session['privilegio']
+    if privilegio == 1:
+        print(f"Ação realizada por: {username}, Clicou Home_recebimento")
+        return render_template('home_recebimento.html')
+    elif privilegio == 9:
+        print(f"Ação realizada por: {username}, Clicou Home")
+        return render_template('home.html')
+
+
+@app.route('/home_recebimento')
+def home_recebimento():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+    username = session['username']
     print(f"Ação realizada por: {username}, Clicou Home")
-    return render_template('home.html')
+    return render_template('home_recebimento.html')
 
 
 @app.route('/relatorio_teste')
@@ -935,7 +951,7 @@ def gerar_pdf():
         normal_style = styles['Normal']
 
         data = [
-            ["REG:7.1b - Revisao.04", "01/04/2010", f"Nº Certificado / Nº Certificate Nº{numero_certificado}"]
+            ["REG:7.1b - Revisao.04", "01/04/2010", f"Nº Certificado / Nº Certificate Nº {numero_certificado}"]
         ]
 
         table = Table(data, colWidths=[2 * inch, 2 * inch, 2 * inch])
@@ -950,25 +966,25 @@ def gerar_pdf():
 
         data = [
             [Paragraph(f"<font size='6'>Cliente<br/>Customer: </font><font size='10'>{criar_cliente}</font>",
-                       getSampleStyleSheet()['Normal']),
+                    getSampleStyleSheet()['Normal']),
              Paragraph(f"<font size='6'>Pedido<br/>Customer Order: </font><font size='10'>{criar_pedido}</font>",
-                       getSampleStyleSheet()['Normal'])],
+                    getSampleStyleSheet()['Normal'])],
             [Paragraph(
                 f"<font size='6'>Nº Certificado do Fabricante<br/>Nº Certificate Supplier:      </font><font size='10'>{criar_numero_fabricante}</font>",
                 getSampleStyleSheet()['Normal']),
-             Paragraph(f"<font size='6'>Pedido<br/>ARS:     </font><font size='10'>{criar_pedido_ars}</font>",
-                       getSampleStyleSheet()['Normal'])],
+                Paragraph(f"<font size='6'>Pedido ARS<br/>ARS Order:     </font><font size='10'>{criar_pedido_ars}</font>",
+                    getSampleStyleSheet()['Normal'])],
             [Paragraph(
                 f"<font size='6'>Descrição do Material<br/>Description of Material: </font><font size='10'>{criar_desc_material}</font>",
                 getSampleStyleSheet()['Normal']),
                 Paragraph(
-                    f"<font size='6'>Quantidade de Peças<br/>Quantity of Parts: </font><font size='10'>{criar_quantidade}</font>",
+                    f"<font size='6'>Nota de Saída<br/>Exit Note: </font><font size='10'>{nota_saida}</font>",
                     getSampleStyleSheet()['Normal'])],
             [Paragraph(
                 f"<font size='6'>Material<br/>Material: </font><font size='10'>{criar_material}</font>",
                 getSampleStyleSheet()['Normal']),
                 Paragraph(
-                    f"<font size='6'>Data<br/>Date: </font><font size='10'>{criar_data}</font>",
+                    f"<font size='6'>Quantidade de Peças<br/>Quantity of Parts: </font><font size='10'>{criar_quantidade}</font>",
                     getSampleStyleSheet()['Normal'])],
             [Paragraph(
                 f"<font size='6'>Lote<br/>Lote: </font><font size='10'>{criar_lote}</font>",
@@ -1619,7 +1635,7 @@ def gerar_pdf():
         tamanho_da_fonte = 8
 
         data = [
-            ["Observação - Comments", "Visto - Signs"],
+            ["Observação - Comments", f"Visto - Signs / Data - Date: {criar_data}"],
             [Paragraph("* Com base nos resultados obtidos, certificamos<br/>"
                        "que o produto encontra-se dentro das normas citadas.<br/>"
                        "* In according with test results, we certify that the<br/>"
@@ -2137,17 +2153,27 @@ def cadastro_certificados():
                     if result:
                         flash('Registro encontrado. Pode prosseguir com o registro do certificado.')
 
-                        # Redirecionar para a página com os campos preenchidos
-                        return render_template('cadastro_certificados.html',
-                                               cc_numero_nota=nota_fiscal,
-                                               cc_cod_produto=cod_produto)
+                        # Verificar se o arquivo foi enviado
+                        arquivo = request.files['arquivo']
+                        if arquivo:
+                            arquivo_binario = arquivo.read()
+                            extracted_data = extract_data_from_pdf(arquivo_binario)
+                            if extracted_data['is_belenus']:
+                                # Redirecionar para a página com os campos preenchidos
+                                return render_template('cadastro_certificados.html',
+                                                       cc_numero_nota=nota_fiscal,
+                                                       cc_cod_produto=cod_produto,
+                                                       extracted_data=extracted_data,
+                                                       arquivo=secure_filename(arquivo.filename))
+                            else:
+                                flash('O arquivo anexado não é um certificado da Belenus.')
 
                     else:
                         # Se nenhum registro correspondente foi encontrado
                         flash('Erro, não foi feito registro de inspeção. Verifique os valores inseridos.')
 
             except Exception as e:
-                print(f"Ocorreu um erro bt_registrar_certificado: {e}")
+                print(f"Ocorreu um erro bt_procurar_nota: {e}")
             finally:
                 connection.close()
 
@@ -3041,8 +3067,8 @@ def rncf():
 
             flash('Relatório atualizado com sucesso!')
         else:
-            cursor.execute("SELECT COALESCE(MAX(rncf_numero), 0) + 1 FROM dbo.rncf")
-            rncf_numero_relatorio = cursor.fetchone()[0]
+            #cursor.execute("SELECT COALESCE(MAX(rncf_numero), 0) + 1 FROM dbo.rncf")
+            #rncf_numero_relatorio = cursor.fetchone()[0]
 
             if rncf_relatorio_pdf and allowed_file_pdf(rncf_relatorio_pdf.filename):
                 relatorio_pdf_data = rncf_relatorio_pdf.read()
@@ -3272,10 +3298,9 @@ def generate_supplier_report():
 
         dates.append(data_notificacao)
         if status == 'Finalizado':
-            # Calculate the resolution time correctly
             resolution_time = (data_finalizado - data_notificacao).days
         else:
-            resolution_time = None  # Indicates pending status
+            resolution_time = None
 
         times.append(resolution_time)
         statuses.append(status)
@@ -3298,6 +3323,96 @@ def get_fornecedores():
 
     fornecedores_list = [{'id': index, 'nome': fornecedor[0]} for index, fornecedor in enumerate(fornecedores)]
     return jsonify(fornecedores_list)
+
+
+def extract_data_from_pdf(pdf_binary):
+    with pdfplumber.open(io.BytesIO(pdf_binary)) as pdf:
+        lines = []
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                lines.extend(text.split('\n'))
+
+    with pdfplumber.open(io.BytesIO(pdf_binary)) as pdf:
+        full_text = ""
+        for page in pdf.pages:
+            text = page.extract_text()
+            full_text += text
+
+    # Expressões regulares para os diferentes dados que precisamos extrair
+    cq_pattern = r'CQ Nº:\s*([A-Z0-9-]+)'
+    heat_pattern = r'Corrida / Heat:\s*([A-Z0-9]+)'
+
+    # Encontrar os dados usando expressões regulares
+    cq_match = re.search(cq_pattern, full_text)
+    heat_match = re.search(heat_pattern, full_text)
+
+    # Armazenar os dados extraídos em variáveis
+    cq_value = cq_match.group(1) if cq_match else None
+
+    heat_value = None
+    if heat_match:
+        # Encontrar a linha contendo "Corrida / Heat:"
+        for i, line in enumerate(lines):
+            if "Corrida / Heat:" in line:
+                # A linha seguinte contém o valor correto
+                heat_value_line = lines[i + 1].strip()
+                heat_value = heat_value_line.split()[-1]  # Último elemento da linha
+                break
+
+    elements_values = {}
+
+    # Rastrear a Analise Quimica
+    for i, line in enumerate(lines):
+        if "Análise Química" in line:
+            elements_line = lines[i + 2].split()  # linha abaixo de "Análise Química"
+            values_line = lines[i + 3].split()  # próxima linha contém os valores
+            for element, value in zip(elements_line, values_line):
+                elements_values[element] = value.replace(',', '.')
+            break
+
+    # Inicializar dicionário para armazenar propriedades mecânicas
+    mechanical_properties = {
+        "tensile_strength": None,
+        "yield_strength": None,
+        "elongation": None,
+        "reduction_of_area": None,
+        "proof_load": None
+    }
+
+    # Função para extrair o penúltimo e último elementos
+    def extract_penultimate_and_last_elements(line):
+        parts = line.split()
+        if len(parts) >= 3:
+            return f"{parts[-1]} {parts[-3]}"
+        return None
+
+    # Rastrear e extrair propriedades mecânicas
+    for line in lines:
+        if "RESISTENCIA À TRAÇÃO" in line:
+            mechanical_properties["tensile_strength"] = extract_penultimate_and_last_elements(line)
+        elif "LIMITE DE ESCOAMENTO" in line:
+            mechanical_properties["yield_strength"] = extract_penultimate_and_last_elements(line)
+        elif "ALONGAMENTO" in line:
+            mechanical_properties["elongation"] = extract_penultimate_and_last_elements(line)
+        elif "ESTRICÇÃO" in line:
+            mechanical_properties["reduction_of_area"] = extract_penultimate_and_last_elements(line)
+        elif "CARGA DE PROVA" in line:
+            mechanical_properties["proof_load"] = extract_penultimate_and_last_elements(line)
+
+    # Verificar se o PDF é da Belenus
+    is_belenus = False
+    if lines and "www.belenus.com.br" in lines[-1].strip():
+        is_belenus = True
+
+    # Retornar os valores extraídos
+    return {
+        "cq_value": cq_value,
+        "heat_value": heat_value,
+        "elements_values": elements_values,
+        "mechanical_properties": mechanical_properties,
+        "is_belenus": is_belenus
+    }
 
 
 if __name__ == '__main__':

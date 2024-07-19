@@ -1,6 +1,13 @@
-{% extends "base.html" %}
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+
+{% else %}
+    {% extends "base.html" %}
+
+{% endif %}
 
 {% block content %}
+
 <!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
@@ -256,6 +263,7 @@
     }
 
     // Função para carregar registros
+
     function loadRecords(filters = {}, page = 1, perPage = 5) {
       const params = new URLSearchParams(filters);
       params.append('page', page);

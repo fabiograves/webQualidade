@@ -1,4 +1,10 @@
-{% extends "base.html" %}
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+
+{% else %}
+    {% extends "base.html" %}
+
+{% endif %}
 
 {% block content %}
 
@@ -25,7 +31,6 @@
                         <a class="nav-link btn btn-custom rounded-pill" href="/pesquisar_registro_inspecao" role="button">Pesquisar Registro Inspeção</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/avaliacao_diaria.html" role="button">Avaliação Diária</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/plano_controle_inspecao" role="button">Plano de Controle</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_norma" role="button">Cadastro de Normas</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/lista_norma" role="button">Lista de Normas</a>
                     </li>
                 </ul>
@@ -44,12 +49,6 @@
                 <h5 class="text-center">Qualidade</h5>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_certificados" role="button">Cadastro de Certificado</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="/criar_certificado" role="button">Criar Certificado</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="/pesquisar_certificado" role="button">Pesquisar Certificado</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="/download_certificado" role="button">Download de Certificado</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_fornecedor" role="button">Cadastro de Fornecedor</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_equipamento" role="button">Cadastro de Equipamento</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="pesquisar_avaliacao_diaria.html" role="button">IQF</a>
                     </li>
                 </ul>

@@ -1,4 +1,10 @@
-{% extends "base.html" %}
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+
+{% else %}
+    {% extends "base.html" %}
+
+{% endif %}
 
 {% block content %}
 
@@ -58,7 +64,7 @@
                     <div class="form-group"><label>Número do Certificado</label><input type="text" class="form-control" id="criar_numero_certificado" name="criar_numero_certificado" value="{{ proximo_numero_certificado }}" readonly></div>
                 </div>
                 <div class="col-md-3" style="">
-
+                    <div class="form-group"><label>Cliente:</label><input type="text" class="form-control" id="criar_cliente" name="criar_cliente"></div>
                 </div>
                 <div class="col-md-3" style="">
                     <div class="form-group"><label>Pedido:</label><input type="text" class="form-control" id="criar_pedido" name="criar_pedido"></div>
@@ -69,11 +75,13 @@
             </div>
             <div class="row">
                 <div class="col-md-3" style="">
-                    <div class="form-group"><label>Número Certificado Fabricante:</label><input type="text" class="form-control" id="criar_numero_fabricante" name="criar_numero_fabricante"></div>
+                    <div class="form-group"><label>Número Certificado Fabricante:</label><input type="text" class="form-control" id="criar_numero_fabricante" name="criar_numero_fabricante"
+                                                                                                value="{{ resultado['cadastro_certificados']['cc_cq'] if resultado is defined and resultado['cadastro_certificados'] else '' }}"></div>
+
                 </div>
                 <div class="col-md-3" style="">
                     <div class="form-group"><label>Descrição Material:</label><input type="text" class="form-control" id="criar_desc_material" name="criar_desc_material"
-                    value="{{ resultado['cadastro_certificados']['cc_descricao'] if resultado is defined and resultado['cadastro_certificados'] else '' }}" readonly></div>
+                                                                                     value="{{ resultado['cadastro_certificados']['cc_descricao'] if resultado is defined and resultado['cadastro_certificados'] else '' }}"></div>
                 </div>
                 <div class="col-md-3" style="">
                     <div class="form-group"><label>Quantidade:</label><input type="text" class="form-control" id="criar_quantidade" name="criar_quantidade"></div>
@@ -88,7 +96,8 @@
                     <div class="form-group"><label>Data:</label><input type="date" class="form-control" id="criar_data" name="criar_data"></div>
                 </div>
                 <div class="col-md-3" style="">
-                    <div class="form-group"><label>Lote:</label><input type="text" class="form-control" id="criar_lote" name="criar_lote"></div>
+                    <div class="form-group"><label>Lote:</label><input type="text" class="form-control" id="criar_lote" name="criar_lote"
+                                                                       value="{{ resultado['cadastro_certificados']['cc_corrida'] if resultado is defined and resultado['cadastro_certificados'] else '' }}"></div>
                 </div>
                 <div class="col-md-3" style="">
                     <div class="form-group"><label>Código Fornecedor:</label><input type="text" class="form-control" id="criar_codigo_fornecedor" name="criar_codigo_fornecedor"

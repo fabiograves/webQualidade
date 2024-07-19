@@ -1,19 +1,23 @@
-{% extends "base.html" %}
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 
 {% block content %}
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-    <form method="POST" action="{{ url_for('cadastro_certificados') }}" enctype="multipart/form-data">
-        <div class="py-5">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-12">
-                        <h1 class="text-center">Cadastro de Certificados</h1>
-                  </div>
-              </div>
-          </div>
-      </div>
+<form method="POST" action="{{ url_for('cadastro_certificados') }}" enctype="multipart/form-data">
+    <div class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1 class="text-center">Cadastro de Certificados</h1>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="">
         <div class="container">
             <div class="row">
@@ -58,7 +62,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="cc_corrida">Corrida</label>
-                                <input type="text" class="form-control" id="cc_corrida" name="cc_corrida">
+                                <input type="text" class="form-control" id="cc_corrida" name="cc_corrida" value="{{ extracted_data.heat_value if extracted_data else '' }}">
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -69,7 +73,7 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group"><label for="cc_cq">Número Certificado Ext.</label>
-                                <input type="text" class="form-control" id="cc_cq" name="cc_cq">
+                                <input type="text" class="form-control" id="cc_cq" name="cc_cq" value="{{ extracted_data.cq_value if extracted_data else '' }}">
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -83,7 +87,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="comp_quimica" name="comp_quimica">
+                                    <input type="checkbox" class="form-check-input" id="comp_quimica" name="comp_quimica" {% if extracted_data %}checked{% endif %}>
                                     <label class="form-check-label text-center" for="comp_quimica">Composição Química</label>
                                 </div>
                             </div>
@@ -108,32 +112,32 @@
                 </div>
             </div>
 
-            <div id="camposExtras_comp_quimica" style="display:none;">
+            <div id="camposExtras_comp_quimica" style="display:{% if extracted_data %}block{% else %}none{% endif %};">
                 <div class="container" id="fundo_diferente">
                     <!-- Primeira Linha de Inputs -->
                     <div class="row">
                         <h2 class="text-center">Composição Química</h2>
                     </div>
                     <div class="row">
-                        <div class="col text-center"><label>C</label><input type="text" class="form-control" id="cc_c" name="cc_c"></div>
-                        <div class="col text-center"><label>Mn</label><input type="text" class="form-control" id="cc_mn" name="cc_mn"></div>
-                        <div class="col text-center"><label>P</label><input type="text" class="form-control" id="cc_p" name="cc_p"></div>
-                        <div class="col text-center"><label>S</label><input type="text" class="form-control" id="cc_s" name="cc_s"></div>
-                        <div class="col text-center"><label>Si</label><input type="text" class="form-control" id="cc_si" name="cc_si"></div>
-                        <div class="col text-center"><label>Ni</label><input type="text" class="form-control" id="cc_ni" name="cc_ni"></div>
-                        <div class="col text-center"><label>Cr</label><input type="text" class="form-control" id="cc_cr" name="cc_cr"></div>
-                        <div class="col text-center"><label>B</label><input type="text" class="form-control" id="cc_b" name="cc_b"></div>
+                        <div class="col text-center"><label>C</label><input type="text" class="form-control" id="cc_c" name="cc_c" value="{{ extracted_data.elements_values.C if extracted_data and 'C' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Mn</label><input type="text" class="form-control" id="cc_mn" name="cc_mn" value="{{ extracted_data.elements_values.Mn if extracted_data and 'Mn' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>P</label><input type="text" class="form-control" id="cc_p" name="cc_p" value="{{ extracted_data.elements_values.P if extracted_data and 'P' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>S</label><input type="text" class="form-control" id="cc_s" name="cc_s" value="{{ extracted_data.elements_values.S if extracted_data and 'S' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Si</label><input type="text" class="form-control" id="cc_si" name="cc_si" value="{{ extracted_data.elements_values.Si if extracted_data and 'Si' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Ni</label><input type="text" class="form-control" id="cc_ni" name="cc_ni" value="{{ extracted_data.elements_values.Ni if extracted_data and 'Ni' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Cr</label><input type="text" class="form-control" id="cc_cr" name="cc_cr" value="{{ extracted_data.elements_values.Cr if extracted_data and 'Cr' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>B</label><input type="text" class="form-control" id="cc_b" name="cc_b" value="{{ extracted_data.elements_values.B if extracted_data and 'B' in extracted_data.elements_values else '' }}"></div>
                     </div>
                     <!-- Segunda Linha de Inputs -->
                     <div class="row">
-                        <div class="col text-center"><label>Cu</label><input type="text" class="form-control" id="cc_cu" name="cc_cu"></div>
-                        <div class="col text-center"><label>Mo</label><input type="text" class="form-control" id="cc_mo" name="cc_mo"></div>
-                        <div class="col text-center"><label>Co</label><input type="text" class="form-control" id="cc_co" name="cc_co"></div>
-                        <div class="col text-center"><label>Fe</label><input type="text" class="form-control" id="cc_fe" name="cc_fe"></div>
-                        <div class="col text-center"><label>Sn</label><input type="text" class="form-control" id="cc_sn" name="cc_sn"></div>
-                        <div class="col text-center"><label>Al</label><input type="text" class="form-control" id="cc_al" name="cc_al"></div>
-                        <div class="col text-center"><label>N</label><input type="text" class="form-control" id="cc_n" name="cc_n"></div>
-                        <div class="col text-center"><label>Nb</label><input type="text" class="form-control" id="cc_nb" name="cc_nb"></div>
+                        <div class="col text-center"><label>Cu</label><input type="text" class="form-control" id="cc_cu" name="cc_cu" value="{{ extracted_data.elements_values.Cu if extracted_data and 'Cu' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Mo</label><input type="text" class="form-control" id="cc_mo" name="cc_mo" value="{{ extracted_data.elements_values.Mo if extracted_data and 'Mo' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Co</label><input type="text" class="form-control" id="cc_co" name="cc_co" value="{{ extracted_data.elements_values.Co if extracted_data and 'Co' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Fe</label><input type="text" class="form-control" id="cc_fe" name="cc_fe" value="{{ extracted_data.elements_values.Fe if extracted_data and 'Fe' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Sn</label><input type="text" class="form-control" id="cc_sn" name="cc_sn" value="{{ extracted_data.elements_values.Sn if extracted_data and 'Sn' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Al</label><input type="text" class="form-control" id="cc_al" name="cc_al" value="{{ extracted_data.elements_values.Al if extracted_data and 'Al' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>N</label><input type="text" class="form-control" id="cc_n" name="cc_n" value="{{ extracted_data.elements_values.N if extracted_data and 'N' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Nb</label><input type="text" class="form-control" id="cc_nb" name="cc_nb" value="{{ extracted_data.elements_values.Nb if extracted_data and 'Nb' in extracted_data.elements_values else '' }}"></div>
                     </div>
                 </div>
             </div>
@@ -145,12 +149,12 @@
                         <h2 class="text-center">Propriedades Mecânicas</h2>
                     </div>
                     <div class="row">
-                        <div class="col text-center"><label>Escoamento<br>Yield Strength</label><input type="text" class="form-control" id="cc_escoamento" name="cc_escoamento"></div>
-                        <div class="col text-center"><label>Resistência Tração<br>Tensile Strength</label><input type="text" class="form-control" id="cc_tracao" name="cc_tracao"></div>
-                        <div class="col text-center"><label>Redução de Área(%)<br>Reduction of Area(%)</label><input type="text" class="form-control" id="cc_reducao" name="cc_reducao"></div>
-                        <div class="col text-center"><label>Alongamento(%)<br>Elongation(%)</label><input type="text" class="form-control" id="cc_alongamento" name="cc_alongamento"></div>
-                        <div class="col text-center"><label>Dureza<br>Hardness</label><input type="text" class="form-control" id="cc_dureza" name="cc_dureza"></div>
-                        <div class="col text-center"><label>Prova de Carga<br>Load Proof</label><input type="text" class="form-control" id="cc_carga" name="cc_carga"></div>
+                        <div class="col text-center"><label>Escoamento<br>Yield Strength</label><input type="text" class="form-control" id="cc_escoamento" name="cc_escoamento" value="{{ extracted_data.mechanical_properties.yield_strength if extracted_data and extracted_data.mechanical_properties.yield_strength else '' }}"></div>
+                        <div class="col text-center"><label>Resistência Tração<br>Tensile Strength</label><input type="text" class="form-control" id="cc_tracao" name="cc_tracao" value="{{ extracted_data.mechanical_properties.tensile_strength if extracted_data and extracted_data.mechanical_properties.tensile_strength else '' }}"></div>
+                        <div class="col text-center"><label>Redução de Área(%)<br>Reduction of Area(%)</label><input type="text" class="form-control" id="cc_reducao" name="cc_reducao" value="{{ extracted_data.mechanical_properties.reduction_of_area if extracted_data and extracted_data.mechanical_properties.reduction_of_area else '' }}"></div>
+                        <div class="col text-center"><label>Alongamento(%)<br>Elongation(%)</label><input type="text" class="form-control" id="cc_alongamento" name="cc_alongamento" value="{{ extracted_data.mechanical_properties.elongation if extracted_data and extracted_data.mechanical_properties.elongation else '' }}"></div>
+                        <!--<div class="col text-center"><label>Dureza<br>Hardness</label><input type="text" class="form-control" id="cc_dureza" name="cc_dureza"></div>-->
+                        <div class="col text-center"><label>Prova de Carga<br>Load Proof</label><input type="text" class="form-control" id="cc_carga" name="cc_carga" value="{{ extracted_data.mechanical_properties.proof_load if extracted_data and extracted_data.mechanical_properties.proof_load else '' }}"></div>
                     </div>
                 </div>
             </div>
@@ -232,8 +236,6 @@
         }
     });
 
-  </script>
-
+</script>
 
 {% endblock %}
-

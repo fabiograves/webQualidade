@@ -1,4 +1,10 @@
-{% extends "base.html" %}
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+
+{% else %}
+    {% extends "base.html" %}
+
+{% endif %}
 
 {% block content %}
 
@@ -39,7 +45,7 @@
                         </div>
                     </div>
                     <div class ="form-row">
-                        {% if session['privilegio'] == 9 or session['privilegio'] == 8 %}
+                        {% if session['privilegio'] == 9 or session['privilegio'] == 8 or session['privilegio'] == 1 %}
                             <button type="submit" class="btn btn-secondary w-100">Cadastrar Avaliação</button>
                         {% else %}
                             <!-- Botão desabilitado se o privilégio for 0 -->
