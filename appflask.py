@@ -2138,11 +2138,14 @@ def cadastro_certificados():
             print(f"Ação realizada por: {username}, Cadastro Certificado NF:{nota_fiscal} - CP:{cod_produto}")
             return redirect(url_for('cadastro_certificados'))
 
+
         elif 'bt_procurar_nota' in request.form:
+
             # Capturando os dados do formulário
             nota_fiscal = request.form.get('cc_numero_nota')
             cod_produto = request.form.get('cc_cod_produto')
             connection = conectar_db()
+
             try:
                 with connection.cursor() as cursor:
                     # Consulta SQL para verificar se um registro existe com os valores fornecidos
@@ -2152,13 +2155,12 @@ def cadastro_certificados():
 
                     if result:
                         flash('Registro encontrado. Pode prosseguir com o registro do certificado.')
-
                         # Verificar se o arquivo foi enviado
                         arquivo = request.files['arquivo']
                         if arquivo:
                             arquivo_binario = arquivo.read()
                             extracted_data = extract_data_from_pdf(arquivo_binario)
-                            if extracted_data['is_belenus']:
+                            if extracted_data and (extracted_data['is_belenus'] or extracted_data['is_metalbo']):
                                 # Redirecionar para a página com os campos preenchidos
                                 return render_template('cadastro_certificados.html',
                                                        cc_numero_nota=nota_fiscal,
@@ -2166,7 +2168,7 @@ def cadastro_certificados():
                                                        extracted_data=extracted_data,
                                                        arquivo=secure_filename(arquivo.filename))
                             else:
-                                flash('O arquivo anexado não é um certificado da Belenus.')
+                                flash('O arquivo anexado não é um certificado válido.')
 
                     else:
                         # Se nenhum registro correspondente foi encontrado
@@ -3339,6 +3341,23 @@ def extract_data_from_pdf(pdf_binary):
             text = page.extract_text()
             full_text += text
 
+    # Verificar se o PDF é da Belenus ou da Metalbo
+    is_belenus = False
+    is_metalbo = False
+    if lines:
+        if "www.belenus.com.br" in lines[-1].strip():
+            is_belenus = True
+        elif "www.metalbo.com.br" in lines[-1].strip():
+            is_metalbo = True
+
+    if is_belenus:
+        return extract_belenus_data(lines, full_text)
+    elif is_metalbo:
+        return extract_metalbo_data(lines, full_text)
+    else:
+        return None
+
+def extract_belenus_data(lines, full_text):
     # Expressões regulares para os diferentes dados que precisamos extrair
     cq_pattern = r'CQ Nº:\s*([A-Z0-9-]+)'
     heat_pattern = r'Corrida / Heat:\s*([A-Z0-9]+)'
@@ -3362,7 +3381,7 @@ def extract_data_from_pdf(pdf_binary):
 
     elements_values = {}
 
-    # Rastrear a Analise Quimica
+    # Rastrear a Análise Química
     for i, line in enumerate(lines):
         if "Análise Química" in line:
             elements_line = lines[i + 2].split()  # linha abaixo de "Análise Química"
@@ -3400,18 +3419,92 @@ def extract_data_from_pdf(pdf_binary):
         elif "CARGA DE PROVA" in line:
             mechanical_properties["proof_load"] = extract_penultimate_and_last_elements(line)
 
-    # Verificar se o PDF é da Belenus
-    is_belenus = False
-    if lines and "www.belenus.com.br" in lines[-1].strip():
-        is_belenus = True
-
-    # Retornar os valores extraídos
     return {
         "cq_value": cq_value,
         "heat_value": heat_value,
         "elements_values": elements_values,
         "mechanical_properties": mechanical_properties,
-        "is_belenus": is_belenus
+        "is_belenus": True,
+        "is_metalbo": False
+    }
+
+def extract_metalbo_data(lines, full_text):
+    # Expressões regulares para os diferentes dados que precisamos extrair
+    heat_pattern = r'Corrida - Heat:\s*([A-Z0-9]+)'
+
+    # Encontrar os dados usando expressões regulares
+    heat_match = re.search(heat_pattern, full_text)
+
+    # Armazenar os dados extraídos em variáveis
+    heat_value = None
+    if heat_match:
+        # Encontrar a linha contendo "Corrida - Heat:"
+        for i, line in enumerate(lines):
+            if "Corrida - Heat:" in line:
+                # A linha contém o valor correto após "Corrida - Heat:"
+                heat_value_line = line.strip()
+                heat_value = heat_value_line.split()[-1]  # Último elemento da linha
+                break
+
+    elements_values = {}
+
+    # Rastrear a Composição Química
+    for i, line in enumerate(lines):
+        if "Test results" in line:
+            i += 1  # Move para a linha dos elementos
+            while i < len(lines) and "ENSAIOS / INSPEÇÃO" not in lines[i]:
+                parts = lines[i].split()
+                if len(parts) >= 2:
+                    element = parts[-2]
+                    print("Penultimo: ",element)
+                    value = parts[-1].replace(',', '.')
+                    elements_values[element] = value
+                i += 1
+            break
+
+    # Inicializar dicionário para armazenar propriedades mecânicas
+    mechanical_properties = {
+        "tensile_strength": None,
+        "yield_strength": None,
+        "elongation": None,
+        "reduction_of_area": None,
+        "proof_load": None
+    }
+
+    # Função para extrair o último elemento
+    def extract_last_elements_with_unit(line, unit):
+        parts = line.split()
+        if len(parts) >= 1:
+            return f"{parts[-1]} {unit}"
+        return None
+
+    # Rastrear e extrair propriedades mecânicas
+    for line in lines:
+        if "ESCOAMENTO - PSI" in line:
+            mechanical_properties["yield_strength"] = extract_last_elements_with_unit(line, "PSI")
+        elif "LIMITE ESCOAMENTO PERMANENTE - N/MM²" in line:
+            mechanical_properties["yield_strength"] = extract_last_elements_with_unit(line, "N/mm²")
+        elif "RESISTÊNCIA A TRAÇÃO - PSI" in line:
+            mechanical_properties["tensile_strength"] = extract_last_elements_with_unit(line, "PSI")
+        elif "RESISTÊNCIA A TRAÇÃO - N/MM²" in line:
+            mechanical_properties["tensile_strength"] = extract_last_elements_with_unit(line, "N/mm²")
+        elif "ESTRICÇÃO (%)" in line:
+            mechanical_properties["reduction_of_area"] = extract_last_elements_with_unit(line, "%")
+        elif "ALONGAMENTO (%)" in line:
+            mechanical_properties["elongation"] = extract_last_elements_with_unit(line, "%")
+        elif "RUPTURA - LBF" in line:
+            mechanical_properties["proof_load"] = extract_last_elements_with_unit(line, "LBF")
+        elif "RUPTURA - NEWTON" in line:
+            mechanical_properties["proof_load"] = extract_last_elements_with_unit(line, "N")
+        elif "CARGA DE PROVA - KGF" in line:
+            mechanical_properties["proof_load"] = extract_last_elements_with_unit(line, "KGF")
+
+    return {
+        "heat_value": heat_value,
+        "elements_values": elements_values,
+        "mechanical_properties": mechanical_properties,
+        "is_belenus": False,
+        "is_metalbo": True
     }
 
 

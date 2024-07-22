@@ -119,25 +119,52 @@
                         <h2 class="text-center">Composição Química</h2>
                     </div>
                     <div class="row">
-                        <div class="col text-center"><label>C</label><input type="text" class="form-control" id="cc_c" name="cc_c" value="{{ extracted_data.elements_values.C if extracted_data and 'C' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>Mn</label><input type="text" class="form-control" id="cc_mn" name="cc_mn" value="{{ extracted_data.elements_values.Mn if extracted_data and 'Mn' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>P</label><input type="text" class="form-control" id="cc_p" name="cc_p" value="{{ extracted_data.elements_values.P if extracted_data and 'P' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>S</label><input type="text" class="form-control" id="cc_s" name="cc_s" value="{{ extracted_data.elements_values.S if extracted_data and 'S' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>Si</label><input type="text" class="form-control" id="cc_si" name="cc_si" value="{{ extracted_data.elements_values.Si if extracted_data and 'Si' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>Ni</label><input type="text" class="form-control" id="cc_ni" name="cc_ni" value="{{ extracted_data.elements_values.Ni if extracted_data and 'Ni' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>Cr</label><input type="text" class="form-control" id="cc_cr" name="cc_cr" value="{{ extracted_data.elements_values.Cr if extracted_data and 'Cr' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>B</label><input type="text" class="form-control" id="cc_b" name="cc_b" value="{{ extracted_data.elements_values.B if extracted_data and 'B' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>C</label><input type="text" class="form-control" id="cc_c" name="cc_c" value=
+                                "{{ extracted_data.elements_values.C if extracted_data and 'C' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Mn</label><input type="text" class="form-control" id="cc_mn" name="cc_mn" value=
+                                "{{ (extracted_data.elements_values.Mn if extracted_data and 'Mn' in extracted_data.elements_values else '') or
+                                (extracted_data.elements_values.MN if extracted_data and 'MN' in extracted_data.elements_values else '') }}"></div>
+                        <div class="col text-center"><label>P</label><input type="text" class="form-control" id="cc_p" name="cc_p" value=
+                                "{{ extracted_data.elements_values.P if extracted_data and 'P' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>S</label><input type="text" class="form-control" id="cc_s" name="cc_s" value=
+                                "{{ extracted_data.elements_values.S if extracted_data and 'S' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Si</label><input type="text" class="form-control" id="cc_si" name="cc_si" value=
+                                "{{ (extracted_data.elements_values.Si if extracted_data and 'Si' in extracted_data.elements_values else '') or
+                                 (extracted_data.elements_values.SI if extracted_data and 'SI' in extracted_data.elements_values else '') }}"></div>
+                        <div class="col text-center"><label>Ni</label><input type="text" class="form-control" id="cc_ni" name="cc_ni" value=
+                                "{{ (extracted_data.elements_values.Ni if extracted_data and 'Ni' in extracted_data.elements_values else '') or
+                                 (extracted_data.elements_values.NI if extracted_data and 'NI' in extracted_data.elements_values else '') }}"></div>
+                        <div class="col text-center"><label>Cr</label><input type="text" class="form-control" id="cc_cr" name="cc_cr" value=
+                                "{{ (extracted_data.elements_values.Cr if extracted_data and 'Cr' in extracted_data.elements_values else '') or
+                                 (extracted_data.elements_values.CR if extracted_data and 'CR' in extracted_data.elements_values else '') }}"></div>
+                        <div class="col text-center"><label>B</label><input type="text" class="form-control" id="cc_b" name="cc_b" value=
+                                "{{ extracted_data.elements_values.B if extracted_data and 'B' in extracted_data.elements_values else '' }}"></div>
                     </div>
                     <!-- Segunda Linha de Inputs -->
                     <div class="row">
-                        <div class="col text-center"><label>Cu</label><input type="text" class="form-control" id="cc_cu" name="cc_cu" value="{{ extracted_data.elements_values.Cu if extracted_data and 'Cu' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>Mo</label><input type="text" class="form-control" id="cc_mo" name="cc_mo" value="{{ extracted_data.elements_values.Mo if extracted_data and 'Mo' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>Co</label><input type="text" class="form-control" id="cc_co" name="cc_co" value="{{ extracted_data.elements_values.Co if extracted_data and 'Co' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>Fe</label><input type="text" class="form-control" id="cc_fe" name="cc_fe" value="{{ extracted_data.elements_values.Fe if extracted_data and 'Fe' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>Sn</label><input type="text" class="form-control" id="cc_sn" name="cc_sn" value="{{ extracted_data.elements_values.Sn if extracted_data and 'Sn' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>Al</label><input type="text" class="form-control" id="cc_al" name="cc_al" value="{{ extracted_data.elements_values.Al if extracted_data and 'Al' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>N</label><input type="text" class="form-control" id="cc_n" name="cc_n" value="{{ extracted_data.elements_values.N if extracted_data and 'N' in extracted_data.elements_values else '' }}"></div>
-                        <div class="col text-center"><label>Nb</label><input type="text" class="form-control" id="cc_nb" name="cc_nb" value="{{ extracted_data.elements_values.Nb if extracted_data and 'Nb' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Cu</label><input type="text" class="form-control" id="cc_cu" name="cc_cu" value=
+                                "{{ (extracted_data.elements_values.Cu if extracted_data and 'Cu' in extracted_data.elements_values else '') or
+                                 (extracted_data.elements_values.CU if extracted_data and 'CU' in extracted_data.elements_values else '') }}"></div>
+                        <div class="col text-center"><label>Mo</label><input type="text" class="form-control" id="cc_mo" name="cc_mo" value=
+                                "{{ (extracted_data.elements_values.Mo if extracted_data and 'Mo' in extracted_data.elements_values else '') or
+                                 (extracted_data.elements_values.MO if extracted_data and 'MO' in extracted_data.elements_values else '') }}"></div>
+                        <div class="col text-center"><label>Co</label><input type="text" class="form-control" id="cc_co" name="cc_co" value=
+                                "{{ (extracted_data.elements_values.Co if extracted_data and 'Co' in extracted_data.elements_values else '') or
+                                 (extracted_data.elements_values.CO if extracted_data and 'CO' in extracted_data.elements_values else '') }}"></div>
+                        <div class="col text-center"><label>Fe</label><input type="text" class="form-control" id="cc_fe" name="cc_fe" value=
+                                "{{ (extracted_data.elements_values.Fe if extracted_data and 'Fe' in extracted_data.elements_values else '') or
+                                 (extracted_data.elements_values.FE if extracted_data and 'FE' in extracted_data.elements_values else '') }}"></div>
+                        <div class="col text-center"><label>Sn</label><input type="text" class="form-control" id="cc_sn" name="cc_sn" value=
+                                "{{ (extracted_data.elements_values.Sn if extracted_data and 'Sn' in extracted_data.elements_values else '') or
+                                 (extracted_data.elements_values.SN if extracted_data and 'SN' in extracted_data.elements_values else '') }}"></div>
+                        <div class="col text-center"><label>Al</label><input type="text" class="form-control" id="cc_al" name="cc_al" value=
+                                "{{ (extracted_data.elements_values.Al if extracted_data and 'Al' in extracted_data.elements_values else '') or
+                                 (extracted_data.elements_values.AL if extracted_data and 'AL' in extracted_data.elements_values else '') }}"></div>
+                        <div class="col text-center"><label>N</label><input type="text" class="form-control" id="cc_n" name="cc_n" value=
+                                "{{ extracted_data.elements_values.N if extracted_data and 'N' in extracted_data.elements_values else '' }}"></div>
+                        <div class="col text-center"><label>Nb</label><input type="text" class="form-control" id="cc_nb" name="cc_nb" value=
+                                "{{ (extracted_data.elements_values.Nb if extracted_data and 'Nb' in extracted_data.elements_values else '') or
+                                 (extracted_data.elements_values.NB if extracted_data and 'NB' in extracted_data.elements_values else '') }}"></div>
                     </div>
                 </div>
             </div>
