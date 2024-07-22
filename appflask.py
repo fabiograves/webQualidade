@@ -186,7 +186,7 @@ def generate_pdf():
         p.setFont("Helvetica-Bold", 30)
         p.drawString(225, height - 55, "Relatório de Torque")
 
-        p.setFont("Helvetica", 10)
+        p.setFont("Helvetica-Bold", 10)
         p.drawString(30, height - 100, f"Cliente: {cliente}")
         p.drawString(30, height - 115, f"Pedido: {pedido}")
         p.drawString(300, height - 115, f"Data: {data_relatorio}")
@@ -3341,19 +3341,24 @@ def extract_data_from_pdf(pdf_binary):
             text = page.extract_text()
             full_text += text
 
-    # Verificar se o PDF é da Belenus ou da Metalbo
+    # Verificar se o PDF é da Belenus, Metalbo ou REX
     is_belenus = False
     is_metalbo = False
+    is_rex = False
     if lines:
         if "www.belenus.com.br" in lines[-1].strip():
             is_belenus = True
         elif "www.metalbo.com.br" in lines[-1].strip():
             is_metalbo = True
+        elif "Industrial Rex Ltda" in lines[0].strip():
+            is_rex = True
 
     if is_belenus:
         return extract_belenus_data(lines, full_text)
     elif is_metalbo:
         return extract_metalbo_data(lines, full_text)
+    elif is_rex:
+        return extract_rex_data(lines, full_text)
     else:
         return None
 
@@ -3419,6 +3424,7 @@ def extract_belenus_data(lines, full_text):
         elif "CARGA DE PROVA" in line:
             mechanical_properties["proof_load"] = extract_penultimate_and_last_elements(line)
 
+    print(elements_values)
     return {
         "cq_value": cq_value,
         "heat_value": heat_value,
@@ -3499,6 +3505,7 @@ def extract_metalbo_data(lines, full_text):
         elif "CARGA DE PROVA - KGF" in line:
             mechanical_properties["proof_load"] = extract_last_elements_with_unit(line, "KGF")
 
+    print(elements_values)
     return {
         "heat_value": heat_value,
         "elements_values": elements_values,
@@ -3507,6 +3514,93 @@ def extract_metalbo_data(lines, full_text):
         "is_metalbo": True
     }
 
+
+def extract_rex_data(lines, full_text):
+    # Função para extrair o penúltimo e último elementos com a unidade
+    def extract_penultimate_and_last_elements(line):
+        parts = line.split()
+        if len(parts) >= 3:
+            return f"{parts[-1]} {parts[3]}"
+        return None
+    def extract_penultimate_and_last_elements_escoamento(line):
+        parts = line.split()
+        if len(parts) >= 6:
+            return f"{parts[-1]} {parts[6]}"
+        return None
+    def extract_penultimate_and_last_elements_carga(line):
+        parts = line.split()
+        if len(parts) >= 6:
+            return f"{parts[-1]} {parts[6]}"
+        return None
+    def extract_penultimate_and_last_elements_reducao(line):
+        parts = line.split()
+        if len(parts) >= 7:
+            return f"{parts[-1]} {parts[7]}"
+        return None
+
+    # Padrão para reconhecer a análise química
+    composition_pattern = re.compile(
+        r"(C:\d+,\d+|Mn:\d+,\d+|P:\d+,\d+|S:\d+,\d+|Si:\d+,\d+|Ni:\d+,\d+|Cr:\d+,\d+|B:\d+,\d+|Cu:\d+,\d+|Mo:\d+,\d+|Co:\d+,\d+|Fe:\d+,\d+|Sn:\d+,\d+|Al:\d+,\d+|N:\d+,\d+|Nb:\d+,\d+)"
+    )
+
+    heat_data = []
+    composition_data = []
+    elements_values = {}
+
+    # Encontrar a composição química e o valor da corrida
+    for line in lines:
+        first_composition_match = composition_pattern.search(line)
+        if first_composition_match:
+            heat_value = line[:first_composition_match.start()].strip().split()[-1]
+            heat_data.append(heat_value)
+
+            composition_matches = composition_pattern.findall(line)
+            if composition_matches:
+                for match in composition_matches:
+                    element, value = match.split(":")
+                    elements_values[element] = value.replace(',', '.')
+                composition_data.append(' '.join(composition_matches))
+
+    # Inicializar dicionário para armazenar propriedades mecânicas
+    mechanical_properties = {
+        "tensile_strength": None,
+        "yield_strength": None,
+        "elongation": None,
+        "reduction_of_area": None,
+        "proof_load": None
+    }
+
+    # Padrões para propriedades mecânicas
+    property_patterns = {
+        "tensile_strength": r"Tração - Tension",
+        "yield_strength": r"Limite de Escoamento - Yield Strength",
+        "elongation": r"Alongamento - Elongation",
+        "reduction_of_area": r"Redução de Área - Reduction of Area",
+        "proof_load": r"Carga de Prova - Proof Load"
+    }
+
+    # Rastrear e extrair propriedades mecânicas
+    for line in lines:
+        for key, pattern in property_patterns.items():
+            if pattern in line:
+                if pattern == "Limite de Escoamento - Yield Strength":
+                    mechanical_properties[key] = extract_penultimate_and_last_elements_escoamento(line)
+                elif pattern == "Carga de Prova - Proof Load":
+                    mechanical_properties[key] = extract_penultimate_and_last_elements_carga(line)
+                elif pattern == "Redução de Área - Reduction of Area":
+                    mechanical_properties[key] = extract_penultimate_and_last_elements_reducao(line)
+                else:
+                    mechanical_properties[key] = extract_penultimate_and_last_elements(line)
+                break
+
+    print(elements_values)
+    return {
+        "heat_value": heat_data[0],
+        "elements_values": elements_values,
+        "mechanical_properties": mechanical_properties,
+        "is_belenus": False,
+        "is_metalbo": True
+    }
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)
