@@ -7,7 +7,6 @@
 {% endif %}
 
 {% block content %}
-
 <style>
 .btn-custom {
     background-color: #122556; /* Azul Bootstrap padrão, ajuste conforme necessário */
@@ -22,16 +21,11 @@
 
 <div class="container-fluid my-5">
     <div class="row">
-        <div class="col-md-3 p-4">
+        <div class="col-md-4 p-4">
             <div class="mb-5">
                 <h5 class="text-center">Inspeção</h5>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link btn btn-custom rounded-pill" href="/registro_inspecao" role="button">Registrar Inspeção</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="/pesquisar_registro_inspecao" role="button">Pesquisar Registro Inspeção</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="/avaliacao_diaria.html" role="button">Avaliação Diária</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="/plano_controle_inspecao" role="button">Plano de Controle</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="/lista_norma" role="button">Lista de Normas</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_recebimento_concluido" role="button">Cadastro Recebimento Concluido</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/pesquisar_recebimento_concluido" role="button">Pesquisar Recebimento Concluido</a>
                     </li>
@@ -43,19 +37,8 @@
             <div class="text-center mb-5">
                 <img src="{{ url_for('static', filename='images/logoGrandePlainSVG.svg') }}" alt="Logo da ARS Qualidade" class="img-fluid">
             </div>
-
         </div>
 
-        <div class="col-md-3 p-4">
-            <div>
-                <h5 class="text-center">Qualidade</h5>
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-custom rounded-pill" href="pesquisar_avaliacao_diaria.html" role="button">IQF</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
 
     </div>
 </div>

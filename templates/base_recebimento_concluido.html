@@ -10,7 +10,7 @@
     <meta name="generator" content="Hugo 0.118.2">
     <title>ARS - Certificados</title>
 
-    
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
@@ -90,31 +90,17 @@
                 <div class="offcanvas-body">
                     <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="{{ url_for('home') }}">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" aria-current="page" href="{{ url_for('download_certificado') }}">Download Certificados</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" aria-current="page" href="{{ url_for('criar_certificado') }}">Criar Certificado</a>
+                            <a class="nav-link active" aria-current="page" href="{{ url_for('home_recebimento_concluido') }}">Home</a>
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Cadastros
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('cadastro_certificados') }}">Certificado</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('registro_inspecao') }}">Registro Inspeção</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('rncf') }}">RNCF</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('relatorio_teste') }}">Relatório de Torque</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('cadastro_recebimento_concluido') }}">Recebimento Concluido</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item" href="{{ url_for('cadastro_fornecedor') }}">Fornecedor</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('cadastro_equipamento') }}">Equipamento</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('cadastro_norma') }}">Normas</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('avaliacao_diaria') }}">Avaliação Diária</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('cadastro_recebimento_concluido') }}">Recebimento Concluido</a></li>
                             </ul>
                         </li>
                         <li class="nav-item dropdown">
@@ -122,15 +108,10 @@
                                 Pesquisa
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('pesquisar_certificado') }}">Certificado</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('pesquisar_registro_inspecao') }}">Registro Inspeção</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('plano_controle_inspecao') }}">Plano de Controle</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('pesquisar_recebimento_concluido') }}">Recebimento Concluido</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item" href="{{ url_for('lista_norma') }}">Lista de Normas</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('pesquisar_avaliacao_diaria') }}">IQF</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('pesquisar_recebimento_concluido') }}">Recebimento Concluido</a></li>
                                 <li id="abrirCalculadora"><a class="dropdown-item" href="#">Abrir Calculadora</a></li>
                             </ul>
                         </li>

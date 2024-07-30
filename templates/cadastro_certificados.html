@@ -1,5 +1,7 @@
 {% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
     {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -100,14 +102,14 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <!--<div class="col-md-3">
                             <div class="form-group">
                                 <div class="form-check">
                                     <input type="checkbox" class="form-check-input" id="tratamentos" name="tratamentos">
                                     <label class="form-check-label" for="tratamentos">Tratamentos</label>
                                 </div>
                             </div>
-                        </div>
+                        </div>-->
                     </div>
                 </div>
             </div>
@@ -186,9 +188,9 @@
                 </div>
             </div>
 
-            <div id="camposExtras_tratamentos" style="display:none;">
+            <!--<div id="camposExtras_tratamentos" style="display:none;">
                 <div class="container" id="fundo_diferente">
-                    <!-- Primeira Linha de Inputs -->
+                     Primeira Linha de Inputs
                     <div class="row mb-3">
                         <h2 class="text-center">Tratamentos</h2>
                     </div>
@@ -200,7 +202,7 @@
                         <div class="col text-center"><label>Observações<br>Comments</label><input type="text" class="form-control" id="cc_observacao" name="cc_observacao"></div>
                     </div>
                 </div>
-            </div>
+            </div>-->
             <div class="container">
                 <div class="row">
                     {% with messages = get_flashed_messages() %}
@@ -238,7 +240,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const comp_quimicaCheckbox = document.getElementById('comp_quimica');
         const prop_mecanicasCheckbox = document.getElementById('prop_mecanicas');
-        const tratamentosCheckbox = document.getElementById('tratamentos');
+        //const tratamentosCheckbox = document.getElementById('tratamentos');
         const analise_dimensionalCheckbox = document.getElementById('analise_dimensional');
 
         comp_quimicaCheckbox.addEventListener('change', function() {
@@ -247,9 +249,9 @@
         prop_mecanicasCheckbox.addEventListener('change', function() {
             camposExtras_prop_mecanicas.style.display = prop_mecanicasCheckbox.checked ? 'block' : 'none';
         });
-        tratamentosCheckbox.addEventListener('change', function() {
-            camposExtras_tratamentos.style.display = tratamentosCheckbox.checked ? 'block' : 'none';
-        });
+        //tratamentosCheckbox.addEventListener('change', function() {
+        //    camposExtras_tratamentos.style.display = tratamentosCheckbox.checked ? 'block' : 'none';
+        //});
         analise_dimensionalCheckbox.addEventListener('change', function() {
             camposExtras_analise_dimensional.style.display = analise_dimensionalCheckbox.checked ? 'block' : 'none';
         });

@@ -1,0 +1,79 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+
+<!-- Correção para a inclusão do jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Incluindo o CSS do Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+
+<!-- Incluindo o JavaScript do Select2 após o jQuery -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
+<div class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <h1 class="">Cadastro Recebimento</h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <form method="POST" action="{{ url_for('cadastro_recebimento_concluido') }}">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="form-group"><label>Data de Entrada</label><input type="date" class="form-control" id="cr_data" name="cr_data" required></div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group"><label>Nota Fiscal</label><input type="text" class="form-control" id="cr_nota_fiscal" name="cr_nota_fiscal" maxlength="50" required></div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group"><label>Ordem de Compra</label><input type="text" class="form-control" id="cr_ordem_compra" name="cr_ordem_compra" maxlength="50" required></div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group"><label>Pedido</label><input type="text" class="form-control" id="cr_pedido" name="cr_pedido" maxlength="50"></div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group"><label>Resp. Recebimento</label><input type="text" class="form-control" id="ri_resp_inspecao" name="ri_resp_inspecao" value="{{ session['nome_assinatura'] if session['nome_assinatura'] else '' }}" readonly required></div>
+                        </div>
+                    </div>
+
+                    {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+                            <ul>
+                                {% for message in messages %}
+                                <li>{{ message }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    <!-- Limitar botão de acordo com privilégio -->
+                    {% if session['privilegio'] == 9 or session['privilegio'] == 8 or session['privilegio'] == 1 or session['privilegio'] == 2 %}
+                    <!-- Botão de envio com confirmação -->
+                    <button type="submit" class="btn btn-secondary w-100 mb-3" onclick="return confirm('Tem certeza que deseja registrar?')">Registrar</button>
+                    {% else %}
+                    <!-- Botão desabilitado se o privilégio for 0 -->
+                    <button type="submit" class="btn btn-secondary w-100 mb-3" disabled>Sem Privilegio para Cadastrar</button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

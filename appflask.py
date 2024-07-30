@@ -29,6 +29,10 @@ from io import BytesIO
 import pdfplumber
 import re
 
+from pyzbar import pyzbar
+import numpy as np
+import cv2
+
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
 
@@ -155,6 +159,9 @@ def home():
     if privilegio == 1:
         print(f"Ação realizada por: {username}, Clicou Home_recebimento")
         return render_template('home_recebimento.html')
+    elif privilegio == 2:
+        print(f"Ação realizada por: {username}, Clicou Home")
+        return render_template('home_recebimento_concluido.html')
     elif privilegio == 9:
         print(f"Ação realizada por: {username}, Clicou Home")
         return render_template('home.html')
@@ -167,6 +174,15 @@ def home_recebimento():
     username = session['username']
     print(f"Ação realizada por: {username}, Clicou Home")
     return render_template('home_recebimento.html')
+
+
+@app.route('/home_recebimento_concluido')
+def home_recebimento_concluido():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+    username = session['username']
+    print(f"Ação realizada por: {username}, Clicou Home")
+    return render_template('home_recebimento_concluido.html')
 
 
 @app.route('/relatorio_teste')
@@ -677,7 +693,7 @@ def pesquisar_avaliacao_diaria():
             total_meses_com_dados = sum(1 for _, dados in meses if 'valor_final' in dados and dados['valor_final'] > 0)
             # Calcula a nota final apenas se houver meses com dados
             nota_final_trimestre = total_valor_final / total_meses_com_dados if total_meses_com_dados else 0
-            notas_finais_trimestres[trimestre] = nota_final_trimestre
+            notas_finais_trimestres[trimestre] = round(nota_final_trimestre, 2)
 
     except Exception as e:
         print(f"Erro: {e}")
@@ -696,6 +712,7 @@ def pesquisar_avaliacao_diaria():
                            notas_finais_trimestres=notas_finais_trimestres,
                            pesquisa_realizada=pesquisa_realizada,
                            fornecedor_escolhido=fornecedor_escolhido)
+
 
 
 @app.route('/lista_norma')
@@ -879,6 +896,11 @@ def gerar_pdf():
         criar_lote = request.form.get('criar_lote', 'Não informado')
         criar_codigo_fornecedor = request.form.get('criar_codigo_fornecedor', 'Não informado')
         nota_saida = request.form.get('nota_saida', 'Não informado')
+        cc_revenimento = request.form.get('cc_revenimento', '')
+        cc_termico = request.form.get('cc_termico', '')
+        cc_superficial = request.form.get('cc_superficial', '')
+        cc_macrografia = request.form.get('cc_macrografia', '')
+        cc_observacao = request.form.get('cc_observacao', '')
 
         tem_dados_comp_quimica = dados_pdf.get('comp_quimica') and any(dados_pdf['comp_quimica'].values())
         tem_dados_prop_mecanicas = dados_pdf.get('prop_mecanicas') and any(dados_pdf['prop_mecanicas'].values())
@@ -1073,43 +1095,43 @@ def gerar_pdf():
             elements.append(prop_mecanicas_table)
             elements.append(Spacer(0.1, 0.1 * inch))
 
-        if tem_dados_tratamentos:
-            revenimento = dados_pdf['tratamentos'].get('cc_revenimento', '') or '---'
-            termico = dados_pdf['tratamentos'].get('cc_termico', '') or '---'
-            superficial = dados_pdf['tratamentos'].get('cc_superficial', '') or '---'
-            macrografia = dados_pdf['tratamentos'].get('cc_macrografia', '') or '---'
-            observacao = dados_pdf['tratamentos'].get('cc_observacao', '') or '---'
 
-            texto_subtitulo = "Tratamentos / Treatments"
-            texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
-            elements.append(texto_paragraph)
-            elements.append(Spacer(0.05, 0.05 * inch))
+        revenimento = cc_revenimento or '---'
+        termico = cc_termico or '---'
+        superficial = cc_superficial or '---'
+        macrografia = cc_macrografia or '---'
+        observacao = cc_observacao or '---'
 
-            tamanho_da_fonte = 8
+        texto_subtitulo = "Tratamentos / Treatments"
+        texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
+        elements.append(texto_paragraph)
+        elements.append(Spacer(0.05, 0.05 * inch))
 
-            data = [
-                [Paragraph("Temperatura Revenimento<br/>Tempering Temperatura", estilo_centralizado),
-                 Paragraph("Tratamento Térmico<br/>Thermal Treatment", estilo_centralizado),
-                 Paragraph("Tratamento Superficial<br/>Surface Treatment", estilo_centralizado),
-                 Paragraph("Macrografia<br/>Macrography", estilo_centralizado),
-                 Paragraph("Observação<br/>Comments", estilo_centralizado)],
-                [Paragraph(revenimento, estilo_centralizado), Paragraph(termico, estilo_centralizado),
-                 Paragraph(superficial, estilo_centralizado),
-                 Paragraph(macrografia, estilo_centralizado), Paragraph(observacao, estilo_centralizado)]
-            ]
+        tamanho_da_fonte = 8
 
-            cell_styles = [
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
-            ]
+        data = [
+            [Paragraph("Temperatura Revenimento<br/>Tempering Temperatura", estilo_centralizado),
+             Paragraph("Tratamento Térmico<br/>Thermal Treatment", estilo_centralizado),
+             Paragraph("Tratamento Superficial<br/>Surface Treatment", estilo_centralizado),
+             Paragraph("Macrografia<br/>Macrography", estilo_centralizado),
+             Paragraph("Observação<br/>Comments", estilo_centralizado)],
+            [Paragraph(revenimento, estilo_centralizado), Paragraph(termico, estilo_centralizado),
+             Paragraph(superficial, estilo_centralizado),
+             Paragraph(macrografia, estilo_centralizado), Paragraph(observacao, estilo_centralizado)]
+        ]
 
-            tratamentos_table = Table(data, colWidths=effective_page_width / 5)
-            tratamentos_table.setStyle(TableStyle(cell_styles))
+        cell_styles = [
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
+        ]
 
-            elements.append(tratamentos_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+        tratamentos_table = Table(data, colWidths=effective_page_width / 5)
+        tratamentos_table.setStyle(TableStyle(cell_styles))
+
+        elements.append(tratamentos_table)
+        elements.append(Spacer(0.1, 0.1 * inch))
 
         if tem_dados_ad_porcas:
             dureza = dados_pdf['ad_porcas'].get('cc_adporcas_dureza', '') or '---'
@@ -1665,7 +1687,7 @@ def gerar_pdf():
         inserir_certificado_gerado(buffer, nota_saida, cod_produto)
 
         # Define o nome do arquivo PDF
-        nome_arquivo_pdf = f"{numero_nota}-{cod_produto}.pdf"
+        nome_arquivo_pdf = f"{numero_certificado}-{criar_desc_material}.pdf"
 
         buffer.seek(0)
         return Response(buffer.getvalue(), mimetype='application/pdf',
@@ -1942,40 +1964,38 @@ def pesquisar_registro_inspecao():
     if request.method == 'POST':
         numero_nota = request.form.get('pc_numero_nota')
         ri_data = request.form.get('ri_data')
+        ri_cod_produto = request.form.get('pc_cod_produto')
 
-        # Função que busca os dados apenas pelo número da nota
-        resultados = buscar_registro_inspecao(numero_nota, ri_data)
+        # Função que busca os dados pelos parâmetros fornecidos
+        resultados = buscar_registro_inspecao(numero_nota, ri_data, ri_cod_produto)
 
     username = session['username']
     print(f"Ação realizada por: {username}, Entrou Pesquisa Registro Inspeção")
     return render_template('pesquisar_registro_inspecao.html', resultados=resultados)
 
 
-def buscar_registro_inspecao(numero_nota, ri_data):
+
+def buscar_registro_inspecao(numero_nota, ri_data, ri_cod_produto):
     connection = conectar_db()
     try:
         resultados_agrupados = {}
-
         cursor = connection.cursor()
 
         # Verifica quais campos foram preenchidos e ajusta a consulta SQL
-        if numero_nota and ri_data:
-            # Ambos números da nota e data são fornecidos
-            sql = "SELECT * FROM dbo.registro_inspecao WHERE ri_numero_nota = ? AND ri_data = ?"
-            cursor.execute(sql, (numero_nota, ri_data))
-        elif numero_nota:
-            # Apenas número da nota fornecido
-            sql = "SELECT * FROM dbo.registro_inspecao WHERE ri_numero_nota = ?"
-            cursor.execute(sql, (numero_nota,))
-        elif ri_data:
-            print(ri_data)
-            # Apenas data fornecida
-            sql = "SELECT * FROM dbo.registro_inspecao WHERE ri_data = ?"
-            cursor.execute(sql, (ri_data,))
-        else:
-            # Se nenhum campo foi preenchido, pode optar por retornar vazio ou todos os registros
-            return resultados_agrupados
+        sql = "SELECT * FROM dbo.registro_inspecao WHERE 1=1"
+        params = []
 
+        if numero_nota:
+            sql += " AND ri_numero_nota = ?"
+            params.append(numero_nota)
+        if ri_data:
+            sql += " AND ri_data = ?"
+            params.append(ri_data)
+        if ri_cod_produto:
+            sql += " AND ri_cod_produto = ?"
+            params.append(ri_cod_produto)
+
+        cursor.execute(sql, params)
         cadastros = cursor.fetchall()
 
         # Converte manualmente cada linha do resultado em um dicionário
@@ -2006,7 +2026,6 @@ def buscar_registro_inspecao(numero_nota, ri_data):
             'ad_anel': "SELECT * FROM dbo.ad_anel WHERE cc_numero_nota IN (?)",
             'ad_contrapino': "SELECT * FROM dbo.ad_contrapino WHERE cc_numero_nota IN (?)",
             'ad_especial': "SELECT * FROM dbo.ad_especial WHERE cc_numero_nota IN (?)",
-            # Adicione mais conforme necessário
         }
 
         for tipo, sql in tipos_relacionados.items():
@@ -2027,10 +2046,16 @@ def buscar_registro_inspecao(numero_nota, ri_data):
             cursor.close()
         connection.close()
 
+    # Ordenar os resultados agrupados por data de entrada
+    resultados_ordenados = sorted(resultados_agrupados.values(), key=lambda x: x['registro_inspecao']['ri_data'],
+                                  reverse=True)
+
     username = session['username']
-    print(f"Ação realizada por: {username}, Buscou Registro Inspecao NF:{numero_nota} - Data:{ri_data}")
-    # print("resultados_agrupado: ", resultados_agrupados)
-    return resultados_agrupados
+    print(f"Ação realizada por: {username}, Buscou Registro Inspecao NF:{numero_nota} - Data:{ri_data} -"
+          f" Cod: {ri_cod_produto}")
+    return resultados_ordenados
+
+
 
 
 @app.route('/cadastro_certificados', methods=['GET', 'POST'])
@@ -3601,6 +3626,201 @@ def extract_rex_data(lines, full_text):
         "is_belenus": False,
         "is_metalbo": True
     }
+
+
+@app.route('/cadastro_recebimento_concluido', methods=['GET', 'POST'])
+def cadastro_recebimento_concluido():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        data_entrada = request.form['cr_data']
+        nota_fiscal = request.form['cr_nota_fiscal']
+        ordem_compra = request.form['cr_ordem_compra']
+        pedido = request.form['cr_pedido']
+        responsavel = request.form['ri_resp_inspecao']
+        data_cadastro = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Define a data de cadastro como a data e hora atual
+
+        connection = conectar_db()
+        cursor = connection.cursor()
+        cursor.execute("""
+            INSERT INTO dbo.cadastro_recebimento_concluido (
+                data_entrada, nota_fiscal, ordem_compra, data_cadastro, responsavel, pedido
+            ) VALUES (?, ?, ?, ?, ?, ?)
+        """, (data_entrada, nota_fiscal, ordem_compra, data_cadastro, responsavel, pedido))
+        connection.commit()
+        connection.close()
+
+        flash('Recebimento cadastrado com sucesso!')
+        username = session['username']
+        print(f"Ação realizada por: {username}, Cadastro Recebimento Concluído: Nota Fiscal {nota_fiscal}")
+        return redirect(url_for('cadastro_recebimento_concluido'))
+
+    return render_template('cadastro_recebimento_concluido.html')
+
+
+@app.route('/pesquisar_recebimento_concluido', methods=['GET', 'POST'])
+def pesquisar_recebimento_concluido():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    results = []
+    today = datetime.datetime.now().strftime('%Y-%m-%d')
+
+    if request.method == 'POST':
+        data_entrada = request.form.get('cr_data')
+        nota_fiscal = request.form.get('cr_nota_fiscal')
+        ordem_compra = request.form.get('cr_ordem_compra')
+        pedido = request.form.get('cr_pedido')
+
+        query = "SELECT * FROM dbo.cadastro_recebimento_concluido WHERE 1=1"
+        params = []
+
+        if data_entrada:
+            query += " AND data_entrada = ?"
+            params.append(data_entrada)
+        if nota_fiscal:
+            query += " AND nota_fiscal LIKE ?"
+            params.append(f"%{nota_fiscal}%")
+        if ordem_compra:
+            query += " AND ordem_compra LIKE ?"
+            params.append(f"%{ordem_compra}%")
+        if pedido:
+            query += " AND pedido LIKE ?"
+            params.append(f"%{pedido}%")
+
+        connection = conectar_db()
+        cursor = connection.cursor()
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        connection.close()
+    else:
+        # Busca os registros do dia atual se não for uma requisição POST
+        query = "SELECT * FROM dbo.cadastro_recebimento_concluido WHERE data_entrada = ?"
+        params = [today]
+
+        connection = conectar_db()
+        cursor = connection.cursor()
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        connection.close()
+
+    # Formatar datas para o padrão brasileiro
+    formatted_results = []
+    for row in results:
+        formatted_row = list(row)
+        # Formatar data de entrada
+        if isinstance(formatted_row[1], datetime.date):
+            formatted_row[1] = formatted_row[1].strftime('%d/%m/%Y')
+        elif isinstance(formatted_row[1], str):
+            try:
+                formatted_row[1] = datetime.datetime.strptime(formatted_row[1], '%Y-%m-%d').strftime('%d/%m/%Y')
+            except ValueError:
+                pass  # Mantém a string original se a conversão falhar
+        # Formatar data de cadastro (data e hora)
+        if isinstance(formatted_row[4], datetime.datetime):
+            formatted_row[4] = formatted_row[4].strftime('%d/%m/%Y')
+        elif isinstance(formatted_row[4], str):
+            try:
+                formatted_row[4] = datetime.datetime.strptime(formatted_row[4], '%Y-%m-%d %H:%M:%S').strftime('%d/%m/%Y')
+            except ValueError:
+                pass  # Mantém a string original se a conversão falhar
+        formatted_results.append(formatted_row)
+
+    return render_template('pesquisar_recebimento_concluido.html', results=formatted_results)
+
+
+@app.route('/resumo_trimestral.html', methods=['GET', 'POST'])
+def resumo_trimestral():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    fornecedores = []
+    dados_organizados = defaultdict(lambda: defaultdict(dict))
+    resumo_trimestral = defaultdict(lambda: defaultdict(lambda: {'soma_nao_conformidade': 0, 'soma_atraso_entrega': 0, 'qtd_dias_com_valor': 0}))
+    notas_finais_trimestres = defaultdict(lambda: defaultdict(float))
+    anos_disponiveis = [2024, 2025, 2026, 2027]
+    ano_selecionado = 2024  # Padrão
+
+    if request.method == 'POST':
+        ano_selecionado = int(request.form['ano'])
+
+    try:
+        with connection.cursor() as cursor:
+            # Busca todos os fornecedores
+            sql_fornecedores = "SELECT id, nome_fornecedor FROM dbo.cadastro_fornecedor ORDER BY nome_fornecedor ASC"
+            cursor.execute(sql_fornecedores)
+            fornecedores = cursor.fetchall()
+
+            # Para cada fornecedor, buscar os dados de avaliação do ano selecionado
+            for fornecedor in fornecedores:
+                id_fornecedor = fornecedor[0]
+                cursor.execute("""
+                SELECT * FROM dbo.avaliacao_diaria WHERE id_fornecedor = ? AND CONVERT(VARCHAR, data, 23) LIKE ?
+                """, (id_fornecedor, f"{ano_selecionado}%"))
+
+                resultado = fetch_dictn(cursor)
+                while resultado:
+                    data_obj = datetime.datetime.strptime(resultado['data'], '%Y-%m-%d')
+                    mes = data_obj.month
+                    dia = data_obj.day
+
+                    if id_fornecedor not in dados_organizados:
+                        dados_organizados[id_fornecedor] = defaultdict(lambda: defaultdict(dict))
+
+                    dados_organizados[id_fornecedor][mes][dia] = resultado
+                    resultado = fetch_dictn(cursor)
+
+            # Calcular o resumo trimestral para cada fornecedor
+            for id_fornecedor, meses in dados_organizados.items():
+                for mes, dias in meses.items():
+                    soma_nao_conformidade = sum(dia.get('nao_conformidade', 0) for dia in dias.values())
+                    soma_atraso_entrega = sum(dia.get('atraso_entrega', 0) for dia in dias.values())
+                    qtd_dias_com_valor = sum(1 for dia in dias.values())
+
+                    trimestre = (mes - 1) // 3 + 1
+                    resumo_trimestral[id_fornecedor][trimestre]['soma_nao_conformidade'] += soma_nao_conformidade
+                    resumo_trimestral[id_fornecedor][trimestre]['soma_atraso_entrega'] += soma_atraso_entrega
+                    resumo_trimestral[id_fornecedor][trimestre]['qtd_dias_com_valor'] += qtd_dias_com_valor
+                    if id_fornecedor == 7:
+                        print("soma n conf", soma_nao_conformidade)
+                        print("soma atra", soma_atraso_entrega)
+                        print("soma dias", qtd_dias_com_valor)
+
+            # Calcular as notas finais trimestrais para cada fornecedor
+            for id_fornecedor, trimestres in resumo_trimestral.items():
+                for trimestre, dados in trimestres.items():
+                    if dados['qtd_dias_com_valor'] > 0:
+                        dados['valor_final'] = (((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega']) / dados['qtd_dias_com_valor']) * 5)
+                    else:
+                        dados['valor_final'] = 0
+                    print(f"Fornecedor {id_fornecedor} Trimestre {trimestre}: {dados['valor_final']}")
+                    notas_finais_trimestres[id_fornecedor][trimestre] = dados['valor_final']
+
+    except Exception as e:
+        print(f"Erro: {e}")
+        flash(f"Erro ao processar o resumo: {e}")
+    finally:
+        connection.close()
+
+    return render_template('resumo_trimestral.html',
+                           fornecedores=fornecedores,
+                           resumo_trimestral=resumo_trimestral,
+                           notas_finais_trimestres=notas_finais_trimestres,
+                           anos_disponiveis=anos_disponiveis,
+                           ano_selecionado=ano_selecionado)
+
+
+def fetch_dictn(cursor):
+    columns = [column[0] for column in cursor.description]
+    row = cursor.fetchone()
+    if row:
+        result = dict(zip(columns, row))
+        return result
+    else:
+        return None
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)
