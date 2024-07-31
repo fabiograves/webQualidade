@@ -684,7 +684,7 @@ def pesquisar_avaliacao_diaria():
         for mes, dados in resumo_trimestral.items():
             trimestre = (mes - 1) // 3 + 1
             dados['valor_final'] = ((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega']) / max(
-                dados['qtd_dias_com_valor'], 1)) * 5
+                dados['qtd_dias_com_valor'], 2)) * 5
             resumo_por_trimestre[trimestre].append((mes, dados))
 
         notas_finais_trimestres = {}
@@ -3783,19 +3783,17 @@ def resumo_trimestral():
                     resumo_trimestral[id_fornecedor][trimestre]['soma_nao_conformidade'] += soma_nao_conformidade
                     resumo_trimestral[id_fornecedor][trimestre]['soma_atraso_entrega'] += soma_atraso_entrega
                     resumo_trimestral[id_fornecedor][trimestre]['qtd_dias_com_valor'] += qtd_dias_com_valor
-                    if id_fornecedor == 7:
-                        print("soma n conf", soma_nao_conformidade)
-                        print("soma atra", soma_atraso_entrega)
-                        print("soma dias", qtd_dias_com_valor)
 
             # Calcular as notas finais trimestrais para cada fornecedor
             for id_fornecedor, trimestres in resumo_trimestral.items():
+
                 for trimestre, dados in trimestres.items():
                     if dados['qtd_dias_com_valor'] > 0:
                         dados['valor_final'] = (((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega']) / dados['qtd_dias_com_valor']) * 5)
                     else:
                         dados['valor_final'] = 0
-                    print(f"Fornecedor {id_fornecedor} Trimestre {trimestre}: {dados['valor_final']}")
+
+                    #print(f"Fornecedor {id_fornecedor} Trimestre {trimestre}: {dados['valor_final']}")
                     notas_finais_trimestres[id_fornecedor][trimestre] = dados['valor_final']
 
     except Exception as e:
@@ -3820,6 +3818,77 @@ def fetch_dictn(cursor):
         return result
     else:
         return None
+
+
+@app.route('/quantidade_inspecao', methods=['GET', 'POST'])
+def get_quantidade_inspecao():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    ano = request.form.get('ano')
+    mes = request.form.get('mes')
+    dia = request.form.get('dia')
+    responsavel = request.form.get('responsavel')
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    query = """
+        SELECT 
+            COUNT(*) AS total,
+            SUM(CASE WHEN ri_opcao = 'Reprovado' THEN 1 ELSE 0 END) AS reprovados,
+            SUM(CASE WHEN ri_opcao != 'Reprovado' THEN 1 ELSE 0 END) AS aprovados
+        FROM dbo.registro_inspecao
+        WHERE 
+            TRY_CONVERT(date, ri_data) IS NOT NULL AND
+            (? IS NULL OR YEAR(TRY_CONVERT(date, ri_data)) = ?) AND
+            (? IS NULL OR MONTH(TRY_CONVERT(date, ri_data)) = ?) AND
+            (? IS NULL OR DAY(TRY_CONVERT(date, ri_data)) = ?) AND
+            (? IS NULL OR ri_resp_inspecao = ?)
+    """
+
+    parameters = [
+        ano if ano else None,
+        ano if ano else 0,
+        mes if mes else None,
+        mes if mes else 0,
+        dia if dia else None,
+        dia if dia else 0,
+        responsavel if responsavel else None,
+        responsavel if responsavel else ''
+    ]
+
+    cursor.execute(query, parameters)
+    result = cursor.fetchone()
+
+    total = result[0]
+    reprovados = result[1]
+    aprovados = result[2]
+
+    # Obter lista de responsáveis
+    cursor.execute("SELECT DISTINCT ri_resp_inspecao FROM dbo.registro_inspecao ORDER BY ri_resp_inspecao")
+    responsaveis = cursor.fetchall()
+
+    # Obter lista de anos, meses e dias disponíveis
+    cursor.execute("SELECT DISTINCT YEAR(TRY_CONVERT(date, ri_data)) AS ano FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL ORDER BY ano")
+    anos_disponiveis = cursor.fetchall()
+
+    cursor.execute("SELECT DISTINCT MONTH(TRY_CONVERT(date, ri_data)) AS mes FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL ORDER BY mes")
+    meses_disponiveis = cursor.fetchall()
+
+    cursor.execute("SELECT DISTINCT DAY(TRY_CONVERT(date, ri_data)) AS dia FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL ORDER BY dia")
+    dias_disponiveis = cursor.fetchall()
+
+    connection.close()
+
+    return render_template('quantidade_inspecao.html',
+                           total=total,
+                           reprovados=reprovados,
+                           aprovados=aprovados,
+                           anos_disponiveis=anos_disponiveis,
+                           meses_disponiveis=meses_disponiveis,
+                           dias_disponiveis=dias_disponiveis,
+                           responsaveis=responsaveis)
 
 
 if __name__ == '__main__':

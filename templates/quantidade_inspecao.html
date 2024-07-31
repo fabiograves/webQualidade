@@ -1,0 +1,104 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <div class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-12">
+                    <h1 class="text-center mb-4">Quantidade inspeção</h1>
+
+                    <!-- Resumo Geral -->
+                    <div class="form-row">
+                        <div class="col-md-4">
+                            <div class="alert alert-info text-center">
+                                <h4>Total registros:</h4>
+                                <p>{{ total }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="alert alert-danger text-center">
+                                <h4>Total Reprovados:</h4>
+                                <p>{{ reprovados }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="alert alert-success text-center">
+                                <h4>Total Aprovados:</h4>
+                                <p>{{ aprovados }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulário de Seleção de Filtros -->
+                    <form method="POST" action="{{ url_for('get_quantidade_inspecao') }}">
+                        <div class="form-row">
+                            <div class="form-group col-md-2">
+                                <label for="ano">Ano</label>
+                                <select class="form-control" id="ano" name="ano">
+                                    <option value="">Selecione</option>
+                                    {% for ano in anos_disponiveis %}
+                                        <option value="{{ ano.ano }}">{{ ano.ano }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="mes">Mês</label>
+                                <select class="form-control" id="mes" name="mes">
+                                    <option value="">Selecione</option>
+                                    {% for mes in meses_disponiveis %}
+                                        <option value="{{ mes.mes }}">{{ mes.mes }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="dia">Dia</label>
+                                <select class="form-control" id="dia" name="dia">
+                                    <option value="">Selecione</option>
+                                    {% for dia in dias_disponiveis %}
+                                        <option value="{{ dia.dia }}">{{ dia.dia }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="responsavel">Responsável</label>
+                                <select class="form-control" id="responsavel" name="responsavel">
+                                    <option value="">Selecione</option>
+                                    {% for responsavel in responsaveis %}
+                                        <option value="{{ responsavel.ri_resp_inspecao }}">{{ responsavel.ri_resp_inspecao }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <button type="submit" class="btn btn-secondary w-100">Pesquisar</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                {% with messages = get_flashed_messages() %}
+                                    {% if messages %}
+                                        <div class="flash-messages">
+                                            {% for message in messages %}
+                                            <div class="alert alert-warning" role="alert">{{ message }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
