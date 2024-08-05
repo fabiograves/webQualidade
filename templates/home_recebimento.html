@@ -2,6 +2,8 @@
     {% extends "base_recebimento.html" %}
 {% elif session['privilegio'] == 2 %}
     {% extends "base_recebimento_concluido.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -51,7 +53,7 @@
                 <h5 class="text-center">Qualidade</h5>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link btn btn-custom rounded-pill" href="pesquisar_avaliacao_diaria.html" role="button">IQF</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="pesquisar_avaliacao_diaria.html" role="button">IQF Mensal</a>
                     </li>
                 </ul>
             </div>

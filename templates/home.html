@@ -2,6 +2,8 @@
     {% extends "base_recebimento.html" %}
 {% elif session['privilegio'] == 2 %}
     {% extends "base_recebimento_concluido.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -58,7 +60,7 @@
                         <a class="nav-link btn btn-custom rounded-pill" href="/download_certificado" role="button">Download de Certificado</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_fornecedor" role="button">Cadastro de Fornecedor</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_equipamento" role="button">Cadastro de Equipamento</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="pesquisar_avaliacao_diaria.html" role="button">IQF</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="pesquisar_avaliacao_diaria.html" role="button">IQF Mensal</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/resumo_trimestral.html" role="button">Resumo Trimestral</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/quantidade_inspecao" role="button">Quantidade Inspeção</a>
                     </li>

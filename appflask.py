@@ -18,7 +18,7 @@ import io
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import Image
 from reportlab.platypus import Spacer
 from reportlab.platypus import Paragraph
@@ -28,10 +28,11 @@ from collections import defaultdict
 from io import BytesIO
 import pdfplumber
 import re
+import zipfile
 
-from pyzbar import pyzbar
+#from pyzbar import pyzbar
 import numpy as np
-import cv2
+#import cv2
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -162,6 +163,9 @@ def home():
     elif privilegio == 2:
         print(f"Ação realizada por: {username}, Clicou Home")
         return render_template('home_recebimento_concluido.html')
+    elif privilegio == 3:
+        print(f"Ação realizada por: {username}, Clicou Home")
+        return render_template('home_zincagem.html')
     elif privilegio == 9:
         print(f"Ação realizada por: {username}, Clicou Home")
         return render_template('home.html')
@@ -183,6 +187,15 @@ def home_recebimento_concluido():
     username = session['username']
     print(f"Ação realizada por: {username}, Clicou Home")
     return render_template('home_recebimento_concluido.html')
+
+
+@app.route('/home_zincagem')
+def home_zincagem():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+    username = session['username']
+    print(f"Ação realizada por: {username}, Clicou Home")
+    return render_template('home_zincagem.html')
 
 
 @app.route('/relatorio_teste')
@@ -500,28 +513,31 @@ def baixar_certificado_por_id():
                 # Se apenas um arquivo, envie diretamente
                 response = make_response(arquivos[0][0])
                 content_filename = f'certificado_{numero_certificado}.pdf' if numero_certificado else f'certificados_nota_{nota_saida}.pdf'
+                response.headers['Content-Type'] = 'application/pdf'
+                response.headers['Content-Disposition'] = f'attachment; filename={content_filename}'
+                return response
             else:
-                # Se múltiplos arquivos, combine-os primeiro
-                merger = PdfMerger()
-                for arquivo in arquivos:
-                    merger.append(io.BytesIO(arquivo[0]))
-                merged_pdf = io.BytesIO()
-                merger.write(merged_pdf)
-                merger.close()
-                merged_pdf.seek(0)
-                response = make_response(merged_pdf.read())
-                content_filename = f'certificados_nota_{nota_saida}.pdf'
+                # Se múltiplos arquivos, crie um zip com eles individualmente
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zf:
+                    for i, arquivo in enumerate(arquivos):
+                        pdf_filename = f'certificado_{i + 1}.pdf'
+                        zf.writestr(pdf_filename, arquivo[0])
 
-            response.headers['Content-Type'] = 'application/pdf'
-            response.headers['Content-Disposition'] = f'attachment; filename={content_filename}'
-            return response
+                zip_buffer.seek(0)
+                response = make_response(zip_buffer.read())
+                content_filename = f'certificados_nota_{nota_saida}.zip'
+
+                response.headers['Content-Type'] = 'application/zip'
+                response.headers['Content-Disposition'] = f'attachment; filename={content_filename}'
+                return response
         else:
             return "Certificado não encontrado.", 404
     except Exception as e:
         print(f"Erro ao buscar o certificado: {e}")
         return "Ocorreu um erro ao processar sua solicitação.", 500
     finally:
-        username = session['username']
+        username = session.get('username', 'unknown user')
         print(f"Ação realizada por: {username}, Baixar Certificado NF:{numero_certificado} - NS:{nota_saida}")
         cursor.close()
         connection.close()
@@ -921,17 +937,17 @@ def gerar_pdf():
 
         # Cria um arquivo PDF na memória
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
         page_width, page_height = letter
 
         # Estilo personalizado para parágrafos centralizados
         estilo_centralizado = ParagraphStyle(name='Centralizado', alignment=TA_CENTER, fontSize=8)
 
         # Defina as margens da página
-        left_margin = 0.2 * inch
-        right_margin = 0.2 * inch
-        top_margin = 0.2 * inch
-        bottom_margin = 0.2 * inch
+        left_margin = 0.4 * inch
+        right_margin = 0.4 * inch
+        top_margin = 0.4 * inch
+        bottom_margin = 0.4 * inch
 
         # Remove cabeçalho e rodapé
         doc.topMargin = top_margin
@@ -944,24 +960,31 @@ def gerar_pdf():
         elements = []
 
         # Estilo para o título
-        texto_style1 = ParagraphStyle(name='TextoStyle1', fontSize=20, alignment=1, leading=22)
+        texto_style1 = ParagraphStyle(name='TextoStyle1', fontSize=14, alignment=1, leading=22)
         texto_style2 = ParagraphStyle(name='TextoStyle2', fontSize=12, alignment=1, leading=14)
+        texto_style3 = ParagraphStyle(name='TextoStyle3', fontSize=8, alignment=1, leading=14)
 
         # Texto dentro da tabela
-        texto_tabela = "Certificado de Qualidade / Quality Certificate"
+        texto_certificado = "Certificado de Qualidade / Quality Certificate"
+        texto_numero_certificado = f"Nº: {numero_certificado}"
 
-        # Cria o parágrafo do texto com o estilo personalizado
-        texto_paragraph = Paragraph(texto_tabela, texto_style1)
+        # Cria os parágrafos dos textos com os estilos personalizados
+        texto_certificado_paragraph = Paragraph(texto_certificado, texto_style1)
+        texto_numero_certificado_paragraph = Paragraph(texto_numero_certificado, texto_style1)
 
+        # Caminho para a imagem
+        image_path = os.path.join(app.static_folder, 'images', 'LogoCertificado.png')
+
+        # Cria a tabela com a imagem e os textos
         data = [
-            [Image(os.path.join(app.static_folder, 'images', 'LogoCertificado.png'), width=120, height=60),
-             texto_paragraph]
+            [Image(image_path, width=108, height=54), texto_certificado_paragraph, texto_numero_certificado_paragraph]
         ]
 
-        table = Table(data, colWidths=[2 * inch, 4 * inch])
+        table = Table(data, colWidths=[1.5 * inch, 4.5 * inch, 1.5 * inch])
         table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, 0), 'LEFT'),  # Alinha a imagem à esquerda
-            ('ALIGN', (1, 0), (1, 0), 'CENTER'),  # Alinha o texto ao centro
+            ('ALIGN', (1, 0), (1, 0), 'CENTER'),  # Alinha o texto certificado ao centro
+            ('ALIGN', (2, 0), (2, 0), 'RIGHT'),  # Alinha o número do certificado à direita
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
 
@@ -973,12 +996,12 @@ def gerar_pdf():
         normal_style = styles['Normal']
 
         data = [
-            ["REG:7.1b - Revisao.04", "01/04/2010", f"Nº Certificado / Nº Certificate Nº {numero_certificado}"]
+            ["Av. Queirós dos Santos 690 - Centro - CEP: 09015-310 - Fone: (11) 4469-3000"]
         ]
 
-        table = Table(data, colWidths=[2 * inch, 2 * inch, 2 * inch])
+        table = Table(data, colWidths=[6 * inch])
         table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Alinha todas as colunas à esquerda
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Alinha todas as colunas à esquerda
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
 
@@ -1062,6 +1085,8 @@ def gerar_pdf():
             comp_quimica_table.setStyle(TableStyle([
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
             ]))
             elements.append(comp_quimica_table)
             elements.append(Spacer(0.1, 0.1 * inch))
@@ -1072,6 +1097,33 @@ def gerar_pdf():
             reducao = dados_pdf['prop_mecanicas'].get('cc_reducao', '') or '---'
             alongamento = dados_pdf['prop_mecanicas'].get('cc_alongamento', '') or '---'
             carga = dados_pdf['prop_mecanicas'].get('cc_carga', '') or '---'
+            dureza_1 = '---'
+
+            if tem_dados_ad_porcas:
+                dureza_1 = dados_pdf['ad_porcas'].get('cc_adporcas_dureza', '') or '---'
+            elif tem_dados_ad_pinos:
+                dureza_1 = dados_pdf['ad_pinos'].get('cc_adpinos_dureza', '') or '---'
+            elif tem_dados_ad_parafusos:
+                dureza_1 = dados_pdf['ad_parafusos'].get('cc_adparafusos_dureza', "") or '---'
+            elif tem_dados_ad_grampos:
+                dureza_1 = dados_pdf['ad_grampos'].get('cc_adgrampos_dureza', '') or '---'
+            elif tem_dados_ad_arruelas:
+                dureza_1 = dados_pdf['ad_arruelas'].get('cc_adarruelas_dureza', '') or '---'
+            elif tem_dados_ad_anel:
+                dureza_1 = dados_pdf['ad_anel'].get('cc_adanel_dureza', '') or '---'
+            elif tem_dados_ad_prisioneiro_estojo:
+                dureza_1 = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_dureza', '') or '---'
+            elif tem_dados_ad_especial:
+                dureza_1 = dados_pdf['ad_especial'].get('cc_adespecial_dureza', '') or '---'
+            elif tem_dados_ad_chumbador:
+                dureza_1 = dados_pdf['ad_chumbador'].get('cc_adchumbador_dureza', '') or '---'
+            elif tem_dados_ad_rebite:
+                dureza_1 = dados_pdf['ad_rebite'].get('cc_adrebite_dureza', '') or '---'
+            elif tem_dados_ad_chaveta:
+                dureza_1 = dados_pdf['ad_chaveta'].get('cc_adchaveta_dureza', '') or '---'
+            elif tem_dados_ad_contrapino:
+                dureza_1 = dados_pdf['ad_contrapino'].get('cc_adcontrapino_dureza', '') or '---'
+
 
             texto_subtitulo = "Propriedades Mecânicas / Mechanical Properties"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
@@ -1083,14 +1135,18 @@ def gerar_pdf():
                  Paragraph("Resistência Tração<br/>Tensile Strenght", estilo_centralizado),
                  Paragraph("Redução de Área<br/>Reduction of Area", estilo_centralizado),
                  Paragraph("Alongamento<br/>Elongation", estilo_centralizado),
-                 Paragraph("Prova de Carga<br/>Load Proof", estilo_centralizado)],
-                [escoamento, tracao, reducao, alongamento, carga]
+                 Paragraph("Prova de Carga<br/>Load Proof", estilo_centralizado),
+                 Paragraph("Dureza<br/>Hardness", estilo_centralizado),],
+
+                [escoamento, tracao, reducao, alongamento, carga, dureza_1]
             ]
-            prop_mecanicas_table = Table(data, colWidths=effective_page_width / 5)
+            prop_mecanicas_table = Table(data, colWidths=effective_page_width / 6)
 
             prop_mecanicas_table.setStyle(TableStyle([
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
             ]))
             elements.append(prop_mecanicas_table)
             elements.append(Spacer(0.1, 0.1 * inch))
@@ -1143,7 +1199,7 @@ def gerar_pdf():
             diametro_externo = dados_pdf['ad_porcas'].get('cc_adporcas_diametro_externo', '') or '---'
             norma = dados_pdf['ad_porcas'].get('cc_adporcas_norma', '') or '---'
 
-            texto_subtitulo = "Propriedades Dimensionais / Dimensional Properties"
+            texto_subtitulo = "Dimensionais / Dimensional"
             texto_paragraph = Paragraph(texto_subtitulo, texto_style2)
             elements.append(texto_paragraph)
             elements.append(Spacer(0.05, 0.05 * inch))
@@ -1151,20 +1207,18 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Altura<br/>Height", estilo_centralizado),
+                [Paragraph("Altura<br/>Height", estilo_centralizado),
                  Paragraph("Chave<br/>Key", estilo_centralizado),
-                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado),
-                 Paragraph(altura, estilo_centralizado),
+                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
+                 Paragraph("Diâmetro Estrutural<br/>Structural Diameter", estilo_centralizado)],
+                [Paragraph(altura, estilo_centralizado),
                  Paragraph(chave, estilo_centralizado),
-                 Paragraph(diametro, estilo_centralizado)],
-                [Paragraph("Diâmetro Estrutural<br/>Structural Diameter", estilo_centralizado),
-                 Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
+                 Paragraph(diametro, estilo_centralizado),
+                 Paragraph(diametro_estrutura, estilo_centralizado)],
+                [Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
                  Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(diametro_estrutura, estilo_centralizado),
-                 Paragraph(diametro_interno, estilo_centralizado),
+                [Paragraph(diametro_interno, estilo_centralizado),
                  Paragraph(diametro_externo, estilo_centralizado),
                  Paragraph(norma, estilo_centralizado)]
             ]
@@ -1200,20 +1254,19 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Espessura<br/>Thickness", estilo_centralizado),
+                [Paragraph("Espessura<br/>Thickness", estilo_centralizado),
                  Paragraph("Comprimento<br/>Length", estilo_centralizado),
-                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado),
-                 Paragraph(espessura, estilo_centralizado),
+                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
+                 Paragraph("Diâmetro Cabeça<br/>Head Diameter", estilo_centralizado)],
+                [Paragraph(espessura, estilo_centralizado),
                  Paragraph(comprimento, estilo_centralizado),
-                 Paragraph(diametro, estilo_centralizado)],
-                [Paragraph("Diâmetro Cabeça<br/>Head Diameter", estilo_centralizado),
+                 Paragraph(diametro, estilo_centralizado),
+                Paragraph(diametro_cabeca, estilo_centralizado)],
+                [
                  Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
                  Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(diametro_cabeca, estilo_centralizado),
-                 Paragraph(diametro_interno, estilo_centralizado),
+                [Paragraph(diametro_interno, estilo_centralizado),
                  Paragraph(diametro_externo, estilo_centralizado),
                  Paragraph(norma, estilo_centralizado)]
             ]
@@ -1250,20 +1303,22 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Altura<br/>Height", estilo_centralizado),
+                [Paragraph("Altura<br/>Height", estilo_centralizado),
                  Paragraph("Chave<br/>Key", estilo_centralizado),
                  Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
                  Paragraph("Diâmetro<br/>Diameter", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado), Paragraph(altura, estilo_centralizado),
-                 Paragraph(chave, estilo_centralizado), Paragraph(comprimento, estilo_centralizado),
+                [Paragraph(altura, estilo_centralizado),
+                 Paragraph(chave, estilo_centralizado),
+                 Paragraph(comprimento, estilo_centralizado),
                  Paragraph(diametro, estilo_centralizado)],
                 [Paragraph("Diâmetro Cabeça/Corpo<br/>Head/Body Diameter", estilo_centralizado),
                  Paragraph("Comprimento Rosca<br/>Thread Lenght", estilo_centralizado),
                  Paragraph("Diâmetro Ponta<br/>Tip Diameter", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(diametro_cabeca, estilo_centralizado), Paragraph(comprimento_rosca, estilo_centralizado),
-                 Paragraph(diametro_ponta, estilo_centralizado), Paragraph(norma, estilo_centralizado)]
+                [Paragraph(diametro_cabeca, estilo_centralizado),
+                 Paragraph(comprimento_rosca, estilo_centralizado),
+                 Paragraph(diametro_ponta, estilo_centralizado),
+                 Paragraph(norma, estilo_centralizado)]
             ]
 
             cell_styles = [
@@ -1273,7 +1328,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
-            adparafusos_table = Table(data, colWidths=effective_page_width / 5)
+            adparafusos_table = Table(data, colWidths=effective_page_width / 4)
             adparafusos_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adparafusos_table)
@@ -1295,15 +1350,16 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
                  Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
                  Paragraph("Comprimento Rosca<br/>Thread Lenght", estilo_centralizado),
                  Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado), Paragraph(comprimento, estilo_centralizado),
-                 Paragraph(diametro, estilo_centralizado), Paragraph(comprimento_rosca, estilo_centralizado),
-                 Paragraph(diametro_interno, estilo_centralizado), Paragraph(norma, estilo_centralizado)]
+                [Paragraph(comprimento, estilo_centralizado),
+                 Paragraph(diametro, estilo_centralizado),
+                 Paragraph(comprimento_rosca, estilo_centralizado),
+                 Paragraph(diametro_interno, estilo_centralizado),
+                 Paragraph(norma, estilo_centralizado)]
             ]
 
             cell_styles = [
@@ -1313,7 +1369,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
-            adgrampos_table = Table(data, colWidths=effective_page_width / 6)
+            adgrampos_table = Table(data, colWidths=effective_page_width / 5)
             adgrampos_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adgrampos_table)
@@ -1334,13 +1390,13 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Altura<br/>Height", estilo_centralizado),
+                [Paragraph("Altura<br/>Height", estilo_centralizado),
                  Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
                  Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado), Paragraph(altura, estilo_centralizado),
-                 Paragraph(diametro_interno, estilo_centralizado), Paragraph(diametro_externo, estilo_centralizado),
+                [Paragraph(altura, estilo_centralizado),
+                 Paragraph(diametro_interno, estilo_centralizado),
+                 Paragraph(diametro_externo, estilo_centralizado),
                  Paragraph(norma, estilo_centralizado)]
             ]
 
@@ -1351,7 +1407,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
-            adarruelas_table = Table(data, colWidths=effective_page_width / 5)
+            adarruelas_table = Table(data, colWidths=effective_page_width / 4)
             adarruelas_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adarruelas_table)
@@ -1372,13 +1428,13 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Altura<br/>Height", estilo_centralizado),
+                [Paragraph("Altura<br/>Height", estilo_centralizado),
                  Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
                  Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado), Paragraph(altura, estilo_centralizado),
-                 Paragraph(diametro_interno, estilo_centralizado), Paragraph(diametro_externo, estilo_centralizado),
+                [Paragraph(altura, estilo_centralizado),
+                 Paragraph(diametro_interno, estilo_centralizado),
+                 Paragraph(diametro_externo, estilo_centralizado),
                  Paragraph(norma, estilo_centralizado)]
             ]
 
@@ -1389,7 +1445,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
-            adanel_table = Table(data, colWidths=effective_page_width / 5)
+            adanel_table = Table(data, colWidths=effective_page_width / 4)
             adanel_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adanel_table)
@@ -1410,13 +1466,13 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
                  Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
                  Paragraph("Comprimento Rosca<br/>Thread Lenght", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado), Paragraph(comprimento, estilo_centralizado),
-                 Paragraph(diametro, estilo_centralizado), Paragraph(comprimento_rosca, estilo_centralizado),
+                [Paragraph(comprimento, estilo_centralizado),
+                 Paragraph(diametro, estilo_centralizado),
+                 Paragraph(comprimento_rosca, estilo_centralizado),
                  Paragraph(norma, estilo_centralizado)]
             ]
 
@@ -1427,7 +1483,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
-            adprisioneiroestojo_table = Table(data, colWidths=effective_page_width / 5)
+            adprisioneiroestojo_table = Table(data, colWidths=effective_page_width / 4)
             adprisioneiroestojo_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adprisioneiroestojo_table)
@@ -1453,21 +1509,24 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Altura<br/>Height", estilo_centralizado),
+                [Paragraph("Altura<br/>Height", estilo_centralizado),
                  Paragraph("Chave<br/>Key", estilo_centralizado),
                  Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
-                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado), Paragraph(altura, estilo_centralizado),
-                 Paragraph(chave, estilo_centralizado), Paragraph(comprimento, estilo_centralizado),
-                 Paragraph(diametro, estilo_centralizado)],
-                [Paragraph("Diâmetro Cabeça<br/>Head Diameter", estilo_centralizado),
+                 Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
+                 Paragraph("Diâmetro Cabeça<br/>Head Diameter", estilo_centralizado)],
+                [Paragraph(altura, estilo_centralizado),
+                 Paragraph(chave, estilo_centralizado),
+                 Paragraph(comprimento, estilo_centralizado),
+                 Paragraph(diametro, estilo_centralizado),
+                 Paragraph(diametro_cabeca, estilo_centralizado)],
+                [
                  Paragraph("Comprimento Rosca<br/>Thread Lenght", estilo_centralizado),
                  Paragraph("Diâmetro Interno<br/>Inner Diameter", estilo_centralizado),
                  Paragraph("Diâmetro Externo<br/>Outer Diameter", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(diametro_cabeca, estilo_centralizado), Paragraph(comprimento_rosca, estilo_centralizado),
-                 Paragraph(diametro_interno, estilo_centralizado), Paragraph(diametro_externo, estilo_centralizado),
+                [Paragraph(comprimento_rosca, estilo_centralizado),
+                 Paragraph(diametro_interno, estilo_centralizado),
+                 Paragraph(diametro_externo, estilo_centralizado),
                  Paragraph(norma, estilo_centralizado)]
             ]
 
@@ -1498,12 +1557,12 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
                  Paragraph("Bitola<br/>Gauge", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado), Paragraph(comprimento, estilo_centralizado),
-                 Paragraph(bitola, estilo_centralizado), Paragraph(norma, estilo_centralizado)]
+                [Paragraph(comprimento, estilo_centralizado),
+                 Paragraph(bitola, estilo_centralizado),
+                 Paragraph(norma, estilo_centralizado)]
             ]
 
             cell_styles = [
@@ -1513,7 +1572,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
-            adchumbador_table = Table(data, colWidths=effective_page_width / 4)
+            adchumbador_table = Table(data, colWidths=effective_page_width / 3)
             adchumbador_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adchumbador_table)
@@ -1534,12 +1593,11 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
                  Paragraph("Bitola<br/>Gauge", estilo_centralizado),
                  Paragraph("Diâmetro Cabeça<br/>Head Diameter", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado), Paragraph(comprimento, estilo_centralizado),
+                [Paragraph(comprimento, estilo_centralizado),
                  Paragraph(bitola, estilo_centralizado), Paragraph(diametro_cabeca, estilo_centralizado),
                  Paragraph(norma, estilo_centralizado)]
             ]
@@ -1551,7 +1609,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
-            adrebite_table = Table(data, colWidths=effective_page_width / 5)
+            adrebite_table = Table(data, colWidths=effective_page_width / 4)
             adrebite_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adrebite_table)
@@ -1572,13 +1630,11 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
                  Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
                  Paragraph("Altura<br/>Height", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado),
-                 Paragraph(comprimento, estilo_centralizado),
+                [Paragraph(comprimento, estilo_centralizado),
                  Paragraph(diametro, estilo_centralizado),
                  Paragraph(altura, estilo_centralizado),
                  Paragraph(norma, estilo_centralizado)]
@@ -1591,7 +1647,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
-            adchaveta_table = Table(data, colWidths=effective_page_width / 5)
+            adchaveta_table = Table(data, colWidths=effective_page_width / 4)
             adchaveta_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adchaveta_table)
@@ -1611,12 +1667,12 @@ def gerar_pdf():
             tamanho_da_fonte = 8
 
             data = [
-                [Paragraph("Dureza<br/>Hardness", estilo_centralizado),
-                 Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
+                [Paragraph("Comprimento<br/>Lenght", estilo_centralizado),
                  Paragraph("Diâmetro<br/>Diameter", estilo_centralizado),
                  Paragraph("Norma<br/>Norm", estilo_centralizado)],
-                [Paragraph(dureza, estilo_centralizado), Paragraph(comprimento, estilo_centralizado),
-                 Paragraph(diametro, estilo_centralizado), Paragraph(norma, estilo_centralizado)]
+                [Paragraph(comprimento, estilo_centralizado),
+                 Paragraph(diametro, estilo_centralizado),
+                 Paragraph(norma, estilo_centralizado)]
             ]
 
             cell_styles = [
@@ -1626,7 +1682,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
             ]
 
-            adcontrapino_table = Table(data, colWidths=effective_page_width / 4)
+            adcontrapino_table = Table(data, colWidths=effective_page_width / 3)
             adcontrapino_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adcontrapino_table)
