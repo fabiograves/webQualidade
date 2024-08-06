@@ -3805,7 +3805,7 @@ def resumo_trimestral():
     try:
         with connection.cursor() as cursor:
             # Busca todos os fornecedores
-            sql_fornecedores = "SELECT id, nome_fornecedor FROM dbo.cadastro_fornecedor ORDER BY nome_fornecedor ASC"
+            sql_fornecedores = "SELECT id, nome_fornecedor, campo1, campo2, pdf_fornecedor FROM dbo.cadastro_fornecedor ORDER BY nome_fornecedor ASC"
             cursor.execute(sql_fornecedores)
             fornecedores = cursor.fetchall()
 
@@ -3849,7 +3849,6 @@ def resumo_trimestral():
                     else:
                         dados['valor_final'] = 0
 
-                    #print(f"Fornecedor {id_fornecedor} Trimestre {trimestre}: {dados['valor_final']}")
                     notas_finais_trimestres[id_fornecedor][trimestre] = dados['valor_final']
 
     except Exception as e:
@@ -3864,6 +3863,98 @@ def resumo_trimestral():
                            notas_finais_trimestres=notas_finais_trimestres,
                            anos_disponiveis=anos_disponiveis,
                            ano_selecionado=ano_selecionado)
+
+
+@app.route('/salvar_fornecedores', methods=['POST'])
+def salvar_fornecedores():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+
+    try:
+        with connection.cursor() as cursor:
+            fornecedor_id = request.form.get('salvar_fornecedor_id')
+            if fornecedor_id:
+                campo1 = request.form.get('campo1')
+                campo2 = request.form.get('campo2')
+
+                # Garantir que campo2 não é None antes de dividir
+                if not campo2:
+                    campo2 = ""
+
+                # Verificar se todos os dados necessários estão presentes
+                if campo1 is not None and campo2 is not None:
+                    # Declaração preparada para evitar SQL injection
+                    sql_update = """
+                        UPDATE dbo.cadastro_fornecedor
+                        SET campo1 = ?, campo2 = ?
+                        WHERE id = ?
+                    """
+                    cursor.execute(sql_update, (campo1, campo2, fornecedor_id))
+
+                if 'pdf' in request.files:
+                    pdf_file = request.files['pdf']
+                    if pdf_file.filename != '':
+                        pdf_data = pdf_file.read()
+                        # Declaração preparada para dados do PDF
+                        sql_update_pdf = """
+                            UPDATE dbo.cadastro_fornecedor
+                            SET pdf_fornecedor = ?
+                            WHERE id = ?
+                        """
+                        cursor.execute(sql_update_pdf, (pdf_data, fornecedor_id))
+
+            connection.commit()
+        flash("Modificações salvas com sucesso!", "success")
+    except Exception as e:
+        print(f"Erro ao salvar modificações: {e}")
+        flash(f"Erro ao salvar modificações: {e}", "danger")
+    finally:
+        connection.close()
+
+    return redirect(url_for('resumo_trimestral'))
+
+
+@app.route('/download_pdf_trimestral/<int:fornecedor_id>')
+def download_pdf_trimestral(fornecedor_id):
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    pdf_path = None
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pdf_fornecedor FROM dbo.cadastro_fornecedor WHERE id = ?", (fornecedor_id,))
+            pdf_data = cursor.fetchone()[0]
+
+            if pdf_data:
+                if not os.path.exists('temp'):
+                    os.makedirs('temp')
+                pdf_path = f"temp/{fornecedor_id}.pdf"
+                with open(pdf_path, "wb") as f:
+                    f.write(pdf_data)
+
+                response = send_file(pdf_path, as_attachment=True)
+
+                # Remover o arquivo após o envio da resposta
+                @response.call_on_close
+                def remove_file():
+                    try:
+                        os.remove(pdf_path)
+                    except Exception as e:
+                        print(f"Erro ao remover arquivo: {e}")
+
+                return response
+            else:
+                flash("PDF não encontrado!", "warning")
+                return redirect(url_for('resumo_trimestral'))
+    except Exception as e:
+        print(f"Erro: {e} do download pdf")
+        flash(f"Erro ao baixar PDF: {e}", "danger")
+        return redirect(url_for('resumo_trimestral'))
+    finally:
+        connection.close()
 
 
 def fetch_dictn(cursor):
