@@ -3999,11 +3999,12 @@ def get_quantidade_inspecao():
             SUM(CASE WHEN ri_opcao != 'Reprovado' THEN 1 ELSE 0 END) AS aprovados
         FROM dbo.registro_inspecao
         WHERE 
-            TRY_CONVERT(date, ri_data) IS NOT NULL AND
-            (? IS NULL OR YEAR(TRY_CONVERT(date, ri_data)) = ?) AND
-            (? IS NULL OR MONTH(TRY_CONVERT(date, ri_data)) = ?) AND
-            (? IS NULL OR DAY(TRY_CONVERT(date, ri_data)) = ?) AND
-            (? IS NULL OR ri_resp_inspecao = ?)
+            TRY_CONVERT(date, ri_data) IS NOT NULL
+            AND ri_data <> '' -- Ignora datas vazias
+            AND (? IS NULL OR YEAR(TRY_CONVERT(date, ri_data)) = ?)
+            AND (? IS NULL OR MONTH(TRY_CONVERT(date, ri_data)) = ?)
+            AND (? IS NULL OR DAY(TRY_CONVERT(date, ri_data)) = ?)
+            AND (? IS NULL OR ri_resp_inspecao = ?)
     """
 
     parameters = [
@@ -4029,13 +4030,13 @@ def get_quantidade_inspecao():
     responsaveis = cursor.fetchall()
 
     # Obter lista de anos, meses e dias disponíveis
-    cursor.execute("SELECT DISTINCT YEAR(TRY_CONVERT(date, ri_data)) AS ano FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL ORDER BY ano")
+    cursor.execute("SELECT DISTINCT YEAR(TRY_CONVERT(date, ri_data)) AS ano FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL AND ri_data <> '' ORDER BY ano")
     anos_disponiveis = cursor.fetchall()
 
-    cursor.execute("SELECT DISTINCT MONTH(TRY_CONVERT(date, ri_data)) AS mes FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL ORDER BY mes")
+    cursor.execute("SELECT DISTINCT MONTH(TRY_CONVERT(date, ri_data)) AS mes FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL AND ri_data <> '' ORDER BY mes")
     meses_disponiveis = cursor.fetchall()
 
-    cursor.execute("SELECT DISTINCT DAY(TRY_CONVERT(date, ri_data)) AS dia FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL ORDER BY dia")
+    cursor.execute("SELECT DISTINCT DAY(TRY_CONVERT(date, ri_data)) AS dia FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL AND ri_data <> '' ORDER BY dia")
     dias_disponiveis = cursor.fetchall()
 
     connection.close()
