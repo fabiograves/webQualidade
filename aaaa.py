@@ -1,30 +1,60 @@
-def extract_uid(hex_value):
-    # Remove o prefixo '0x' se existir
-    if hex_value.startswith('0x'):
-        hex_value = hex_value[2:]
+import pandas as pd
+import pyodbc
 
-    # Ignora os primeiros 8 caracteres (4 bytes)
-    relevant_part = hex_value[8:]
+def conectar_db():
+    driver = '{ODBC Driver 17 for SQL Server}'
+    server = "172.16.2.27"
+    database = "dbQualidade"
+    username = "Qualidade"
+    password = "y2%:ff4G4A>7"
+    connectionString = (f'DRIVER={driver};SERVER={server},1433;DATABASE={database};UID={username};'
+                        f'PWD={password};Encrypt=yes;TrustServerCertificate=yes;')
 
-    # Extrai os primeiros 14 caracteres após o prefixo
-    uid_hex = relevant_part[:14]
+    try:
+        connection = pyodbc.connect(connectionString)
+        return connection
+    except Exception as e:
+        raise Exception(f"Erro ao conectar ao banco de dados: {e}")
 
-    # Converte a string hexadecimal em bytes
-    uid_bytes = bytes.fromhex(uid_hex)
+def limpar_dados(df):
+    df = df.copy()
+    df['Cod'] = df['Cod'].apply(lambda x: str(x) if pd.notnull(x) else '')
+    df['Desc.Prod.'] = df['Desc.Prod.'].apply(lambda x: str(x) if pd.notnull(x) else '')
+    return df
 
-    # Formata os bytes como um UID
-    uid = ':'.join(f'{byte:02X}' for byte in uid_bytes)
-    return uid
+def inserir_dados(df, conn):
+    cursor = conn.cursor()
+    for index, row in df.iterrows():
+        try:
+            cursor.execute("""
+                INSERT INTO dbo.cadastro_itens (cod_item, descricao_item)
+                VALUES (?, ?)
+            """, row['Cod'], row['Desc.Prod.'])
+            print(f"Executando linha: {index + 1}")
+        except Exception as e:
+            print(f"Erro ao inserir a linha {index + 1}: {e} - Dados: {row.to_dict()}")
+    conn.commit()
+    cursor.close()
 
-# Valores lidos das tags
-hex_value1 = '0xE28068940000502B39329C43'
-hex_value2 = '0xE28068940000502B39322843'
-#04:14:4C:0A:2A:19:91
-#04:76:4B:0A:2A:19:91
+def main():
+    caminho_arquivo = './static/itens ars.xlsx'
+    df = pd.read_excel(caminho_arquivo)
 
-# UIDs reais extraídos
-uid1 = extract_uid(hex_value1)
-uid2 = extract_uid(hex_value2)
+    linha_inicial = int(input("Digite a linha inicial: "))
+    linha_final = int(input("Digite a linha final: "))
 
-print(f'UID real para {hex_value1}: {uid1}')
-print(f'UID real para {hex_value2}: {uid2}')
+    if linha_final > len(df):
+        linha_final = len(df)
+
+    df_filtrado = df.iloc[linha_inicial-1:linha_final]
+
+    df_filtrado = limpar_dados(df_filtrado)
+
+    conn = conectar_db()
+
+    inserir_dados(df_filtrado, conn)
+
+    conn.close()
+
+if __name__ == "__main__":
+    main()

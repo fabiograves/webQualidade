@@ -1,0 +1,156 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<form method="POST" action="{{ url_for('reprova_inspecao') }}" enctype="multipart/form-data">
+    <div class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1 class="text-center">Reprova Inspeção Final</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Data</label>
+                        <!--<input type="date" class="form-control" id="rep_data" name="rep_data" value="{{ today_date }}" readonly>-->
+                        <input type="date" class="form-control" id="rep_data" name="rep_data">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Num. Pedido</label>
+                        <input type="text" class="form-control" id="rep_num_pedido" name="rep_num_pedido" required>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Cod. ARS</label>
+                        <input type="text" class="form-control" id="rep_cod_item_ars" name="rep_cod_item_ars" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Descritivo</label>
+                        <input type="text" class="form-control" id="rep_desc_item_ars" name="rep_desc_item_ars" required readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Quantidade</label>
+                        <input type="text" class="form-control" id="rep_quantidade" name="rep_quantidade" required>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Cod. Separador</label>
+                        <input type="text" class="form-control" id="rep_cod_separador" name="rep_cod_separador" required>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Separador</label>
+                        <input type="text" class="form-control" id="rep_separador" name="rep_separador" required readonly>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Cod. Picker</label>
+                        <input type="text" class="form-control" id="rep_cod_picker" name="rep_cod_picker" required>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Picker</label>
+                        <input type="text" class="form-control" id="rep_picker" name="rep_picker" required readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Cod. Reprova</label>
+                        <input type="text" class="form-control" id="rep_cod_reprova" name="rep_cod_reprova" required>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="form-group">
+                        <label>Motivo Reprova</label>
+                        <input type="text" class="form-control" id="rep_motivo_reprova" name="rep_motivo_reprova" required readonly>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="form-group">
+                        <label>Observação</label>
+                        <input type="text" class="form-control" id="rep_observacao" name="rep_observacao">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <button type="submit" id="botao-registrar" class="btn btn-secondary w-100 mb-3">Confirmar Reprova</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    function fetchData(url, targetField, errorMessage) {
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(errorMessage);
+                    document.getElementById(targetField).value = '';
+                } else {
+                    document.getElementById(targetField).value = data.descricao || data.nome;
+                }
+            });
+    }
+
+    document.getElementById('rep_cod_item_ars').addEventListener('blur', function() {
+        fetchData(`/get_item_desc/${this.value}`, 'rep_desc_item_ars', 'Código do item ARS não encontrado. Verifique se existe ou peça para cadastrar.');
+    });
+
+    document.getElementById('rep_cod_separador').addEventListener('blur', function() {
+        fetchData(`/get_separador_desc/${this.value}`, 'rep_separador', 'Código do separador não encontrado. Verifique se existe ou peça para cadastrar.');
+    });
+
+    document.getElementById('rep_cod_picker').addEventListener('blur', function() {
+        fetchData(`/get_picker_desc/${this.value}`, 'rep_picker', 'Código do picker não encontrado. Verifique se existe ou peça para cadastrar.');
+    });
+
+    document.getElementById('rep_cod_reprova').addEventListener('blur', function() {
+        fetchData(`/get_reprova_desc/${this.value}`, 'rep_motivo_reprova', 'Código da reprova não encontrado. Verifique se existe ou peça para cadastrar.');
+    });
+
+    document.getElementById('botao-registrar').addEventListener('click', function(event) {
+        var confirmacao = confirm('Tem certeza que deseja confirmar a reprova?');
+        if (!confirmacao) {
+            event.preventDefault();
+        }
+    });
+</script>
+
+{% endblock %}

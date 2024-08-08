@@ -24,13 +24,13 @@
 
 <div class="container-fluid my-5">
     <div class="row">
-        <div class="col-md-3 p-4">
+        <div class="col-md-4 p-4">
             <div class="mb-5">
-                <h5 class="text-center">Inspeção</h5>
+                <h5 class="text-center">Recebimento</h5>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link btn btn-custom rounded-pill" href="/registro_inspecao" role="button">Registrar Inspeção</a>
-                        <a class="nav-link btn btn-custom rounded-pill" href="/pesquisar_registro_inspecao" role="button">Pesquisar Registro Inspeção</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/registro_inspecao" role="button">Registrar Inspeção Recebimento</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/pesquisar_registro_inspecao" role="button">Pesquisar Inspeção Recebimento</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/avaliacao_diaria.html" role="button">Avaliação Diária</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/plano_controle_inspecao" role="button">Plano de Controle</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_norma" role="button">Cadastro de Normas</a>
@@ -42,14 +42,7 @@
             </div>
         </div>
 
-        <div class="col-md-6 p-5">
-            <div class="text-center mb-5">
-                <img src="{{ url_for('static', filename='images/logoGrandePlainSVG.svg') }}" alt="Logo da ARS Qualidade" class="img-fluid">
-            </div>
-
-        </div>
-
-        <div class="col-md-3 p-4">
+        <div class="col-md-4 p-4">
             <div>
                 <h5 class="text-center">Qualidade</h5>
                 <ul class="nav flex-column">
@@ -63,6 +56,22 @@
                         <a class="nav-link btn btn-custom rounded-pill" href="pesquisar_avaliacao_diaria.html" role="button">IQF Mensal</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/resumo_trimestral.html" role="button">Resumo Trimestral</a>
                         <a class="nav-link btn btn-custom rounded-pill" href="/quantidade_inspecao" role="button">Quantidade Inspeção</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-4 p-4">
+            <div>
+                <h5 class="text-center">Inspeção Final</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-custom rounded-pill" href="/reprova_inspecao" role="button">Reprova Inspeção</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/pesquisar_reprova_inspecao" role="button">Pesquisar Reprova</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_itens_ars" role="button">Cadastro Itens ARS</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_picker" role="button">Cadastro Picker</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_separador" role="button">Cadastro Separador</a>
+                        <a class="nav-link btn btn-custom rounded-pill" href="/cadastro_recusa" role="button">Cadastro de Recusa</a>
                     </li>
                 </ul>
             </div>

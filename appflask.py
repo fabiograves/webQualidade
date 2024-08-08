@@ -30,6 +30,11 @@ import pdfplumber
 import re
 import zipfile
 
+import matplotlib.pyplot as plt
+import pandas as pd
+from sqlalchemy import create_engine
+
+
 #from pyzbar import pyzbar
 import numpy as np
 #import cv2
@@ -41,6 +46,11 @@ app.secret_key = 'sua_chave_secreta_aqui'
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
+# Substitua 'DATABASE_URL' pela URL do seu banco de dados
+DATABASE_URL = 'mssql+pyodbc://Qualidade:y2%:ff4G4A>7@172.16.2.27:1433/dbQualidade?driver=ODBC+Driver+17+for+SQL+Server'
+
+# Crie o engine
+engine = create_engine(DATABASE_URL)
 
 def conectar_db():
     driver = '{ODBC Driver 17 for SQL Server}'
@@ -4049,6 +4059,535 @@ def get_quantidade_inspecao():
                            meses_disponiveis=meses_disponiveis,
                            dias_disponiveis=dias_disponiveis,
                            responsaveis=responsaveis)
+
+
+app.jinja_env.globals.update(max=max, min=min)
+
+
+@app.route('/cadastro_itens_ars', methods=['GET', 'POST'])
+def cadastro_itens_ars():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    if request.method == 'POST':
+        codigo = request.form['cad_itens_ars']
+        descricao = request.form['cad_desc_itens']
+
+        cursor.execute("""
+            INSERT INTO dbo.cadastro_itens (
+                cod_item, descricao_item
+            ) VALUES (?, ?)
+        """, (codigo, descricao))
+        connection.commit()
+        flash('Item cadastrado com sucesso!')
+        connection.close()
+        return redirect(url_for('cadastro_itens_ars'))  # Redireciona para evitar reenvio do formulário
+
+    search_query = request.args.get('search', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    if search_query:
+        cursor.execute("""
+            SELECT id, cod_item, descricao_item
+            FROM dbo.cadastro_itens
+            WHERE cod_item LIKE ? OR descricao_item LIKE ?
+            ORDER BY id DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """, ('%' + search_query + '%', '%' + search_query + '%', offset, per_page))
+        itens = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.cadastro_itens
+            WHERE cod_item LIKE ? OR descricao_item LIKE ?
+        """, ('%' + search_query + '%', '%' + search_query + '%'))
+    else:
+        cursor.execute("""
+            SELECT id, cod_item, descricao_item
+            FROM dbo.cadastro_itens
+            ORDER BY id DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """, (offset, per_page))
+        itens = cursor.fetchall()
+
+        cursor.execute("SELECT COUNT(*) FROM dbo.cadastro_itens")
+
+    total_row = cursor.fetchone()
+    total = total_row[0] if total_row else 0
+
+    connection.close()
+
+    return render_template('cadastro_itens_ars.html', itens=itens, page=page, total=total, per_page=per_page, search_query=search_query)
+
+
+@app.route('/cadastro_separador', methods=['GET', 'POST'])
+def cadastro_separador():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    if request.method == 'POST':
+        num_separador = request.form['cad_numero_separador']
+        nome_separador = request.form['cad_nome_separador']
+        status_separador = 'Desativado'
+
+        cursor.execute("""
+            INSERT INTO dbo.cadastro_separador (
+                num_separador, nome_separador, status_separador
+            ) VALUES (?, ?, ?)
+        """, (num_separador, nome_separador, status_separador))
+        connection.commit()
+        flash('Separador cadastrado com sucesso!')
+        connection.close()
+        return redirect(url_for('cadastro_separador'))  # Redireciona para evitar reenvio do formulário
+
+    search_query = request.args.get('search', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    if search_query:
+        cursor.execute("""
+            SELECT id, num_separador, nome_separador, status_separador
+            FROM dbo.cadastro_separador
+            WHERE num_separador LIKE ? OR nome_separador LIKE ?
+            ORDER BY id DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """, ('%' + search_query + '%', '%' + search_query + '%', offset, per_page))
+        separadores = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.cadastro_separador
+            WHERE num_separador LIKE ? OR nome_separador LIKE ?
+        """, ('%' + search_query + '%', '%' + search_query + '%'))
+    else:
+        cursor.execute("""
+            SELECT id, num_separador, nome_separador, status_separador
+            FROM dbo.cadastro_separador
+            ORDER BY id DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """, (offset, per_page))
+        separadores = cursor.fetchall()
+
+        cursor.execute("SELECT COUNT(*) FROM dbo.cadastro_separador")
+
+    total_row = cursor.fetchone()
+    total = total_row[0] if total_row else 0
+
+    connection.close()
+
+    return render_template('cadastro_separador.html', separadores=separadores, page=page, total=total, per_page=per_page, search_query=search_query)
+
+
+@app.route('/cadastro_picker', methods=['GET', 'POST'])
+def cadastro_picker():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    if request.method == 'POST':
+        num_picker = request.form['cad_numero_picker']
+        nome_picker = request.form['cad_nome_picker']
+        status_picker = 'Desativado'
+
+        cursor.execute("""
+            INSERT INTO dbo.cadastro_picker (
+                num_picker, nome_picker, status_picker
+            ) VALUES (?, ?, ?)
+        """, (num_picker, nome_picker, status_picker))
+        connection.commit()
+        flash('Picker cadastrado com sucesso!')
+        connection.close()
+        return redirect(url_for('cadastro_picker'))  # Redireciona para evitar reenvio do formulário
+
+    search_query = request.args.get('search', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    if search_query:
+        cursor.execute("""
+            SELECT id, num_picker, nome_picker, status_picker
+            FROM dbo.cadastro_picker
+            WHERE num_picker LIKE ? OR nome_picker LIKE ?
+            ORDER BY id DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """, ('%' + search_query + '%', '%' + search_query + '%', offset, per_page))
+        pickers = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.cadastro_picker
+            WHERE num_picker LIKE ? OR nome_picker LIKE ?
+        """, ('%' + search_query + '%', '%' + search_query + '%'))
+    else:
+        cursor.execute("""
+            SELECT id, num_picker, nome_picker, status_picker
+            FROM dbo.cadastro_picker
+            ORDER BY id DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """, (offset, per_page))
+        pickers = cursor.fetchall()
+
+        cursor.execute("SELECT COUNT(*) FROM dbo.cadastro_picker")
+
+    total_row = cursor.fetchone()
+    total = total_row[0] if total_row else 0
+
+    connection.close()
+
+    return render_template('cadastro_picker.html', pickers=pickers, page=page, total=total, per_page=per_page, search_query=search_query)
+
+
+@app.route('/cadastro_recusa', methods=['GET', 'POST'])
+def cadastro_recusa():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    if request.method == 'POST':
+        cod_recusa = request.form['cad_cod_recusa']
+        desc_recusa = request.form['cad_desc_recusa']
+
+        cursor.execute("""
+            INSERT INTO dbo.cadastro_reprova (
+                cod_reprova, descricao_reprova
+            ) VALUES (?, ?)
+        """, (cod_recusa, desc_recusa))
+        connection.commit()
+        flash('Recusa cadastrada com sucesso!')
+        connection.close()
+        return redirect(url_for('cadastro_recusa'))  # Redireciona para evitar reenvio do formulário
+
+    search_query = request.args.get('search', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    if search_query:
+        cursor.execute("""
+            SELECT id, cod_reprova, descricao_reprova
+            FROM dbo.cadastro_reprova
+            WHERE cod_reprova LIKE ? OR descricao_reprova LIKE ?
+            ORDER BY id DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """, ('%' + search_query + '%', '%' + search_query + '%', offset, per_page))
+        recusas = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.cadastro_reprova
+            WHERE cod_reprova LIKE ? OR descricao_reprova LIKE ?
+        """, ('%' + search_query + '%', '%' + search_query + '%'))
+    else:
+        cursor.execute("""
+            SELECT id, cod_reprova, descricao_reprova
+            FROM dbo.cadastro_reprova
+            ORDER BY id DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """, (offset, per_page))
+        recusas = cursor.fetchall()
+
+        cursor.execute("SELECT COUNT(*) FROM dbo.cadastro_reprova")
+
+    total_row = cursor.fetchone()
+    total = total_row[0] if total_row else 0
+
+    connection.close()
+
+    return render_template('cadastro_recusa.html', recusas=recusas, page=page, total=total, per_page=per_page, search_query=search_query)
+
+
+from flask import Flask, render_template, redirect, url_for, flash, jsonify, session, request
+import datetime
+
+@app.route('/reprova_inspecao', methods=['GET', 'POST'])
+def reprova_inspecao():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    if request.method == 'POST':
+        #data = datetime.datetime.now().strftime('%Y-%m-%d')
+        data = request.form['rep_data']
+        num_pedido = request.form['rep_num_pedido']
+        cod_item_ars = request.form['rep_cod_item_ars']
+        desc_item_ars = request.form['rep_desc_item_ars']
+        quantidade = request.form['rep_quantidade']
+        cod_separador = request.form['rep_cod_separador']
+        separador = request.form['rep_separador']
+        cod_picker = request.form['rep_cod_picker']
+        picker = request.form['rep_picker']
+        cod_reprova = request.form['rep_cod_reprova']
+        desc_reprova = request.form['rep_motivo_reprova']
+        observacao = request.form['rep_observacao']
+        responsavel = session['username']
+
+        cursor.execute("""
+            INSERT INTO dbo.registro_reprova (
+                data, num_pedido, cod_item_ars, desc_item_ars, quantidade,
+                cod_separador, separador, cod_picker, picker, cod_reprova,
+                desc_reprova, observacao, responsavel
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (data, num_pedido, cod_item_ars, desc_item_ars, quantidade, cod_separador, separador,
+              cod_picker, picker, cod_reprova, desc_reprova, observacao, responsavel))
+        connection.commit()
+        flash('Reprova registrada com sucesso!')
+        connection.close()
+        return redirect(url_for('reprova_inspecao'))  # Redireciona para evitar reenvio do formulário
+
+    return render_template('reprova_inspecao.html', today_date=datetime.date.today())
+
+
+@app.route('/get_item_desc/<cod_item>')
+def get_item_desc(cod_item):
+    connection = conectar_db()
+    cursor = connection.cursor()
+    cursor.execute("SELECT descricao_item FROM dbo.cadastro_itens WHERE cod_item = ?", (cod_item,))
+    item = cursor.fetchone()
+    connection.close()
+    if item:
+        return jsonify(descricao=item[0])
+    return jsonify(error='Item não encontrado')
+
+
+@app.route('/get_separador_desc/<num_separador>')
+def get_separador_desc(num_separador):
+    connection = conectar_db()
+    cursor = connection.cursor()
+    cursor.execute("SELECT nome_separador FROM dbo.cadastro_separador WHERE num_separador = ?", (num_separador,))
+    separador = cursor.fetchone()
+    connection.close()
+    if separador:
+        return jsonify(nome=separador[0])
+    return jsonify(error='Separador não encontrado')
+
+
+@app.route('/get_picker_desc/<num_picker>')
+def get_picker_desc(num_picker):
+    connection = conectar_db()
+    cursor = connection.cursor()
+    cursor.execute("SELECT nome_picker FROM dbo.cadastro_picker WHERE num_picker = ?", (num_picker,))
+    picker = cursor.fetchone()
+    connection.close()
+    if picker:
+        return jsonify(nome=picker[0])
+    return jsonify(error='Picker não encontrado')
+
+
+@app.route('/get_reprova_desc/<cod_reprova>')
+def get_reprova_desc(cod_reprova):
+    connection = conectar_db()
+    cursor = connection.cursor()
+    cursor.execute("SELECT descricao_reprova FROM dbo.cadastro_reprova WHERE cod_reprova = ?", (cod_reprova,))
+    reprova = cursor.fetchone()
+    connection.close()
+    if reprova:
+        return jsonify(descricao=reprova[0])
+    return jsonify(error='Reprova não encontrada')
+
+
+@app.route('/pesquisar_reprova_inspecao', methods=['GET'])
+def pesquisar_reprova_inspecao():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    search_query = request.args.get('search', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    if search_query:
+        cursor.execute("""
+            SELECT id, data, num_pedido, cod_item_ars, desc_item_ars, quantidade,
+                   cod_separador, separador, cod_picker, picker, cod_reprova,
+                   desc_reprova, observacao, responsavel
+            FROM dbo.registro_reprova
+            WHERE num_pedido LIKE ? OR cod_item_ars LIKE ? OR desc_item_ars LIKE ?
+               OR cod_separador LIKE ? OR separador LIKE ? OR cod_picker LIKE ?
+               OR picker LIKE ? OR cod_reprova LIKE ? OR desc_reprova LIKE ?
+               OR observacao LIKE ? OR responsavel LIKE ?
+            ORDER BY id DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """, ('%' + search_query + '%', '%' + search_query + '%', '%' + search_query + '%',
+              '%' + search_query + '%', '%' + search_query + '%', '%' + search_query + '%',
+              '%' + search_query + '%', '%' + search_query + '%', '%' + search_query + '%',
+              '%' + search_query + '%', '%' + search_query + '%', offset, per_page))
+        registros = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.registro_reprova
+            WHERE num_pedido LIKE ? OR cod_item_ars LIKE ? OR desc_item_ars LIKE ?
+               OR cod_separador LIKE ? OR separador LIKE ? OR cod_picker LIKE ?
+               OR picker LIKE ? OR cod_reprova LIKE ? OR desc_reprova LIKE ?
+               OR observacao LIKE ? OR responsavel LIKE ?
+        """, ('%' + search_query + '%', '%' + search_query + '%', '%' + search_query + '%',
+              '%' + search_query + '%', '%' + search_query + '%', '%' + search_query + '%',
+              '%' + search_query + '%', '%' + search_query + '%', '%' + search_query + '%',
+              '%' + search_query + '%', '%' + search_query + '%'))
+    else:
+        cursor.execute("""
+            SELECT id, data, num_pedido, cod_item_ars, desc_item_ars, quantidade,
+                   cod_separador, separador, cod_picker, picker, cod_reprova,
+                   desc_reprova, observacao, responsavel
+            FROM dbo.registro_reprova
+            ORDER BY id DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """, (offset, per_page))
+        registros = cursor.fetchall()
+
+        cursor.execute("SELECT COUNT(*) FROM dbo.registro_reprova")
+
+    total_row = cursor.fetchone()
+    total = total_row[0] if total_row else 0
+
+    connection.close()
+
+    return render_template('pesquisar_reprova_inspecao.html', registros=registros, page=page, total=total, per_page=per_page, search_query=search_query)
+
+
+def obter_dados_reprovas():
+    query = """
+    SELECT data, num_pedido, cod_item_ars, desc_item_ars, quantidade,
+           cod_separador, separador, cod_picker, picker, cod_reprova,
+           desc_reprova, observacao, responsavel
+    FROM dbo.registro_reprova
+    """
+    df = pd.read_sql_query(query, engine)
+    return df
+
+
+def gerar_grafico_quantidade_reprovas_por_ano(df):
+    df['data'] = pd.to_datetime(df['data'])
+    df['ano'] = df['data'].dt.year
+    reprovas_por_ano = df.groupby('ano').size()
+
+    fig, ax = plt.subplots()
+    reprovas_por_ano.plot(kind='bar', ax=ax, color='skyblue')
+    ax.set_title('Quantidade de Reprovas por Ano')
+    ax.set_xlabel('Ano')
+    ax.set_ylabel('Quantidade de Reprovas')
+
+    return salvar_grafico(fig)
+
+
+def gerar_grafico_reprovas_por_picker(df):
+    reprovas_por_picker = df.groupby('picker').size()
+
+    fig, ax = plt.subplots()
+    reprovas_por_picker.plot(kind='bar', ax=ax, color='skyblue')
+    ax.set_title('Quantidade de Reprovas por Picker')
+    ax.set_xlabel('Picker')
+    ax.set_ylabel('Quantidade de Reprovas')
+
+    return salvar_grafico(fig)
+
+
+def gerar_grafico_reprovas_por_separador(df):
+    reprovas_por_separador = df.groupby('separador').size()
+
+    fig, ax = plt.subplots()
+    reprovas_por_separador.plot(kind='bar', ax=ax, color='skyblue')
+    ax.set_title('Quantidade de Reprovas por Separador')
+    ax.set_xlabel('Separador')
+    ax.set_ylabel('Quantidade de Reprovas')
+
+    return salvar_grafico(fig)
+
+
+def gerar_grafico_ranking_reprova(df):
+    ranking_reprova = df['desc_reprova'].value_counts()
+
+    fig, ax = plt.subplots()
+    ranking_reprova.plot(kind='bar', ax=ax, color='skyblue')
+    ax.set_title('Ranking de Motivos de Reprova')
+    ax.set_xlabel('Motivo de Reprova')
+    ax.set_ylabel('Quantidade')
+
+    return salvar_grafico(fig)
+
+
+def salvar_grafico(fig):
+    img = BytesIO()
+    fig.savefig(img, format='png')
+    img.seek(0)
+    base64_img = base64.b64encode(img.getvalue()).decode('utf-8')
+    plt.close(fig)
+    return base64_img
+
+
+@app.route('/relatorio_reprovados', methods=['GET', 'POST'])
+def relatorio_reprovados():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    df = obter_dados_reprovas()
+    grafico_ano = gerar_grafico_quantidade_reprovas_por_ano(df)
+    grafico_picker = gerar_grafico_reprovas_por_picker(df)
+    grafico_separador = gerar_grafico_reprovas_por_separador(df)
+    grafico_ranking = gerar_grafico_ranking_reprova(df)
+
+    return render_template('relatorio_reprovados.html', grafico_ano=grafico_ano, grafico_picker=grafico_picker, grafico_separador=grafico_separador, grafico_ranking=grafico_ranking)
+
+
+@app.route('/dados_grafico')
+def dados_grafico():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    tipo = request.args.get('tipo')
+    df = obter_dados_reprovas()
+
+    if tipo == 'ano':
+        df['data'] = pd.to_datetime(df['data'])
+        df['ano'] = df['data'].dt.year
+        dados = df.groupby('ano').size()
+        return jsonify({
+            'labels': dados.index.tolist(),
+            'values': dados.values.tolist(),
+            'label': 'Quantidade de Reprovas por Ano'
+        })
+    elif tipo == 'picker':
+        dados = df.groupby('picker').size()
+        return jsonify({
+            'labels': dados.index.tolist(),
+            'values': dados.values.tolist(),
+            'label': 'Quantidade de Reprovas por Picker'
+        })
+    elif tipo == 'separador':
+        dados = df.groupby('separador').size()
+        return jsonify({
+            'labels': dados.index.tolist(),
+            'values': dados.values.tolist(),
+            'label': 'Quantidade de Reprovas por Separador'
+        })
+    elif tipo == 'ranking':
+        dados = df['desc_reprova'].value_counts()
+        return jsonify({
+            'labels': dados.index.tolist(),
+            'values': dados.values.tolist(),
+            'label': 'Ranking de Motivos de Reprova'
+        })
+    else:
+        return jsonify({'labels': [], 'values': [], 'label': 'Dados não encontrados'})
 
 
 if __name__ == '__main__':
