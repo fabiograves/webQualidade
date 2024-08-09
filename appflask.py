@@ -33,7 +33,7 @@ import zipfile
 import matplotlib.pyplot as plt
 import pandas as pd
 from sqlalchemy import create_engine
-
+import sqlalchemy
 
 #from pyzbar import pyzbar
 import numpy as np
@@ -176,6 +176,9 @@ def home():
     elif privilegio == 3:
         print(f"Ação realizada por: {username}, Clicou Home")
         return render_template('home_zincagem.html')
+    elif privilegio == 4:
+        print(f"Ação realizada por: {username}, Clicou Home")
+        return render_template('home_inspecao_final.html')
     elif privilegio == 9:
         print(f"Ação realizada por: {username}, Clicou Home")
         return render_template('home.html')
@@ -206,6 +209,15 @@ def home_zincagem():
     username = session['username']
     print(f"Ação realizada por: {username}, Clicou Home")
     return render_template('home_zincagem.html')
+
+
+@app.route('/home_inspecao_final')
+def home_inspecao_final():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+    username = session['username']
+    print(f"Ação realizada por: {username}, Clicou Home")
+    return render_template('home_inspecao_final.html')
 
 
 @app.route('/relatorio_teste')
@@ -4471,22 +4483,35 @@ def obter_dados_reprovas():
            desc_reprova, observacao, responsavel
     FROM dbo.registro_reprova
     """
-    df = pd.read_sql_query(query, engine)
-    return df
+    try:
+        df = pd.read_sql_query(query, engine)
+        return df
+    except sqlalchemy.exc.OperationalError as e:
+        print(f"Erro de conexão com o banco de dados: {e}")
+        return pd.DataFrame()  # Retorna um DataFrame vazio em caso de erro
+    except Exception as e:
+        print(f"Ocorreu um erro ao obter os dados: {e}")
+        return pd.DataFrame()
+
 
 
 def gerar_grafico_quantidade_reprovas_por_ano(df):
-    df['data'] = pd.to_datetime(df['data'])
-    df['ano'] = df['data'].dt.year
-    reprovas_por_ano = df.groupby('ano').size()
+    try:
+        df['data'] = pd.to_datetime(df['data'])
+        df['ano'] = df['data'].dt.year
+        reprovas_por_ano = df.groupby('ano').size()
 
-    fig, ax = plt.subplots()
-    reprovas_por_ano.plot(kind='bar', ax=ax, color='skyblue')
-    ax.set_title('Quantidade de Reprovas por Ano')
-    ax.set_xlabel('Ano')
-    ax.set_ylabel('Quantidade de Reprovas')
+        fig, ax = plt.subplots()
+        reprovas_por_ano.plot(kind='bar', ax=ax, color='skyblue')
+        ax.set_title('Quantidade de Reprovas por Ano')
+        ax.set_xlabel('Ano')
+        ax.set_ylabel('Quantidade de Reprovas')
 
-    return salvar_grafico(fig)
+        return salvar_grafico(fig)
+    except Exception as e:
+        print(f"Ocorreu um erro ao gerar o gráfico por ano: {e}")
+        return None  # Retorna None em caso de erro
+
 
 
 def gerar_grafico_reprovas_por_picker(df):
@@ -4539,13 +4564,23 @@ def relatorio_reprovados():
     if not is_logged_in():
         return redirect(url_for('login'))
 
-    df = obter_dados_reprovas()
-    grafico_ano = gerar_grafico_quantidade_reprovas_por_ano(df)
-    grafico_picker = gerar_grafico_reprovas_por_picker(df)
-    grafico_separador = gerar_grafico_reprovas_por_separador(df)
-    grafico_ranking = gerar_grafico_ranking_reprova(df)
+    try:
+        df = obter_dados_reprovas()
+        if df.empty:
+            return render_template('erro.html', mensagem="Não foi possível obter os dados de reprovas.")
 
-    return render_template('relatorio_reprovados.html', grafico_ano=grafico_ano, grafico_picker=grafico_picker, grafico_separador=grafico_separador, grafico_ranking=grafico_ranking)
+        grafico_ano = gerar_grafico_quantidade_reprovas_por_ano(df)
+        grafico_picker = gerar_grafico_reprovas_por_picker(df)
+        grafico_separador = gerar_grafico_reprovas_por_separador(df)
+        grafico_ranking = gerar_grafico_ranking_reprova(df)
+
+        if not all([grafico_ano, grafico_picker, grafico_separador, grafico_ranking]):
+            return render_template('erro.html', mensagem="Erro ao gerar os gráficos.")
+
+        return render_template('relatorio_reprovados.html', grafico_ano=grafico_ano, grafico_picker=grafico_picker, grafico_separador=grafico_separador, grafico_ranking=grafico_ranking)
+    except Exception as e:
+        print(f"Ocorreu um erro na geração do relatório: {e}")
+        return render_template('erro.html', mensagem="Erro ao gerar o relatório de reprovas.")
 
 
 @app.route('/dados_grafico')
@@ -4553,41 +4588,57 @@ def dados_grafico():
     if not is_logged_in():
         return redirect(url_for('login'))
 
-    tipo = request.args.get('tipo')
-    df = obter_dados_reprovas()
+    try:
+        tipo = request.args.get('tipo')
+        ano = request.args.get('ano')
+        mes = request.args.get('mes')
+        df = obter_dados_reprovas()
 
-    if tipo == 'ano':
-        df['data'] = pd.to_datetime(df['data'])
-        df['ano'] = df['data'].dt.year
-        dados = df.groupby('ano').size()
-        return jsonify({
-            'labels': dados.index.tolist(),
-            'values': dados.values.tolist(),
-            'label': 'Quantidade de Reprovas por Ano'
-        })
-    elif tipo == 'picker':
-        dados = df.groupby('picker').size()
-        return jsonify({
-            'labels': dados.index.tolist(),
-            'values': dados.values.tolist(),
-            'label': 'Quantidade de Reprovas por Picker'
-        })
-    elif tipo == 'separador':
-        dados = df.groupby('separador').size()
-        return jsonify({
-            'labels': dados.index.tolist(),
-            'values': dados.values.tolist(),
-            'label': 'Quantidade de Reprovas por Separador'
-        })
-    elif tipo == 'ranking':
-        dados = df['desc_reprova'].value_counts()
-        return jsonify({
-            'labels': dados.index.tolist(),
-            'values': dados.values.tolist(),
-            'label': 'Ranking de Motivos de Reprova'
-        })
-    else:
-        return jsonify({'labels': [], 'values': [], 'label': 'Dados não encontrados'})
+        # Converter a coluna 'data' para o formato datetime
+        df['data'] = pd.to_datetime(df['data'], errors='coerce')
+
+        # Filtrar por ano, se selecionado
+        if ano:
+            df = df[df['data'].dt.year == int(ano)]
+
+        # Filtrar por mês, se selecionado
+        if mes:
+            df = df[df['data'].dt.month == int(mes)]
+
+        if tipo == 'ano':
+            df['ano'] = df['data'].dt.year
+            dados = df.groupby('ano').size()
+            return jsonify({
+                'labels': dados.index.tolist(),
+                'values': dados.values.tolist(),
+                'label': 'Quantidade de Reprovas por Ano'
+            })
+        elif tipo == 'picker':
+            dados = df.groupby('picker').size()
+            return jsonify({
+                'labels': dados.index.tolist(),
+                'values': dados.values.tolist(),
+                'label': 'Quantidade de Reprovas por Picker'
+            })
+        elif tipo == 'separador':
+            dados = df.groupby('separador').size()
+            return jsonify({
+                'labels': dados.index.tolist(),
+                'values': dados.values.tolist(),
+                'label': 'Quantidade de Reprovas por Separador'
+            })
+        elif tipo == 'ranking':
+            dados = df['desc_reprova'].value_counts()
+            return jsonify({
+                'labels': dados.index.tolist(),
+                'values': dados.values.tolist(),
+                'label': 'Ranking de Motivos de Reprova'
+            })
+        else:
+            return jsonify({'labels': [], 'values': [], 'label': 'Dados não encontrados'})
+    except Exception as e:
+        print(f"Ocorreu um erro ao processar os dados do gráfico: {e}")
+        return jsonify({'labels': [], 'values': [], 'label': 'Erro ao processar os dados'})
 
 
 if __name__ == '__main__':

@@ -1,7 +1,11 @@
 {% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
     {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
 {% elif session['privilegio'] == 3 %}
     {% extends "base_zincagem.html" %}
+{% elif session['privilegio'] == 4 %}
+    {% extends "base_inspecao_final.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -22,6 +26,33 @@
             </div>
         </div>
         <div class="row">
+            <div class="col-md-3">
+                <label for="filtroAno">Ano:</label>
+                <select id="filtroAno" class="form-select" onchange="atualizarGrafico()">
+                    <option value="">Todos</option>
+                    {% for ano in anos %}
+                        <option value="{{ ano }}">{{ ano }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="filtroMes">Mês:</label>
+                <select id="filtroMes" class="form-select" onchange="atualizarGrafico()">
+                    <option value="">Todos</option>
+                    <option value="1">Janeiro</option>
+                    <option value="2">Fevereiro</option>
+                    <option value="3">Março</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Maio</option>
+                    <option value="6">Junho</option>
+                    <option value="7">Julho</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+            </div>
             <div class="col-md-4">
                 <label for="graficoTipo">Tipo de Gráfico:</label>
                 <select id="graficoTipo" class="form-select" onchange="atualizarGrafico()">
@@ -31,7 +62,7 @@
                     <option value="ranking">Ranking de Motivos de Reprova</option>
                 </select>
             </div>
-            <div class="col-md-12">
+            <div class="col-md-12 mt-3">
                 <canvas id="graficoCanvas"></canvas>
             </div>
         </div>
@@ -45,7 +76,14 @@ const ctx = document.getElementById('graficoCanvas').getContext('2d');
 
 function atualizarGrafico() {
     const tipo = document.getElementById('graficoTipo').value;
-    fetch(`/dados_grafico?tipo=${tipo}`)
+    const ano = document.getElementById('filtroAno').value;
+    const mes = document.getElementById('filtroMes').value;
+
+    const url = new URL(`/dados_grafico?tipo=${tipo}`, window.location.origin);
+    if (ano) url.searchParams.append('ano', ano);
+    if (mes) url.searchParams.append('mes', mes);
+
+    fetch(url)
         .then(response => response.json())
         .then(data => {
             if (grafico) {

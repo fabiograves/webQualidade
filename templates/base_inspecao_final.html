@@ -70,7 +70,6 @@
                                 <li class="nav-item">
                                     <a class="nav-link active" aria-current="page" href="{{ url_for('home') }}">Home</a>
                                 </li>
-
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Inspeção
@@ -89,40 +88,7 @@
 
                                     </ul>
                                 </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Qualidade
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_certificados') }}">Cadastro Certificado</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_equipamento') }}">Cadastro Equipamento</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_fornecedor') }}">Cadastro Fornecedor</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('criar_certificado') }}">Criar Certificado</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('download_certificado') }}">Download Certificado</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_avaliacao_diaria') }}">IQF Mensal</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_certificado') }}">Pesquisar Certificado</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('resumo_trimestral') }}">Resumo Trimestral</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('get_quantidade_inspecao') }}">Quantidade Inspeção</a></li>
 
-                                    </ul>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Recebimento
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ url_for('avaliacao_diaria') }}">Avaliação Diária</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_norma') }}">Cadastro Normas</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_recebimento_concluido') }}">Cadastro Recebimento Concluido</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('lista_norma') }}">Lista Normas</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_registro_inspecao') }}">Pesquisar Registro Inspeção</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_recebimento_concluido') }}">Pesquisar Recebimento Concluido</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('plano_controle_inspecao') }}">Plano de Controle</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('registro_inspecao') }}">Registrar Inspeção</a></li>
-
-                                        <li id="abrirCalculadora"><a class="dropdown-item" href="#">Abrir Calculadora</a></li>
-                                    </ul>
-                                </li>
                             </ul>
                         </div>
                     </div>
