@@ -21,6 +21,9 @@
     <orderEntry type="library" name="jquery.mask" level="application" />
     <orderEntry type="library" name="select2" level="application" />
     <orderEntry type="library" name="@docsearch" level="application" />
+    <orderEntry type="library" name="chartjs-plugin-annotation" level="application" />
+    <orderEntry type="library" name="chart.js" level="application" />
+    <orderEntry type="library" name="jquery-3.3.1" level="application" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_FOLDERS">

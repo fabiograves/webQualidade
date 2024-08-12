@@ -17,6 +17,8 @@
 
 <!-- Inclua Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2/dist/chartjs-plugin-annotation.min.js"></script>
+
 
 <div class="py-5">
     <div class="container">
@@ -90,6 +92,9 @@ function atualizarGrafico() {
                 grafico.destroy();
             }
 
+            // Calcular a média dos valores
+            const mediaGeral = data.values.reduce((a, b) => a + b, 0) / data.values.length;
+
             grafico = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -107,11 +112,31 @@ function atualizarGrafico() {
                         y: {
                             beginAtZero: true
                         }
+                    },
+                    plugins: {
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    yMin: mediaGeral,
+                                    yMax: mediaGeral,
+                                    borderColor: 'red',
+                                    borderWidth: 2,
+                                    label: {
+                                        content: `Média: ${mediaGeral.toFixed(2)}`,
+                                        enabled: true,
+                                        position: 'center',
+                                        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             });
         });
 }
+
 
 document.addEventListener('DOMContentLoaded', function() {
     atualizarGrafico();

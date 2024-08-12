@@ -48,91 +48,241 @@
 </style>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-
-    <form method="POST" action="{{ url_for('cadastro_equipamento') }}" enctype="multipart/form-data">
-        <div class="py-5">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-12">
-                        <h1 class="text-center">Cadastro de Equipamento</h1>
+    <div class="container mt-4">
+        <form method="POST" action="{{ url_for('cadastro_equipamento') }}" enctype="multipart/form-data">
+            <div class="py-5">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h1 class="text-center">Cadastro de Equipamento</h1>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Número do Instrumento</label>
-                            <select class="form-control" id="cad_numero_instrumento" name="cad_numero_instrumento" onchange="buscarDadosInstrumento(this.value)">
-                                <option value="">Selecione...</option>
-                                {% for numero_instrumento in numeros_instrumentos %}
-                                <option value="{{ numero_instrumento }}">{{ numero_instrumento }}</option>
+            <div class="">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Número do Instrumento</label>
+                                <select class="form-control" id="cad_numero_instrumento" name="cad_numero_instrumento" onchange="buscarDadosInstrumento(this.value)">
+                                    <option value="">Selecione...</option>
+                                    {% for numero_instrumento in numeros_instrumentos %}
+                                    <option value="{{ numero_instrumento }}">{{ numero_instrumento }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Código</label>
+                                <input type="text" class="form-control" id="cad_cod_equipamento" name="cad_cod_equipamento">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Equipamento</label>
+                                <input type="text" class="form-control" id="cad_equipamento" name="cad_equipamento">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Local de Calibração</label>
+                                <input type="text" class="form-control" id="cad_local_calibracao" name="cad_local_calibracao">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Certificado</label>
+                                <input type="file" class="form-control" id="cad_certificado" name="cad_certificado" accept=".pdf">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Localizado</label>
+                                <input type="text" class="form-control" id="cad_localizado" name="cad_localizado">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Critério Aceitação (CA)</label>
+                                <input type="text" class="form-control" id="cad_criterio" name="cad_criterio">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Intervalo de Calibração (ANOS)</label>
+                                <input type="number" class="form-control" id="cad_intervalo" name="cad_intervalo">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Ultima Calibração</label>
+                                <input type="date" class="form-control" id="cad_ultima_calibracao" name="cad_ultima_calibracao">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Vencimento Calibração</label>
+                                <input type="text" class="form-control" id="cad_vencimento_calibracao" name="cad_vencimento_calibracao" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Status Geral / Aprovação Diretoria</label>
+                                <input type="text" class="form-control" id="cad_status" name="cad_status">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Botão de envio -->
+                    <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Equipamento</button>
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            <div class="alert alert-success" role="alert">
+                                {% for category, message in messages %}
+                                    {{ message }}
                                 {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Equipamento</label>
-                            <input type="text" class="form-control" id="cad_equipamento" name="cad_equipamento">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Ultima Calibração</label>
-                            <input type="date" class="form-control" id="cad_ultima_calibracao" name="cad_ultima_calibracao">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Intervalo de Calibração</label>
-                            <input type="text" class="form-control" id="cad_intervalo" name="cad_intervalo">
-                        </div>
-                    </div>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
                 </div>
-                <!-- Botão de envio -->
-                <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Equipamento</button>
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        <div class="alert alert-success" role="alert">
-                            {% for category, message in messages %}
-                                {{ message }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                {% endwith %}
             </div>
-        </div>
-  </form>
+        </form>
 
+        <!-- Lista de Equipamentos -->
+        <div class="table-responsive">
+            <table class="table table-striped mt-4">
+                <thead>
+                    <tr>
+                        <th>Número do Instrumento</th>
+                        <th>Código</th>
+                        <th>Equipamento</th>
+                        <th>Local de Calibração</th>
+                        <th>Data de Vencimento</th>
+                        <th>Status</th>
+                        <th>Certificado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for equipamento in equipamentos %}
+                    <tr>
+                        <td>{{ equipamento.numero_instrumento }}</td>
+                        <td>{{ equipamento.cod_equipamento }}</td>
+                        <td>{{ equipamento.equipamento }}</td>
+                        <td>{{ equipamento.local_calibracao }}</td>
+                        <td>{{ equipamento.vencimento_calibracao }}</td>
+                        <td>{{ equipamento.status }}</td>
+                        <td>
+                            {% if equipamento.certificado %}
+                            <a href="{{ url_for('download_certificado_equipamento', equipamento_id=equipamento.id) }}" class="btn btn-outline-primary"><i class="fas fa-download"></i> Baixar</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
 <script>
 
-    $(document).ready(function() {
-        $('#cad_numero_instrumento').select2({
-            placeholder: "Número de instrumento",
-            allowClear: true,
-            tags: true
-        });
+// Função para calcular e atualizar o vencimento da calibração
+function atualizarVencimentoCalibracao() {
+    const ultimaCalibracao = new Date(document.getElementById('cad_ultima_calibracao').value);
+    const intervalo = parseInt(document.getElementById('cad_intervalo').value, 10);
+
+    console.log("Última calibração: ", ultimaCalibracao);
+    console.log("Intervalo: ", intervalo);
+
+    if (ultimaCalibracao && !isNaN(intervalo)) {
+        // Clonar a data original para evitar modificar `ultimaCalibracao`
+        const vencimento = new Date(ultimaCalibracao);
+        vencimento.setFullYear(vencimento.getFullYear() + intervalo);
+
+        // Adicionar 1 dia
+        vencimento.setDate(vencimento.getDate() + 1);
+
+        // Formatar a data como dd/mm/aaaa
+        const dia = String(vencimento.getDate()).padStart(2, '0');
+        const mes = String(vencimento.getMonth() + 1).padStart(2, '0'); // Os meses são indexados de 0 a 11
+        const ano = vencimento.getFullYear();
+        const vencimentoFormatted = `${dia}/${mes}/${ano}`; // Formato dd/mm/aaaa
+
+        document.getElementById('cad_vencimento_calibracao').value = vencimentoFormatted;
+        console.log("Vencimento calculado: ", vencimentoFormatted);
+    }
+}
+
+// Função para buscar dados do instrumento e preencher o formulário
+function buscarDadosInstrumento(numeroInstrumento) {
+    if (!numeroInstrumento) {
+        return;
+    }
+    console.log("Buscando dados para o número do instrumento: ", numeroInstrumento);
+
+    fetch(`/buscar_dados_instrumento/${numeroInstrumento}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log("Dados recebidos: ", data);
+
+            if (data) {
+                document.getElementById('cad_cod_equipamento').value = data.cod_equipamento || '';
+                document.getElementById('cad_equipamento').value = data.equipamento || '';
+                document.getElementById('cad_local_calibracao').value = data.local_calibracao || '';
+                document.getElementById('cad_localizado').value = data.localizado || '';
+                document.getElementById('cad_criterio').value = data.criterio_aceitacao || '';
+                document.getElementById('cad_intervalo').value = data.intervalo || '';
+                document.getElementById('cad_status').value = data.status || '';
+
+                // Verificar e formatar a data para o campo de data HTML
+                if (data.ultima_calibracao) {
+                    const ultimaCalibracaoDate = new Date(data.ultima_calibracao);
+                    const formattedDate = ultimaCalibracaoDate.toISOString().split('T')[0]; // Formata para YYYY-MM-DD
+                    document.getElementById('cad_ultima_calibracao').value = formattedDate;
+                    console.log("Última calibração formatada: ", formattedDate);
+                } else {
+                    document.getElementById('cad_ultima_calibracao').value = ''; // Limpar o campo se não houver data
+                }
+
+                // Atualizar o vencimento da calibração após preencher os dados
+                atualizarVencimentoCalibracao();
+            }
+        })
+        .catch(error => console.error('Erro ao buscar dados do instrumento:', error));
+}
+
+$(document).ready(function() {
+    $('#cad_numero_instrumento').select2({
+        placeholder: "Número de instrumento",
+        allowClear: true,
+        tags: true
     });
 
-    function buscarDadosInstrumento(numeroInstrumento) {
-        if (!numeroInstrumento) {
-            return;
-        }
-        fetch(`/buscar_dados_instrumento/${numeroInstrumento}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data) {
-                    document.getElementById('cad_equipamento').value = data.equipamento || '';
-                    document.getElementById('cad_ultima_calibracao').value = data.ultima_calibracao || '';
-                    document.getElementById('cad_intervalo').value = data.intervalo || '';
-                }
-            })
-            .catch(error => console.error('Erro ao buscar dados do instrumento:', error));
-    }
+    // Evento para atualizar o vencimento quando a última calibração mudar
+    document.getElementById('cad_ultima_calibracao').addEventListener('change', function() {
+        console.log("Última calibração alterada.");
+        atualizarVencimentoCalibracao();
+    });
+
+    // Evento para atualizar o vencimento quando o intervalo mudar
+    document.getElementById('cad_intervalo').addEventListener('input', function() {
+        console.log("Intervalo alterado.");
+        atualizarVencimentoCalibracao();
+    });
+
+    // Atribuir a função ao evento de mudança do número do instrumento
+    document.getElementById('cad_numero_instrumento').addEventListener('change', function() {
+        buscarDadosInstrumento(this.value);
+    });
+});
+
+
 </script>
 
 {% endblock %}

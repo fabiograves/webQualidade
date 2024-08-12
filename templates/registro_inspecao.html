@@ -21,6 +21,36 @@
 <!-- Incluindo o JavaScript do Select2 após o jQuery -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
 
+<style>
+    /* Ajuste o Select2 para combinar com a altura dos campos de formulário do Bootstrap */
+    .select2-container--default .select2-selection--single {
+        height: calc(2.25rem + 2px); /* Ajuste para combinar com a altura dos campos de entrada do Bootstrap 4 */
+        padding: .375rem .75rem; /* Mesmo padding dos campos de entrada do Bootstrap */
+        font-size: 1rem; /* Tamanho de fonte padrão do Bootstrap */
+        line-height: 1.5; /* Altura de linha padrão do Bootstrap */
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 1.5; /* Altura de linha padrão do Bootstrap */
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(2.25rem + 2px); /* Ajuste para combinar com a altura dos campos de entrada do Bootstrap 4 */
+    }
+
+    /* Corrigir a posição da seta para alinhar com os campos de entrada */
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Se necessário, ajustar o foco */
+    .select2-container--focus .select2-selection {
+        border-color: #80bdff;
+        outline: 0;
+        box-shadow: 0 0 0 .2rem rgba(0,123,255,.25);
+    }
+</style>
 
     <div class="py-5">
         <div class="container">
@@ -51,7 +81,14 @@
                                 <div class="form-group"><label>Pedido de Compra</label><input type="text" class="form-control" id="ri_pedido_compra" name="ri_pedido_compra" maxlength="50"></div>
                             </div>
                             <div class="col-md-3">
-                                <div class="form-group"><label>Fornecedor</label><input type="text" class="form-control" id="ri_fornecedor" name="ri_fornecedor" maxlength="50"></div>
+                                <div class="form-group">
+                                    <label>Fornecedor</label>
+                                    <select class="form-control" id="ri_fornecedor" name="ri_fornecedor">
+                                        {% for fornecedor in fornecedores %}
+                                            <option value="{{ fornecedor['nome_fornecedor'] }}">{{ fornecedor['nome_fornecedor'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div class="row">
@@ -363,12 +400,28 @@
                         return "Digite para pesquisar...";
                     },
                     noResults: function() {
-                    return "Nenhum resultado encontrado";
+                        return "Nenhum resultado encontrado";
+                    }
                 }
+            });
+
+            // Ativar Select2 para o seletor de fornecedores
+            $('#ri_fornecedor').select2({
+                placeholder: "Pesquisar Fornecedor...",
+                allowClear: true,
+                minimumInputLength: 0,
+                language: {
+                    inputTooShort: function() {
+                        return "Digite para pesquisar...";
+                    },
+                    noResults: function() {
+                        return "Nenhum resultado encontrado";
+                    }
                 }
             });
         }
     });
+
 
     function exibirCampos() {
         const selecao = document.getElementById("selecaoTipo").value;

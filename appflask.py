@@ -1,14 +1,11 @@
 import base64
-import datetime
 import json
 import tempfile
 
 import pyodbc
 import logging
-from datetime import timedelta
-from PyPDF2 import PdfMerger
+from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, flash, session, make_response, jsonify
-from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 from werkzeug.utils import secure_filename
 from flask_session import Session
@@ -33,11 +30,10 @@ import zipfile
 import matplotlib.pyplot as plt
 import pandas as pd
 from sqlalchemy import create_engine
+from dateutil.relativedelta import relativedelta
 import sqlalchemy
+import datetime as dt
 
-#from pyzbar import pyzbar
-import numpy as np
-#import cv2
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -138,13 +134,19 @@ def inject_aviso():
         mensagens_db = cursor.fetchall()
 
         for numero_instrumento, equipamento, ultima_calibracao, intervalo in mensagens_db:
-            data_calibracao_dt = datetime.datetime.strptime(ultima_calibracao, "%Y-%m-%d").date()
-            data_vencimento = datetime.date(data_calibracao_dt.year + int(intervalo), data_calibracao_dt.month,
-                                            data_calibracao_dt.day)
-            hoje = datetime.date.today()
+            # Como a data já é um objeto date, não precisamos convertê-la novamente
+            if isinstance(ultima_calibracao, date):
+                data_calibracao_dt = ultima_calibracao
+            else:
+                data_calibracao_dt = datetime.datetime.strptime(ultima_calibracao, "%Y-%m-%d").date()
+
+            # Calcular a data de vencimento
+            data_vencimento = data_calibracao_dt.replace(year=data_calibracao_dt.year + int(intervalo))
+            hoje = date.today()
             dias_para_vencimento = (data_vencimento - hoje).days
             data_vencimento_formatada = data_vencimento.strftime("%d/%m/%Y")
-            if dias_para_vencimento <= 60 and dias_para_vencimento >= 0:
+
+            if 0 <= dias_para_vencimento <= 60:
                 aviso = f"{numero_instrumento} - {equipamento} - Vencimento em {data_vencimento_formatada} - Faltam {dias_para_vencimento} dias"
                 mensagens_aviso.append(aviso)
             elif dias_para_vencimento < 0:
@@ -454,49 +456,127 @@ def cadastro_equipamento():
     print(f"Ação realizada por: {username}, Entrou em Cadastro de Equipamento")
     numeros_instrumentos = []
     connection = conectar_db()
+
     try:
         with connection.cursor() as cursor:
             # Busca todos os números de instrumentos existentes
             cursor.execute("SELECT DISTINCT numero_instrumento FROM dbo.cadastro_equipamento ORDER BY numero_instrumento ASC")
             numeros_instrumentos = [row[0] for row in cursor.fetchall()]
 
+            # Busca todos os equipamentos cadastrados
+            cursor.execute("SELECT id, numero_instrumento, cod_equipamento, equipamento, local_calibracao, "
+                           "vencimento_calibracao, status, certificado FROM dbo.cadastro_equipamento ORDER BY numero_instrumento ASC")
+            equipamentos = cursor.fetchall()
+
     except Exception as e:
-        print(f"Erro ao buscar números de instrumentos: {e}")
+        print(f"Erro ao buscar números de instrumentos ou equipamentos: {e}")
+        equipamentos = []  # Se houver um erro, evita renderizar com dados inválidos
 
     if request.method == 'POST':
         numero_instrumento = request.form.get('cad_numero_instrumento')
+        cod_equipamento = request.form.get('cad_cod_equipamento')
         equipamento = request.form.get('cad_equipamento')
-        ultima_calibracao = request.form.get('cad_ultima_calibracao')
+        local_calibracao = request.form.get('cad_local_calibracao')
+        certificado = request.files.get('cad_certificado')
+        localizado = request.form.get('cad_localizado')
+        criterio_aceitacao = request.form.get('cad_criterio')
         intervalo = request.form.get('cad_intervalo')
+        ultima_calibracao = request.form.get('cad_ultima_calibracao')
+        status = request.form.get('cad_status')
+
+        # Verifica se a ultima_calibracao está no formato de string (enviado pelo formulário)
+        if isinstance(ultima_calibracao, str):
+            ultima_calibracao_date = datetime.datetime.strptime(ultima_calibracao, '%Y-%m-%d').date()
+        else:
+            ultima_calibracao_date = ultima_calibracao
+
+        # Calculando o vencimento da calibração com base no intervalo e última calibração
+        vencimento_calibracao = None
+        if ultima_calibracao_date and intervalo:
+            vencimento_calibracao = ultima_calibracao_date + relativedelta(years=int(intervalo))
+
+        # Processando o certificado
+        certificado_data = certificado.read() if certificado else None
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT COUNT(*) FROM dbo.cadastro_equipamento WHERE numero_instrumento = ?", (numero_instrumento,))
+                # Verifica se o equipamento já existe no banco de dados
+                cursor.execute("SELECT COUNT(*) FROM dbo.cadastro_equipamento WHERE numero_instrumento = ?",
+                               (numero_instrumento,))
                 (count,) = cursor.fetchone()
+
                 if count > 0:
-                    sql_update = ("UPDATE dbo.cadastro_equipamento SET equipamento = ?, ultima_calibracao = ?, intervalo = ? "
-                                  "WHERE numero_instrumento = ?")
-                    cursor.execute(sql_update, (equipamento, ultima_calibracao, intervalo, numero_instrumento))
+                    # Caso exista, prepara a query de atualização
+                    sql_update = (
+                        "UPDATE dbo.cadastro_equipamento SET cod_equipamento = ?, equipamento = ?, local_calibracao = ?, "
+                        "localizado = ?, criterio_aceitacao = ?, intervalo = ?, ultima_calibracao = ?, "
+                        "vencimento_calibracao = ?, status = ? WHERE numero_instrumento = ?")
+                    # Cria uma lista de parâmetros para o SQL
+                    params = [cod_equipamento, equipamento, local_calibracao, localizado,
+                              criterio_aceitacao, intervalo, ultima_calibracao_date, vencimento_calibracao, status,
+                              numero_instrumento]
+
+                    # Se um novo certificado foi fornecido, adiciona ao SQL e aos parâmetros
+                    if certificado_data:
+                        sql_update = sql_update.replace("localizado = ?", "localizado = ?, certificado = ?")
+                        params.insert(4, certificado_data)  # Insere o certificado na posição correta
+
+                    # Executa o comando de atualização
+                    cursor.execute(sql_update, tuple(params))
                     print(f"Ação realizada por: {username}, Atualizou: {equipamento}")
                     flash('Atualização de equipamento com sucesso!')
+
                 else:
-                    sql_insert = ("INSERT INTO dbo.cadastro_equipamento (numero_instrumento, equipamento, "
-                                  "ultima_calibracao, intervalo) VALUES (?, ?, ?, ?)")
-                    cursor.execute(sql_insert, (numero_instrumento, equipamento, ultima_calibracao, intervalo))
+                    # Caso o equipamento não exista, insere um novo registro
+                    sql_insert = (
+                        "INSERT INTO dbo.cadastro_equipamento (numero_instrumento, cod_equipamento, equipamento, local_calibracao, "
+                        "certificado, localizado, criterio_aceitacao, intervalo, ultima_calibracao, "
+                        "vencimento_calibracao, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                    cursor.execute(sql_insert, (numero_instrumento, cod_equipamento, equipamento, local_calibracao,
+                                                certificado_data, localizado, criterio_aceitacao, intervalo,
+                                                ultima_calibracao_date, vencimento_calibracao, status))
                     print(f"Ação realizada por: {username}, Cadastrou: {equipamento}")
                     flash('Cadastro de equipamento com sucesso!')
+
+                # Comita a transação
                 connection.commit()
 
+                # Redireciona para evitar duplicação em caso de recarregamento
+                return redirect(url_for('cadastro_equipamento'))
+
         except Exception as e:
-            print(f"Erro ao buscar números de instrumentos ou ao cadastrar/atualizar equipamento: {e}")
+            print(f"Erro ao processar o cadastro ou atualização do equipamento: {e}")
             flash('Ocorreu um erro ao processar sua solicitação.', 'error')
-            return render_template('cadastro_equipamento.html', numeros_instrumentos=numeros_instrumentos), 500
+            return render_template('cadastro_equipamento.html', numeros_instrumentos=numeros_instrumentos, equipamentos=equipamentos), 500
 
         finally:
             if connection:
                 connection.close()
 
-    return render_template('cadastro_equipamento.html', numeros_instrumentos=numeros_instrumentos)
+    return render_template('cadastro_equipamento.html', numeros_instrumentos=numeros_instrumentos, equipamentos=equipamentos)
+
+
+@app.route('/download_certificado_equipamento/<int:equipamento_id>')
+def download_certificado_equipamento(equipamento_id):
+    connection = conectar_db()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT certificado FROM dbo.cadastro_equipamento WHERE id = ?", (equipamento_id,))
+            certificado = cursor.fetchone()
+            if certificado and certificado[0]:
+                response = make_response(certificado[0])
+                response.headers['Content-Type'] = 'application/pdf'
+                response.headers['Content-Disposition'] = f'attachment; filename=equipamento_{equipamento_id}.pdf'
+                return response
+            else:
+                flash('Certificado não encontrado.', 'error')
+                return redirect(url_for('cadastro_equipamento'))
+    except Exception as e:
+        print(f"Erro ao baixar certificado: {e}")
+        flash('Ocorreu um erro ao processar sua solicitação.', 'error')
+        return redirect(url_for('cadastro_equipamento'))
+    finally:
+        connection.close()
 
 
 @app.route('/buscar_dados_instrumento/<numero_instrumento>')
@@ -504,13 +584,23 @@ def buscar_dados_instrumento(numero_instrumento):
     connection = conectar_db()
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT equipamento, ultima_calibracao, intervalo FROM dbo.cadastro_equipamento WHERE numero_instrumento = ?", (numero_instrumento,))
+            cursor.execute("""
+                SELECT cod_equipamento, equipamento, local_calibracao, localizado, 
+                criterio_aceitacao, ultima_calibracao, intervalo, status 
+                FROM dbo.cadastro_equipamento 
+                WHERE numero_instrumento = ?
+            """, (numero_instrumento,))
             resultado = cursor.fetchone()
             if resultado:
                 return jsonify({
-                    "equipamento": resultado[0],
-                    "ultima_calibracao": resultado[1] if resultado[1] else '',
-                    "intervalo": resultado[2]
+                    "cod_equipamento": resultado[0],
+                    "equipamento": resultado[1],
+                    "local_calibracao": resultado[2],
+                    "localizado": resultado[3],
+                    "criterio_aceitacao": resultado[4],
+                    "ultima_calibracao": resultado[5] if resultado[5] else '',
+                    "intervalo": resultado[6],
+                    "status": resultado[7]
                 })
             else:
                 return jsonify({}), 404
@@ -2146,8 +2236,6 @@ def buscar_registro_inspecao(numero_nota, ri_data, ri_cod_produto):
     return resultados_ordenados
 
 
-
-
 @app.route('/cadastro_certificados', methods=['GET', 'POST'])
 def cadastro_certificados():
     if not is_logged_in():
@@ -2854,6 +2942,7 @@ def registro_inspecao():
         return redirect(url_for('login'))
 
     connection = conectar_db()
+    fornecedores = []
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT norma FROM dbo.imagem_norma")
@@ -2866,6 +2955,11 @@ def registro_inspecao():
             normas_alfabeticas.sort(key=lambda x: x)
             # Concatenar as listas
             normas = normas_numericas + normas_alfabeticas
+
+            sql_fornecedores = ("SELECT id, nome_fornecedor FROM dbo.cadastro_fornecedor "
+                                "ORDER BY nome_fornecedor ASC")
+            cursor.execute(sql_fornecedores)
+            fornecedores = cursor.fetchall()
     except Exception as e:
         print(f"Erro ao buscar normas: {e}")
         normas = []
@@ -2885,6 +2979,7 @@ def registro_inspecao():
             return redirect(url_for('registro_inspecao'))
 
         fornecedor = request.form.get('ri_fornecedor')
+        print(f"Fornecedor: {fornecedor}")
         pedido_compra = request.form.get('ri_pedido_compra')
         quantidade_total = request.form.get('ri_quantidade_total')
         volume = request.form.get('ri_volume')
@@ -3098,7 +3193,7 @@ def registro_inspecao():
         flash('Registro de Inspeção criado com sucesso!')
         return redirect(url_for('registro_inspecao'))
 
-    return render_template('registro_inspecao.html', normas=normas)
+    return render_template('registro_inspecao.html', normas=normas, fornecedores=fornecedores)
 
 
 def verificar_existencia_registro(nota_fiscal, cod_produto, pedido_compra):
@@ -4334,8 +4429,8 @@ def reprova_inspecao():
     cursor = connection.cursor()
 
     if request.method == 'POST':
-        #data = datetime.datetime.now().strftime('%Y-%m-%d')
-        data = request.form['rep_data']
+        data = datetime.datetime.now().strftime('%Y-%m-%d')
+        #data = request.form['rep_data']
         num_pedido = request.form['rep_num_pedido']
         cod_item_ars = request.form['rep_cod_item_ars']
         desc_item_ars = request.form['rep_desc_item_ars']
@@ -4569,6 +4664,10 @@ def relatorio_reprovados():
         if df.empty:
             return render_template('erro.html', mensagem="Não foi possível obter os dados de reprovas.")
 
+        # Obter a lista de anos
+        df['data'] = pd.to_datetime(df['data'])
+        anos = sorted(df['data'].dt.year.unique())
+
         grafico_ano = gerar_grafico_quantidade_reprovas_por_ano(df)
         grafico_picker = gerar_grafico_reprovas_por_picker(df)
         grafico_separador = gerar_grafico_reprovas_por_separador(df)
@@ -4577,7 +4676,14 @@ def relatorio_reprovados():
         if not all([grafico_ano, grafico_picker, grafico_separador, grafico_ranking]):
             return render_template('erro.html', mensagem="Erro ao gerar os gráficos.")
 
-        return render_template('relatorio_reprovados.html', grafico_ano=grafico_ano, grafico_picker=grafico_picker, grafico_separador=grafico_separador, grafico_ranking=grafico_ranking)
+        return render_template(
+            'relatorio_reprovados.html',
+            grafico_ano=grafico_ano,
+            grafico_picker=grafico_picker,
+            grafico_separador=grafico_separador,
+            grafico_ranking=grafico_ranking,
+            anos=anos  # Passa a lista de anos para o template
+        )
     except Exception as e:
         print(f"Ocorreu um erro na geração do relatório: {e}")
         return render_template('erro.html', mensagem="Erro ao gerar o relatório de reprovas.")
@@ -4627,6 +4733,7 @@ def dados_grafico():
                 'values': dados.values.tolist(),
                 'label': 'Quantidade de Reprovas por Separador'
             })
+
         elif tipo == 'ranking':
             dados = df['desc_reprova'].value_counts()
             return jsonify({
