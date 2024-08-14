@@ -1,0 +1,325 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
+{% elif session['privilegio'] == 4 %}
+    {% extends "base_inspecao_final.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+
+<!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<form method="POST" action="{{ url_for('cadastro_notas_fiscais') }}" enctype="multipart/form-data">
+    <div class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1 class="text-center">Cadastro de Notas Fiscais</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="">
+        <div class="container">
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Data Emissão NF</label>
+                        <input type="date" class="form-control" id="cad_data_emissao_nf" name="cad_data_emissao_nf" required>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Número da Nota</label>
+                        <input type="text" class="form-control" id="cad_numero_nota" name="cad_numero_nota" required maxlength="50">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Data Entrada ARS</label>
+                        <input type="date" class="form-control" id="cad_data_entrada_ars" name="cad_data_entrada_ars" required>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Pedido</label>
+                        <input type="text" class="form-control" id="cad_pedido" name="cad_pedido"maxlength="200">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Fornecedor</label>
+                        <input type="text" class="form-control" id="cad_fornecedor" name="cad_fornecedor"maxlength="50">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Volume</label>
+                        <input type="text" class="form-control" id="cad_volume" name="cad_volume"maxlength="50">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Peso</label>
+                        <input type="text" class="form-control" id="cad_peso" name="cad_peso"maxlength="50">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Natureza</label>
+                        <input type="text" class="form-control" id="cad_natureza" name="cad_natureza"maxlength="50">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Código XML</label>
+                        <input type="text" class="form-control" id="cad_cod_xml" name="cad_cod_xml"maxlength="50">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Arquivo XML</label>
+                        <input type="file" class="form-control" id="cad_arquivo_xml" name="cad_arquivo_xml">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Certificado</label>
+                        <input type="text" class="form-control" id="cad_certificado" name="cad_certificado"maxlength="50">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Observação</label>
+                        <input type="text" class="form-control" id="cad_observacao" name="cad_observacao"maxlength="50">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Lançamento</label>
+                        <input type="text" class="form-control" id="cad_lancamento" name="cad_lancamento"maxlength="50" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <button type="submit" id="botao-registrar" class="btn btn-secondary w-100 mb-3">Cadastrar Nota Fiscal</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+<!-- Formulário de busca -->
+<div class="py-3">
+    <div class="container">
+        <form method="GET" action="{{ url_for('cadastro_notas_fiscais') }}">
+            <div class="row">
+                <div class="col-md-10">
+                    <input type="text" class="form-control" name="search" placeholder="Buscar notas fiscais..." value="{{ search_query }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">Buscar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabela para exibir as notas fiscais cadastradas -->
+<div class="py-1">
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <h2 class="text-center">Notas Fiscais Cadastradas</h2>
+                <div class="table-responsive">
+                    {% for nota in notas_fiscais %}
+                    <div class="card mb-2" style="border: 3px solid {% if nota.cad_lancamento|lower == 'ok' %}#28a745{% else %}#000{% endif %};">
+                        <div class="card-body">
+                            <!-- Primeira Linha -->
+                            <div class="row">
+                                <div class="col-md-3 text-left"><strong>Data Emissão NF:</strong> {{ nota.cad_data_emissao_nf.strftime('%d/%m/%Y') }}</div>
+                                <div class="col-md-3 text-left"><strong>Número da Nota:</strong> {{ nota.cad_numero_nota }}</div>
+                                <div class="col-md-3 text-left"><strong>Data Entrada ARS:</strong> {{ nota.cad_data_entrada_ars.strftime('%d/%m/%Y') }}</div>
+                                <div class="col-md-3 text-left"><strong>Pedido:</strong> {{ nota.cad_pedido }}</div>
+                            </div>
+                            <!-- Segunda Linha -->
+                            <div class="row">
+                                <div class="col-md-3 text-left"><strong>Fornecedor:</strong> {{ nota.cad_fornecedor }}</div>
+                                <div class="col-md-3 text-left"><strong>Volume:</strong> {{ nota.cad_volume }}</div>
+                                <div class="col-md-3 text-left"><strong>Peso:</strong> {{ nota.cad_peso }}</div>
+                                <div class="col-md-3 text-left"><strong>Natureza:</strong> {{ nota.cad_natureza }}</div>
+                            </div>
+                            <!-- Terceira Linha -->
+                            <div class="row">
+                                <div class="col-md-3 text-left"><strong>Certificado:</strong> {{ nota.cad_certificado }}</div>
+                                <div class="col-md-6 text-left"><strong>Observação:</strong> {{ nota.cad_observacao }}</div>
+                                <div class="col-md-3 text-left"><strong>Lançamento:</strong> {{ nota.cad_lancamento }}</div>
+                            </div>
+                            <!-- Quarta Linha -->
+                            <div class="row">
+                                <div class="col-md-12 text-left"><strong>Código XML:</strong> {{ nota.cad_cod_xml }}</div>
+                            </div>
+                               <!-- Botão de Download -->
+                            <div class="row mt-3">
+                                <div class="col-md-6 text-center">
+                                    {% if nota.cad_arquivo_xml and nota.cad_arquivo_xml|length > 0 %}
+                                    <a href="{{ url_for('download_xml', nota_id=nota.id) }}" class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-download"></i> Baixar XML
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">Nenhum arquivo</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 text-center">
+                                    <button class="btn btn-outline-secondary w-100 openNfePortal" data-cod-xml="{{ nota.cad_cod_xml }}">
+                                        <i class="fas fa-external-link-alt"></i> Abrir Portal NF-e
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginação -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <!-- Link para a primeira página -->
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('cadastro_notas_fiscais', page=1, search=search_query) }}">Primeira</a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Link para a página anterior -->
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('cadastro_notas_fiscais', page=page-1, search=search_query) }}">Anterior</a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Páginas ao redor da página atual -->
+                    {% set start = max(1, page - 5) %}
+                    {% set end = min((total // per_page) + 1, page + 5) %}
+                    {% for p in range(start, end + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('cadastro_notas_fiscais', page=p, search=search_query) }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+
+                    <!-- Link para a próxima página -->
+                    {% if page < (total // per_page) + 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('cadastro_notas_fiscais', page=page+1, search=search_query) }}">Próxima</a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Link para a última página -->
+                    {% if page < (total // per_page) + 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('cadastro_notas_fiscais', page=(total // per_page) + 1, search=search_query) }}">Última</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script>
+    document.getElementById('botao-registrar').addEventListener('click', function(event) {
+        var confirmacao = confirm('Tem certeza que deseja registrar a Nota Fiscal?');
+        if (!confirmacao) {
+            event.preventDefault();
+        }
+    });
+
+    document.getElementById('cad_cod_xml').addEventListener('input', function() {
+        var codXml = this.value;
+
+        if (codXml.length > 0) {
+            fetch(`/get_nota_fiscal_by_cod_xml?cad_cod_xml=${codXml}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.log(data.error);
+                    } else {
+                        document.getElementById('cad_data_emissao_nf').value = formatDateForInput(data.cad_data_emissao_nf);
+                        document.getElementById('cad_data_entrada_ars').value = formatDateForInput(data.cad_data_entrada_ars);
+                        document.getElementById('cad_numero_nota').value = data.cad_numero_nota;
+                        document.getElementById('cad_pedido').value = data.cad_pedido;
+                        document.getElementById('cad_fornecedor').value = data.cad_fornecedor;
+                        document.getElementById('cad_volume').value = data.cad_volume;
+                        document.getElementById('cad_peso').value = data.cad_peso;
+                        document.getElementById('cad_natureza').value = data.cad_natureza;
+                        document.getElementById('cad_certificado').value = data.cad_certificado;
+                        document.getElementById('cad_observacao').value = data.cad_observacao;
+                        document.getElementById('cad_lancamento').value = data.cad_lancamento;
+                    }
+                });
+        }
+    });
+
+    // Função para converter uma string de data para o formato YYYY-MM-DD
+    function formatDateForInput(dateString) {
+        if (!dateString) return '';
+
+        // Tentar criar uma nova data a partir da string
+        var date = new Date(dateString);
+
+        if (isNaN(date.getTime())) {
+            console.error("Data inválida:", dateString);
+            return '';
+        }
+
+        var day = ("0" + date.getUTCDate()).slice(-2);   // Pega o dia e adiciona zero à esquerda se necessário
+        var month = ("0" + (date.getUTCMonth() + 1)).slice(-2); // O mês em JavaScript é baseado em zero
+        var year = date.getUTCFullYear();
+
+        return `${year}-${month}-${day}`; // Retorna no formato YYYY-MM-DD
+    }
+
+    document.getElementById('cad_cod_xml').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+        }
+    });
+
+    document.querySelectorAll('.openNfePortal').forEach(function(button) {
+        button.addEventListener('click', function() {
+            try {
+                const url = 'https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=resumo&tipoConteudo=7PhJ+gAVw2g=';
+                const newWindow = window.open(url, '_blank');
+                if (!newWindow) {
+                    console.error("Falha ao abrir a nova guia. Verifique se pop-ups estão bloqueados.");
+                }
+            } catch (error) {
+                console.error("Erro ao tentar abrir a guia do NF-e:", error);
+            }
+        });
+    });
+
+</script>
+{% endblock %}

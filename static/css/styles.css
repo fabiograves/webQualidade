@@ -86,3 +86,15 @@
   border-width: 3px; /* Ajuste a espessura conforme necessário */
 }
 
+.card {
+    margin-bottom: 10px; /* Espaçamento entre os "cards" */
+    border-radius: 10px; /* Bordas arredondadas para os "cards" */
+}
+
+.card-body {
+    padding: 10px; /* Espaçamento interno dentro dos "cards" */
+}
+
+
+
+

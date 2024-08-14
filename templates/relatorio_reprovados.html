@@ -77,6 +77,9 @@ let grafico;
 const ctx = document.getElementById('graficoCanvas').getContext('2d');
 
 function atualizarGrafico() {
+    // Salva a posição de rolagem atual
+    const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+
     const tipo = document.getElementById('graficoTipo').value;
     const ano = document.getElementById('filtroAno').value;
     const mes = document.getElementById('filtroMes').value;
@@ -134,12 +137,18 @@ function atualizarGrafico() {
                     }
                 }
             });
+
+            // Restaura a posição de rolagem após atualizar o gráfico
+            window.scrollTo(0, scrollPos);
+
         });
 }
 
 
 document.addEventListener('DOMContentLoaded', function() {
     atualizarGrafico();
+
+    setInterval(atualizarGrafico, 30000);
 });
 </script>
 

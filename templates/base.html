@@ -73,6 +73,19 @@
 
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Faturamento
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_notas_fiscais') }}">Cadastro Nota Fiscal</a></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais') }}">Pesquisar Nota Fiscal</a></li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_notas_fiscais_lancamento') }}">Lançamento Nota Fiscal</a></li>
+                                    </ul>
+                                </li>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Inspeção
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
