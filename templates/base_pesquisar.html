@@ -70,21 +70,14 @@
                                 <li class="nav-item">
                                     <a class="nav-link active" aria-current="page" href="{{ url_for('home') }}">Home</a>
                                 </li>
+
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Inspeção
+                                        Faturamento
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ url_for('reprova_inspecao') }}">Reprova Inspeção</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_itens_ars') }}">Cadastro Itens</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_picker') }}">Cadastro Picker</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_separador') }}">Cadastro Separador</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_recusa') }}">Cadastro Recusa</a></li>
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_reprova_inspecao') }}">Pesquisar Reprova</a></li>
-                                    </ul>
+                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais') }}">Pesquisar Nota Fiscal</a></li>
+                                                                            </ul>
                                 </li>
 
                             </ul>

@@ -1,4 +1,5 @@
 import base64
+import functools
 import json
 import tempfile
 
@@ -34,7 +35,6 @@ from dateutil.relativedelta import relativedelta
 import sqlalchemy
 from flask import Flask, render_template, redirect, url_for, flash, jsonify, session, request
 import datetime
-import xml.etree.ElementTree as ET
 
 
 app = Flask(__name__)
@@ -87,7 +87,6 @@ def login():
             if user:
                 session['logged_in'] = True
                 session['username'] = username
-
                 session['privilegio'] = user.privilegio
 
                 # Armazenando informações adicionais na sessão
@@ -122,6 +121,20 @@ def logout():
     session.pop('email_assinatura', None)
     flash('Você saiu com sucesso.')
     return redirect(url_for('login'))
+
+
+def requires_privilege(*privileges):
+    """Decorator para proteger rotas baseadas nos privilégios do usuário."""
+    def decorator(f):
+        @functools.wraps(f)
+        def decorated_function(*args, **kwargs):
+            user_privilege = session.get('privilegio')
+            if user_privilege not in privileges:
+                flash('Você não tem permissão para acessar esta página.')
+                return redirect(url_for('unauthorized'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 
 @app.context_processor
@@ -171,57 +184,7 @@ def home():
         return redirect(url_for('login'))
     username = session['username']
     privilegio = session['privilegio']
-    if privilegio == 1:
-        print(f"Ação realizada por: {username}, Clicou Home_recebimento")
-        return render_template('home_recebimento.html')
-    elif privilegio == 2:
-        print(f"Ação realizada por: {username}, Clicou Home")
-        return render_template('home_recebimento_concluido.html')
-    elif privilegio == 3:
-        print(f"Ação realizada por: {username}, Clicou Home")
-        return render_template('home_zincagem.html')
-    elif privilegio == 4:
-        print(f"Ação realizada por: {username}, Clicou Home")
-        return render_template('home_inspecao_final.html')
-    elif privilegio == 9:
-        print(f"Ação realizada por: {username}, Clicou Home")
-        return render_template('home.html')
-
-
-@app.route('/home_recebimento')
-def home_recebimento():
-    if not is_logged_in():
-        return redirect(url_for('login'))
-    username = session['username']
-    print(f"Ação realizada por: {username}, Clicou Home")
-    return render_template('home_recebimento.html')
-
-
-@app.route('/home_recebimento_concluido')
-def home_recebimento_concluido():
-    if not is_logged_in():
-        return redirect(url_for('login'))
-    username = session['username']
-    print(f"Ação realizada por: {username}, Clicou Home")
-    return render_template('home_recebimento_concluido.html')
-
-
-@app.route('/home_zincagem')
-def home_zincagem():
-    if not is_logged_in():
-        return redirect(url_for('login'))
-    username = session['username']
-    print(f"Ação realizada por: {username}, Clicou Home")
-    return render_template('home_zincagem.html')
-
-
-@app.route('/home_inspecao_final')
-def home_inspecao_final():
-    if not is_logged_in():
-        return redirect(url_for('login'))
-    username = session['username']
-    print(f"Ação realizada por: {username}, Clicou Home")
-    return render_template('home_inspecao_final.html')
+    return render_template('home.html')
 
 
 @app.route('/relatorio_teste')
@@ -380,6 +343,66 @@ def generate_pdf():
                 ["TORQUE 1131 Nm (30% A MAIS TABELA)", request.form.get(f'torque_1131_{table_id}_1', ''), request.form.get(f'torque_1131_{table_id}_2', ''), request.form.get(f'torque_1131_{table_id}_3', '')],
                 ["% DE ALONGAMENTO", request.form.get(f'alongamento_1131_{table_id}_1', ''), request.form.get(f'alongamento_1131_{table_id}_2', ''), request.form.get(f'alongamento_1131_{table_id}_3', '')]
             ]
+        elif table_type == '6':
+            rows = [
+                ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
+                ["TORQUE 47 Nm (CONF.TABELA)", request.form.get(f'torque_47_{table_id}_1', ''), request.form.get(f'torque_47_{table_id}_2', ''), request.form.get(f'torque_47_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_47_{table_id}_1', ''), request.form.get(f'alongamento_47_{table_id}_2', ''), request.form.get(f'alongamento_47_{table_id}_3', '')],
+                ["TORQUE 51,7 Nm (10% A MAIS TABELA)", request.form.get(f'torque_517_{table_id}_1', ''), request.form.get(f'torque_517_{table_id}_2', ''), request.form.get(f'torque_517_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_517_{table_id}_1', ''), request.form.get(f'alongamento_517_{table_id}_2', ''), request.form.get(f'alongamento_517_{table_id}_3', '')],
+                ["TORQUE 56,4 Nm (20% A MAIS TABELA)", request.form.get(f'torque_564_{table_id}_1', ''), request.form.get(f'torque_564_{table_id}_2', ''), request.form.get(f'torque_564_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_564_{table_id}_1', ''), request.form.get(f'alongamento_564_{table_id}_2', ''), request.form.get(f'alongamento_564_{table_id}_3', '')],
+                ["TORQUE 61,1 Nm (30% A MAIS TABELA)", request.form.get(f'torque_611_{table_id}_1', ''), request.form.get(f'torque_611_{table_id}_2', ''), request.form.get(f'torque_611_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_611_{table_id}_1', ''), request.form.get(f'alongamento_611_{table_id}_2', ''), request.form.get(f'alongamento_611_{table_id}_3', '')]
+            ]
+        elif table_type == '7':
+            rows = [
+                ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
+                ["TORQUE 81 Nm (CONF.TABELA)", request.form.get(f'torque_81_{table_id}_1', ''), request.form.get(f'torque_81_{table_id}_2', ''), request.form.get(f'torque_81_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_81_{table_id}_1', ''), request.form.get(f'alongamento_81_{table_id}_2', ''), request.form.get(f'alongamento_81_{table_id}_3', '')],
+                ["TORQUE 89,1 Nm (10% A MAIS TABELA)", request.form.get(f'torque_891_{table_id}_1', ''), request.form.get(f'torque_891_{table_id}_2', ''), request.form.get(f'torque_891_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_891_{table_id}_1', ''), request.form.get(f'alongamento_891_{table_id}_2', ''), request.form.get(f'alongamento_891_{table_id}_3', '')],
+                ["TORQUE 97,2 Nm (20% A MAIS TABELA)", request.form.get(f'torque_972_{table_id}_1', ''), request.form.get(f'torque_972_{table_id}_2', ''), request.form.get(f'torque_972_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_972_{table_id}_1', ''), request.form.get(f'alongamento_972_{table_id}_2', ''), request.form.get(f'alongamento_972_{table_id}_3', '')],
+                ["TORQUE 105,3 Nm (30% A MAIS TABELA)", request.form.get(f'torque_1053_{table_id}_1', ''), request.form.get(f'torque_1053_{table_id}_2', ''), request.form.get(f'torque_1053_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_1053_{table_id}_1', ''), request.form.get(f'alongamento_1053_{table_id}_2', ''), request.form.get(f'alongamento_1053_{table_id}_3', '')]
+            ]
+        elif table_type == '8':
+            rows = [
+                ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
+                ["TORQUE 197 Nm (CONF.TABELA)", request.form.get(f'torque_197_{table_id}_1', ''), request.form.get(f'torque_197_{table_id}_2', ''), request.form.get(f'torque_197_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_197_{table_id}_1', ''), request.form.get(f'alongamento_197_{table_id}_2', ''), request.form.get(f'alongamento_197_{table_id}_3', '')],
+                ["TORQUE 216,7 Nm (10% A MAIS TABELA)", request.form.get(f'torque_2167_{table_id}_1', ''), request.form.get(f'torque_2167_{table_id}_2', ''), request.form.get(f'torque_2167_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_2167_{table_id}_1', ''), request.form.get(f'alongamento_2167_{table_id}_2', ''), request.form.get(f'alongamento_2167_{table_id}_3', '')],
+                ["TORQUE 236,4 Nm (20% A MAIS TABELA)", request.form.get(f'torque_2364_{table_id}_1', ''), request.form.get(f'torque_2364_{table_id}_2', ''), request.form.get(f'torque_2364_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_2364_{table_id}_1', ''), request.form.get(f'alongamento_2364_{table_id}_2', ''), request.form.get(f'alongamento_2364_{table_id}_3', '')],
+                ["TORQUE 256,1 Nm (30% A MAIS TABELA)", request.form.get(f'torque_2561_{table_id}_1', ''), request.form.get(f'torque_2561_{table_id}_2', ''), request.form.get(f'torque_2561_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_2561_{table_id}_1', ''), request.form.get(f'alongamento_2561_{table_id}_2', ''), request.form.get(f'alongamento_2561_{table_id}_3', '')]
+            ]
+        elif table_type == '9':
+            rows = [
+                ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
+                ["TORQUE 385 Nm (CONF.TABELA)", request.form.get(f'torque_385_{table_id}_1', ''), request.form.get(f'torque_385_{table_id}_2', ''), request.form.get(f'torque_385_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_385_{table_id}_1', ''), request.form.get(f'alongamento_385_{table_id}_2', ''), request.form.get(f'alongamento_385_{table_id}_3', '')],
+                ["TORQUE 423,5 Nm (10% A MAIS TABELA)", request.form.get(f'torque_4235_{table_id}_1', ''), request.form.get(f'torque_4235_{table_id}_2', ''), request.form.get(f'torque_4235_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_4235_{table_id}_1', ''), request.form.get(f'alongamento_4235_{table_id}_2', ''), request.form.get(f'alongamento_4235_{table_id}_3', '')],
+                ["TORQUE 462 Nm (20% A MAIS TABELA)", request.form.get(f'torque_462_{table_id}_1', ''), request.form.get(f'torque_462_{table_id}_2', ''), request.form.get(f'torque_462_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_462_{table_id}_1', ''), request.form.get(f'alongamento_462_{table_id}_2', ''), request.form.get(f'alongamento_462_{table_id}_3', '')],
+                ["TORQUE 500,5 Nm (30% A MAIS TABELA)", request.form.get(f'torque_5005_{table_id}_1', ''), request.form.get(f'torque_5005_{table_id}_2', ''), request.form.get(f'torque_5005_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_5005_{table_id}_1', ''), request.form.get(f'alongamento_5005_{table_id}_2', ''), request.form.get(f'alongamento_5005_{table_id}_3', '')]
+            ]
+        elif table_type == '10':
+            rows = [
+                ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
+                ["TORQUE 665 Nm (CONF.TABELA)", request.form.get(f'torque_665_{table_id}_1', ''), request.form.get(f'torque_665_{table_id}_2', ''), request.form.get(f'torque_665_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_665_{table_id}_1', ''), request.form.get(f'alongamento_665_{table_id}_2', ''), request.form.get(f'alongamento_665_{table_id}_3', '')],
+                ["TORQUE 731,5 Nm (10% A MAIS TABELA)", request.form.get(f'torque_7315_{table_id}_1', ''), request.form.get(f'torque_7315_{table_id}_2', ''), request.form.get(f'torque_7315_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_7315_{table_id}_1', ''), request.form.get(f'alongamento_7315_{table_id}_2', ''), request.form.get(f'alongamento_7315_{table_id}_3', '')],
+                ["TORQUE 798 Nm (20% A MAIS TABELA)", request.form.get(f'torque_798_{table_id}_1', ''), request.form.get(f'torque_798_{table_id}_2', ''), request.form.get(f'torque_798_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_798_{table_id}_1', ''), request.form.get(f'alongamento_798_{table_id}_2', ''), request.form.get(f'alongamento_798_{table_id}_3', '')],
+                ["TORQUE 864,5 Nm (30% A MAIS TABELA)", request.form.get(f'torque_8645_{table_id}_1', ''), request.form.get(f'torque_8645_{table_id}_2', ''), request.form.get(f'torque_8645_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_8645_{table_id}_1', ''), request.form.get(f'alongamento_8645_{table_id}_2', ''), request.form.get(f'alongamento_8645_{table_id}_3', '')]
+            ]
         tables_data.append((table_header, rows))
 
     add_header(p)
@@ -445,11 +468,13 @@ def generate_pdf():
 
 
 @app.route('/download_certificado', methods=['GET', 'POST'])
+@requires_privilege(9)
 def download_certificado():
     return render_template('download_certificado.html')
 
 
 @app.route('/cadastro_equipamento', methods=['GET', 'POST'])
+@requires_privilege(9)
 def cadastro_equipamento():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -559,6 +584,7 @@ def cadastro_equipamento():
 
 
 @app.route('/download_certificado_equipamento/<int:equipamento_id>')
+@requires_privilege(9)
 def download_certificado_equipamento(equipamento_id):
     connection = conectar_db()
     try:
@@ -582,6 +608,7 @@ def download_certificado_equipamento(equipamento_id):
 
 
 @app.route('/buscar_dados_instrumento/<numero_instrumento>')
+@requires_privilege(9)
 def buscar_dados_instrumento(numero_instrumento):
     connection = conectar_db()
     try:
@@ -615,6 +642,7 @@ def buscar_dados_instrumento(numero_instrumento):
 
 
 @app.route('/baixar_certificado_por_id', methods=['POST'])
+@requires_privilege(9)
 def baixar_certificado_por_id():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -670,6 +698,7 @@ def baixar_certificado_por_id():
 
 
 @app.route('/criar_certificado')
+@requires_privilege(9)
 def criar_certificado():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -678,6 +707,7 @@ def criar_certificado():
 
 
 @app.route('/cadastro_fornecedor', methods=['GET', 'POST'])
+@requires_privilege(9)
 def cadastro_fornecedor():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -707,6 +737,7 @@ def cadastro_fornecedor():
 
 
 @app.route('/avaliacao_diaria.html', methods=['GET', 'POST'])
+@requires_privilege(3, 1, 9)
 def avaliacao_diaria():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -888,6 +919,7 @@ def lista_norma():
 
 
 @app.route('/plano_controle_inspecao', methods=['GET', 'POST'])
+@requires_privilege(1, 9)
 def plano_controle_inspecao():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -952,6 +984,7 @@ def pesquisar_certificado():
 
 
 @app.route('/criar_certificado', methods=['POST'])
+@requires_privilege(9)
 def tratar_formulario():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -2239,6 +2272,7 @@ def buscar_registro_inspecao(numero_nota, ri_data, ri_cod_produto):
 
 
 @app.route('/cadastro_certificados', methods=['GET', 'POST'])
+@requires_privilege(9)
 def cadastro_certificados():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -2901,6 +2935,7 @@ def buscar_imagem():
 
 
 @app.route('/cadastro_norma', methods=['GET', 'POST'])
+@requires_privilege(9)
 def cadastro_norma():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -2939,6 +2974,7 @@ def allowed_file(filename):
 
 
 @app.route('/registro_inspecao', methods=['GET', 'POST'])
+@requires_privilege(1, 9)
 def registro_inspecao():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -3223,6 +3259,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 @app.route('/rncf', methods=['GET', 'POST'])
+@requires_privilege(9)
 def rncf():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -3816,6 +3853,7 @@ def extract_rex_data(lines, full_text):
 
 
 @app.route('/cadastro_recebimento_concluido', methods=['GET', 'POST'])
+@requires_privilege(2, 9)
 def cadastro_recebimento_concluido():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -3918,6 +3956,7 @@ def pesquisar_recebimento_concluido():
 
 
 @app.route('/resumo_trimestral.html', methods=['GET', 'POST'])
+@requires_privilege(9)
 def resumo_trimestral():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -3997,6 +4036,7 @@ def resumo_trimestral():
 
 
 @app.route('/salvar_fornecedores', methods=['POST'])
+@requires_privilege(9)
 def salvar_fornecedores():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4099,6 +4139,7 @@ def fetch_dictn(cursor):
 
 
 @app.route('/quantidade_inspecao', methods=['GET', 'POST'])
+@requires_privilege(9)
 def get_quantidade_inspecao():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4174,6 +4215,7 @@ app.jinja_env.globals.update(max=max, min=min)
 
 
 @app.route('/cadastro_itens_ars', methods=['GET', 'POST'])
+@requires_privilege(4, 9)
 def cadastro_itens_ars():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4235,6 +4277,7 @@ def cadastro_itens_ars():
 
 
 @app.route('/cadastro_separador', methods=['GET', 'POST'])
+@requires_privilege(4, 9)
 def cadastro_separador():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4297,6 +4340,7 @@ def cadastro_separador():
 
 
 @app.route('/cadastro_picker', methods=['GET', 'POST'])
+@requires_privilege(4, 9)
 def cadastro_picker():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4359,6 +4403,7 @@ def cadastro_picker():
 
 
 @app.route('/cadastro_recusa', methods=['GET', 'POST'])
+@requires_privilege(4, 9)
 def cadastro_recusa():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4420,6 +4465,7 @@ def cadastro_recusa():
 
 
 @app.route('/reprova_inspecao', methods=['GET', 'POST'])
+@requires_privilege(4, 9)
 def reprova_inspecao():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4654,6 +4700,7 @@ def salvar_grafico(fig):
 
 
 @app.route('/relatorio_reprovados', methods=['GET', 'POST'])
+@requires_privilege(9)
 def relatorio_reprovados():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4748,6 +4795,7 @@ def dados_grafico():
 
 
 @app.route('/cadastro_notas_fiscais', methods=['GET', 'POST'])
+@requires_privilege(11)
 def cadastro_notas_fiscais():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4874,6 +4922,7 @@ def cadastro_notas_fiscais():
 
 
 @app.route('/cadastro_notas_fiscais_lancamento', methods=['GET', 'POST'])
+@requires_privilege(12)
 def cadastro_notas_fiscais_lancamento():
     if not is_logged_in():
         return redirect(url_for('login'))

@@ -6,6 +6,12 @@
     {% extends "base_zincagem.html" %}
 {% elif session['privilegio'] == 4 %}
     {% extends "base_inspecao_final.html" %}
+{% elif session['privilegio'] == 11 %}
+    {% extends "base_faturamento.html" %}
+{% elif session['privilegio'] == 12 %}
+    {% extends "base_faturamento_lancamento.html" %}
+{% elif session['privilegio'] == 99 %}
+    {% extends "base_pesquisar.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
