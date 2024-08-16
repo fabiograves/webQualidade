@@ -4278,7 +4278,7 @@ def cadastro_itens_ars():
 
 
 @app.route('/cadastro_separador', methods=['GET', 'POST'])
-@requires_privilege(4, 9)
+@requires_privilege(9)
 def cadastro_separador():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4341,7 +4341,7 @@ def cadastro_separador():
 
 
 @app.route('/cadastro_picker', methods=['GET', 'POST'])
-@requires_privilege(4, 9)
+@requires_privilege(9)
 def cadastro_picker():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4404,7 +4404,7 @@ def cadastro_picker():
 
 
 @app.route('/cadastro_recusa', methods=['GET', 'POST'])
-@requires_privilege(4, 9)
+@requires_privilege(9)
 def cadastro_recusa():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4687,7 +4687,6 @@ def gerar_grafico_quantidade_reprovas_por_ano(df):
         return None  # Retorna None em caso de erro
 
 
-
 def gerar_grafico_reprovas_por_picker(df):
     reprovas_por_picker = df.groupby('picker').size()
 
@@ -4846,7 +4845,7 @@ def cadastro_notas_fiscais():
         cad_fornecedor = request.form['cad_fornecedor']
         cad_volume = request.form['cad_volume']
         cad_peso = request.form['cad_peso']
-        cad_natureza = request.form['cad_natureza']
+        cad_natureza = request.form.get('cad_natureza', '')[:50]
         cad_cod_xml = request.form['cad_cod_xml']
         cad_certificado = request.form['cad_certificado']
         cad_observacao = request.form['cad_observacao']

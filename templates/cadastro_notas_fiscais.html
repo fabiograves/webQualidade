@@ -76,13 +76,13 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Peso</label>
-                        <input type="text" class="form-control" id="cad_peso" name="cad_peso"maxlength="50">
+                        <input type="text" class="form-control" id="cad_peso" name="cad_peso" maxlength="50">
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Natureza</label>
-                        <input type="text" class="form-control" id="cad_natureza" name="cad_natureza"maxlength="50">
+                        <input type="text" class="form-control" id="cad_natureza" name="cad_natureza" maxlength="50">
                     </div>
                 </div>
             </div>
@@ -90,7 +90,7 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label>Código XML</label>
-                        <input type="text" class="form-control" id="cad_cod_xml" name="cad_cod_xml"maxlength="50">
+                        <input type="text" class="form-control" id="cad_cod_xml" name="cad_cod_xml" maxlength="50">
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -104,19 +104,19 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Certificado</label>
-                        <input type="text" class="form-control" id="cad_certificado" name="cad_certificado"maxlength="50">
+                        <input type="text" class="form-control" id="cad_certificado" name="cad_certificado" maxlength="50">
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <label>Observação</label>
-                        <input type="text" class="form-control" id="cad_observacao" name="cad_observacao"maxlength="50">
+                        <input type="text" class="form-control" id="cad_observacao" name="cad_observacao" maxlength="50">
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Lançamento</label>
-                        <input type="text" class="form-control" id="cad_lancamento" name="cad_lancamento"maxlength="50" readonly>
+                        <input type="text" class="form-control" id="cad_lancamento" name="cad_lancamento" maxlength="50" readonly>
                     </div>
                 </div>
             </div>
@@ -330,6 +330,11 @@
                 var xPed = xmlDoc.querySelectorAll('det prod xPed');
                 var qVol = xmlDoc.querySelector('vol qVol') ? xmlDoc.querySelector('vol qVol').textContent : '';
                 var pesoL = xmlDoc.querySelector('vol pesoL') ? xmlDoc.querySelector('vol pesoL').textContent : '';
+
+                // Limitar natOp a 50 caracteres
+                if (natOp.length > 50) {
+                    natOp = natOp.substring(0, 50);
+                }
 
                 // Processar múltiplos pedidos (xPed) e unir com vírgulas
                 var pedidos = Array.from(xPed)
