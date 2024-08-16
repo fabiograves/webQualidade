@@ -180,24 +180,17 @@
                                 <div class="col-md-3 text-left"><strong>Lançamento:</strong> {{ nota.cad_lancamento }}</div>
                             </div>
                             <!-- Quarta Linha -->
-                            <div class="row">
-                                <div class="col-md-12 text-left"><strong>Código XML:</strong> {{ nota.cad_cod_xml }}</div>
-                            </div>
-                               <!-- Botão de Download -->
                             <div class="row mt-3">
-                                <div class="col-md-6 text-center">
-                                    {% if nota.cad_arquivo_xml and nota.cad_arquivo_xml|length > 0 %}
-                                    <a href="{{ url_for('download_xml', nota_id=nota.id) }}" class="btn btn-outline-primary w-100">
-                                        <i class="fas fa-download"></i> Baixar XML
-                                    </a>
+                                <div class="col-md-12 text-center">
+                                    {% if nota.cad_arquivo_xml %}
+                                        <button class="btn btn-outline-secondary w-100 openProductsModal" data-nota-id="{{ nota.id }}">
+                                            <i class="fas fa-box-open"></i> Ver Produtos
+                                        </button>
                                     {% else %}
-                                    <span class="text-muted">Nenhum arquivo</span>
+                                        <button class="btn btn-outline-secondary w-100" disabled>
+                                            XML não anexado
+                                        </button>
                                     {% endif %}
-                                </div>
-                                <div class="col-md-6 text-center">
-                                    <button class="btn btn-outline-secondary w-100 openNfePortal" data-cod-xml="{{ nota.cad_cod_xml }}">
-                                        <i class="fas fa-external-link-alt"></i> Abrir Portal NF-e
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -254,6 +247,33 @@
 
 </div>
 
+<!-- Modal para exibir os produtos -->
+<div class="modal fade" id="productsModal" tabindex="-1" role="dialog" aria-labelledby="productsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productsModalLabel">Produtos da Nota Fiscal</h5>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Produto</th>
+                            <th>Unidade</th>
+                            <th>Quantidade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        <!-- Os produtos serão inseridos aqui dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script>
     document.getElementById('botao-registrar').addEventListener('click', function(event) {
         var confirmacao = confirm('Tem certeza que deseja registrar a Nota Fiscal?');
@@ -287,6 +307,58 @@
                 });
         }
     });
+
+    document.getElementById('cad_arquivo_xml').addEventListener('change', function(event) {
+        var file = event.target.files[0];
+
+        if (file && file.type === "text/xml") {
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+                var xmlText = e.target.result;
+                var parser = new DOMParser();
+                var xmlDoc = parser.parseFromString(xmlText, "application/xml");
+
+                var infNFe = xmlDoc.querySelector('infNFe');
+                var codXml = infNFe ? infNFe.getAttribute('Id').replace(/^NFe/, '') : '';
+
+                // Extrair os dados do XML
+                var natOp = xmlDoc.querySelector('ide natOp') ? xmlDoc.querySelector('ide natOp').textContent : '';
+                var xNome = xmlDoc.querySelector('emit xNome') ? xmlDoc.querySelector('emit xNome').textContent : '';
+                var nNF = xmlDoc.querySelector('ide nNF') ? xmlDoc.querySelector('ide nNF').textContent : '';
+                var dhEmi = xmlDoc.querySelector('ide dhEmi') ? xmlDoc.querySelector('ide dhEmi').textContent.split('T')[0] : '';
+                var xPed = xmlDoc.querySelectorAll('det prod xPed');
+                var qVol = xmlDoc.querySelector('vol qVol') ? xmlDoc.querySelector('vol qVol').textContent : '';
+                var pesoL = xmlDoc.querySelector('vol pesoL') ? xmlDoc.querySelector('vol pesoL').textContent : '';
+
+                // Processar múltiplos pedidos (xPed) e unir com vírgulas
+                var pedidos = Array.from(xPed)
+                    .map(function(ped) {
+                        return ped.textContent;
+                    })
+                    .filter(function(value, index, self) {
+                        return self.indexOf(value) === index;
+                    })
+                    .join(', ');
+
+
+                // Preencher os campos do formulário
+                document.getElementById('cad_cod_xml').value = codXml;
+                document.getElementById('cad_natureza').value = natOp;
+                document.getElementById('cad_numero_nota').value = nNF;
+                document.getElementById('cad_data_emissao_nf').value = dhEmi;
+                document.getElementById('cad_pedido').value = pedidos;
+                document.getElementById('cad_fornecedor').value = xNome
+                document.getElementById('cad_volume').value = qVol;
+                document.getElementById('cad_peso').value = pesoL;
+            };
+
+            reader.readAsText(file);
+        } else {
+            alert("Por favor, selecione um arquivo XML válido.");
+        }
+    });
+
 
     // Função para converter uma string de data para o formato YYYY-MM-DD
     function formatDateForInput(dateString) {
@@ -326,6 +398,61 @@
             }
         });
     });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.openProductsModal').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var notaId = this.getAttribute('data-nota-id');
+                var modal = new bootstrap.Modal(document.getElementById('productsModal'));
+
+                fetch(`/get_products/${notaId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        var productsTableBody = document.getElementById('productsTableBody');
+                        productsTableBody.innerHTML = '';
+
+                        if (data.length > 0) {
+                            data.forEach(function(product) {
+                                var row = document.createElement('tr');
+
+                                var pedidoCell = document.createElement('td');
+                                pedidoCell.textContent = product.pedido;
+                                row.appendChild(pedidoCell);
+
+                                var produtoCell = document.createElement('td');
+                                produtoCell.textContent = product.produto;
+                                row.appendChild(produtoCell);
+
+                                var unidadeCell = document.createElement('td');
+                                unidadeCell.textContent = product.unidade;
+                                row.appendChild(unidadeCell);
+
+                                var quantidadeCell = document.createElement('td');
+                                quantidadeCell.textContent = product.quantidade;
+                                row.appendChild(quantidadeCell);
+
+                                productsTableBody.appendChild(row);
+                            });
+                        } else {
+                            var row = document.createElement('tr');
+                            var noDataCell = document.createElement('td');
+                            noDataCell.textContent = 'Nenhum produto encontrado.';
+                            noDataCell.colSpan = 4;
+                            noDataCell.className = 'text-center';
+                            row.appendChild(noDataCell);
+                            productsTableBody.appendChild(row);
+                        }
+
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Erro ao buscar os produtos:', error);
+                    });
+            });
+        });
+    });
+
+
 
 </script>
 {% endblock %}

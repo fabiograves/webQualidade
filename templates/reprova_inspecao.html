@@ -20,6 +20,38 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
+<style>
+    /* Ajuste o Select2 para combinar com a altura dos campos de formulário do Bootstrap */
+    .select2-container--default .select2-selection--single {
+        height: calc(2.25rem + 2px); /* Ajuste para combinar com a altura dos campos de entrada do Bootstrap 4 */
+        padding: .375rem .75rem; /* Mesmo padding dos campos de entrada do Bootstrap */
+        font-size: 1rem; /* Tamanho de fonte padrão do Bootstrap */
+        line-height: 1.5; /* Altura de linha padrão do Bootstrap */
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 1.5; /* Altura de linha padrão do Bootstrap */
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(2.25rem + 2px); /* Ajuste para combinar com a altura dos campos de entrada do Bootstrap 4 */
+    }
+
+    /* Corrigir a posição da seta para alinhar com os campos de entrada */
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Se necessário, ajustar o foco */
+    .select2-container--focus .select2-selection {
+        border-color: #80bdff;
+        outline: 0;
+        box-shadow: 0 0 0 .2rem rgba(0,123,255,.25);
+    }
+</style>
+
+
 <form method="POST" action="{{ url_for('reprova_inspecao') }}" enctype="multipart/form-data">
     <div class="py-5">
         <div class="container">
@@ -70,25 +102,29 @@
                 <div class="col-md-2">
                     <div class="form-group">
                         <label>Cod. Separador</label>
-                        <input type="text" class="form-control" id="rep_cod_separador" name="rep_cod_separador" required>
+                        <select class="form-control" id="rep_cod_separador" name="rep_cod_separador">
+                            <option value="">Selecione...</option>
+                        </select>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Separador</label>
-                        <input type="text" class="form-control" id="rep_separador" name="rep_separador" required readonly>
+                        <input type="text" class="form-control" id="rep_separador" name="rep_separador"readonly>
                     </div>
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
                         <label>Cod. Picker</label>
-                        <input type="text" class="form-control" id="rep_cod_picker" name="rep_cod_picker" required>
+                        <select class="form-control" id="rep_cod_picker" name="rep_cod_picker">
+                            <option value="">Selecione...</option>
+                        </select>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Picker</label>
-                        <input type="text" class="form-control" id="rep_picker" name="rep_picker" required readonly>
+                        <input type="text" class="form-control" id="rep_picker" name="rep_picker" readonly>
                     </div>
                 </div>
             </div>
@@ -97,7 +133,9 @@
                 <div class="col-md-2">
                     <div class="form-group">
                         <label>Cod. Reprova</label>
-                        <input type="text" class="form-control" id="rep_cod_reprova" name="rep_cod_reprova" required>
+                        <select class="form-control" id="rep_cod_reprova" name="rep_cod_reprova">
+                            <option value="">Selecione...</option>
+                        </select>
                     </div>
                 </div>
                 <div class="col-md-5">
@@ -126,6 +164,107 @@
 </form>
 
 <script>
+    $(document).ready(function() {
+        if ($.fn.select2) {
+            $('#rep_cod_separador').select2({
+                placeholder: "Pesquisar...",
+                allowClear: true,
+                minimumInputLength: 0,
+                language: {
+                    inputTooShort: function() {
+                        return "Digite para pesquisar...";
+                    },
+                    noResults: function() {
+                        return "Nenhum resultado encontrado";
+                    }
+                },
+                ajax: {
+                    url: '/get_separadores',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || ''
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: data
+                        };
+                    },
+                    cache: true
+                }
+            }).on('focus', function() {
+                $(this).select2('open');
+            });
+
+            $('#rep_cod_picker').select2({
+                placeholder: "Pesquisar...",
+                allowClear: true,
+                minimumInputLength: 0,
+                language: {
+                    inputTooShort: function() {
+                        return "Digite para pesquisar...";
+                    },
+                    noResults: function() {
+                        return "Nenhum resultado encontrado";
+                    }
+                },
+                ajax: {
+                    url: '/get_pickers',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || ''
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: data
+                        };
+                    },
+                    cache: true
+                }
+            }).on('focus', function() {
+                $(this).select2('open');
+            });
+
+            $('#rep_cod_reprova').select2({
+                placeholder: "Pesquisar...",
+                allowClear: true,
+                minimumInputLength: 0,
+                language: {
+                    inputTooShort: function() {
+                        return "Digite para pesquisar...";
+                    },
+                    noResults: function() {
+                        return "Nenhum resultado encontrado";
+                    }
+                },
+                ajax: {
+                    url: '/get_reprovas',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || ''
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: data
+                        };
+                    },
+                    cache: true
+                }
+            }).on('focus', function() {
+                $(this).select2('open');
+            });
+        }
+    });
+
+
     function fetchData(url, targetField, errorMessage) {
         fetch(url)
             .then(response => response.json())
@@ -139,20 +278,23 @@
             });
     }
 
+    $('#rep_cod_separador').on('select2:select', function (e) {
+    var data = e.params.data;
+    $('#rep_separador').val(data.text.split(' - ')[1]);
+    });
+
+    $('#rep_cod_picker').on('select2:select', function (e) {
+        var data = e.params.data;
+        $('#rep_picker').val(data.text.split(' - ')[1]);
+    });
+
+    $('#rep_cod_reprova').on('select2:select', function (e) {
+        var data = e.params.data;
+        $('#rep_motivo_reprova').val(data.text.split(' - ')[1]);
+    });
+
     document.getElementById('rep_cod_item_ars').addEventListener('blur', function() {
         fetchData(`/get_item_desc/${this.value}`, 'rep_desc_item_ars', 'Código do item ARS não encontrado. Verifique se existe ou peça para cadastrar.');
-    });
-
-    document.getElementById('rep_cod_separador').addEventListener('blur', function() {
-        fetchData(`/get_separador_desc/${this.value}`, 'rep_separador', 'Código do separador não encontrado. Verifique se existe ou peça para cadastrar.');
-    });
-
-    document.getElementById('rep_cod_picker').addEventListener('blur', function() {
-        fetchData(`/get_picker_desc/${this.value}`, 'rep_picker', 'Código do picker não encontrado. Verifique se existe ou peça para cadastrar.');
-    });
-
-    document.getElementById('rep_cod_reprova').addEventListener('blur', function() {
-        fetchData(`/get_reprova_desc/${this.value}`, 'rep_motivo_reprova', 'Código da reprova não encontrado. Verifique se existe ou peça para cadastrar.');
     });
 
     document.getElementById('botao-registrar').addEventListener('click', function(event) {
