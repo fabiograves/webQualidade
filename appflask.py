@@ -4688,6 +4688,10 @@ def gerar_grafico_quantidade_reprovas_por_ano(df):
 
 
 def gerar_grafico_reprovas_por_picker(df):
+    df = df.dropna(subset=['picker'])
+    df = df[df['picker'].str.strip() != '']
+
+    # Agrupar e contar as reprovas por picker
     reprovas_por_picker = df.groupby('picker').size()
 
     fig, ax = plt.subplots()
@@ -4700,6 +4704,9 @@ def gerar_grafico_reprovas_por_picker(df):
 
 
 def gerar_grafico_reprovas_por_separador(df):
+    df = df.dropna(subset=['separador'])
+    df = df[df['separador'].str.strip() != '']
+
     reprovas_por_separador = df.groupby('separador').size()
 
     fig, ax = plt.subplots()
@@ -4842,7 +4849,7 @@ def cadastro_notas_fiscais():
         cad_numero_nota = request.form['cad_numero_nota']
         cad_data_entrada_ars = request.form['cad_data_entrada_ars']
         cad_pedido = request.form['cad_pedido']
-        cad_fornecedor = request.form['cad_fornecedor']
+        cad_fornecedor = request.form['cad_fornecedor'][:50]
         cad_volume = request.form['cad_volume']
         cad_peso = request.form['cad_peso']
         cad_natureza = request.form.get('cad_natureza', '')[:50]
@@ -5008,9 +5015,10 @@ def cadastro_notas_fiscais_lancamento():
     connection = conectar_db()
     cursor = connection.cursor()
 
+    # Lida com a inserção ou atualização via POST
     if request.method == 'POST':
-        cad_cod_xml = request.form['cad_cod_xml']
-        cad_lancamento = request.form['cad_lancamento']
+        cad_cod_xml = request.form.get('cad_cod_xml')
+        cad_lancamento = request.form.get('cad_lancamento')
 
         # Verifica se o código XML já existe
         cursor.execute("SELECT id FROM dbo.cadastro_notas_fiscais WHERE cad_cod_xml = ?", (cad_cod_xml,))
@@ -5023,66 +5031,91 @@ def cadastro_notas_fiscais_lancamento():
                 SET cad_lancamento = ?
                 WHERE cad_cod_xml = ?
             """, (cad_lancamento, cad_cod_xml))
-
             flash('Nota Fiscal atualizada com sucesso!')
         else:
             flash('Código XML não encontrado. Atualização falhou.', 'error')
 
         connection.commit()
-        connection.close()
-        return redirect(url_for('cadastro_notas_fiscais_lancamento'))
 
-    # Lida com a visualização da lista de notas fiscais
-    search_query = request.args.get('search', '')
+        # Redireciona para a página atual com os filtros aplicados
+        return redirect(url_for('cadastro_notas_fiscais_lancamento',
+                                cad_data_emissao_nf=request.args.get('cad_data_emissao_nf', ''),
+                                cad_numero_nota=request.args.get('cad_numero_nota', ''),
+                                cad_data_entrada_ars=request.args.get('cad_data_entrada_ars', ''),
+                                cad_pedido=request.args.get('cad_pedido', ''),
+                                cad_fornecedor=request.args.get('cad_fornecedor', ''),
+                                cad_lancamento=request.args.get('cad_lancamento', '')))
+
+    # Lida com a visualização da lista de notas fiscais via GET
+    cad_data_emissao_nf = request.args.get('cad_data_emissao_nf', '')
+    cad_numero_nota = request.args.get('cad_numero_nota', '')
+    cad_data_entrada_ars = request.args.get('cad_data_entrada_ars', '')
+    cad_pedido = request.args.get('cad_pedido', '')
+    cad_fornecedor = request.args.get('cad_fornecedor', '')
+    cad_lancamento = request.args.get('cad_lancamento', '')
+
     page = request.args.get('page', 1, type=int)
     per_page = 20
     offset = (page - 1) * per_page
 
-    if search_query:
-        query = f"""
-            SELECT id, cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
-                   cad_volume, cad_peso, cad_natureza, cad_cod_xml, cad_certificado, cad_observacao, 
-                   cad_lancamento, cad_arquivo_xml
-            FROM dbo.cadastro_notas_fiscais
-            WHERE (cad_data_emissao_nf LIKE ? OR cad_numero_nota LIKE ? OR cad_data_entrada_ars LIKE ? 
-            OR cad_pedido LIKE ? OR cad_fornecedor LIKE ? OR cad_volume LIKE ? OR cad_peso LIKE ? 
-            OR cad_natureza LIKE ? OR cad_certificado LIKE ? OR cad_observacao LIKE ?)
-            ORDER BY id DESC
-            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-        """
-        params = tuple(['%' + search_query + '%'] * 11) + (offset, per_page)
+    where_clauses = []
+    params = []
 
-        cursor.execute(query, params)
-        notas_fiscais = cursor.fetchall()
+    if cad_data_emissao_nf:
+        where_clauses.append("cad_data_emissao_nf LIKE ?")
+        params.append('%' + cad_data_emissao_nf + '%')
+    if cad_numero_nota:
+        where_clauses.append("cad_numero_nota LIKE ?")
+        params.append('%' + cad_numero_nota + '%')
+    if cad_data_entrada_ars:
+        where_clauses.append("cad_data_entrada_ars LIKE ?")
+        params.append('%' + cad_data_entrada_ars + '%')
+    if cad_pedido:
+        where_clauses.append("cad_pedido LIKE ?")
+        params.append('%' + cad_pedido + '%')
+    if cad_fornecedor:
+        where_clauses.append("cad_fornecedor LIKE ?")
+        params.append('%' + cad_fornecedor + '%')
+    if cad_lancamento:
+        where_clauses.append("cad_lancamento LIKE ?")
+        params.append('%' + cad_lancamento + '%')
 
-        cursor.execute(f"""
-            SELECT COUNT(*)
-            FROM dbo.cadastro_notas_fiscais
-            WHERE (cad_data_emissao_nf LIKE ? OR cad_numero_nota LIKE ? OR cad_data_entrada_ars LIKE ? 
-            OR cad_pedido LIKE ? OR cad_fornecedor LIKE ? OR cad_volume LIKE ? OR cad_peso LIKE ? 
-            OR cad_natureza LIKE ? OR cad_cod_xml LIKE ? OR cad_certificado LIKE ? OR cad_observacao LIKE ?)
-        """, tuple(['%' + search_query + '%'] * 11))
+    where_clause = ' AND '.join(where_clauses) if where_clauses else '1=1'
 
-    else:
-        cursor.execute("""
-            SELECT id, cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
-                   cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, 
-                   cad_lancamento, cad_arquivo_xml
-            FROM dbo.cadastro_notas_fiscais
-            ORDER BY id DESC
-            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-        """, (offset, per_page))
-        notas_fiscais = cursor.fetchall()
+    query = f"""
+        SELECT id, cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
+               cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, 
+               cad_lancamento, cad_cod_xml, cad_arquivo_xml
+        FROM dbo.cadastro_notas_fiscais
+        WHERE {where_clause}
+        ORDER BY id DESC
+        OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+    """
+    params.extend([offset, per_page])
+    cursor.execute(query, params)
+    notas_fiscais = cursor.fetchall()
 
-        cursor.execute("SELECT COUNT(*) FROM dbo.cadastro_notas_fiscais")
-
+    cursor.execute(f"""
+        SELECT COUNT(*)
+        FROM dbo.cadastro_notas_fiscais
+        WHERE {where_clause}
+    """, params[:-2])  # Remove os parâmetros de paginação
     total_row = cursor.fetchone()
     total = total_row[0] if total_row else 0
 
     connection.close()
 
-    return render_template('cadastro_notas_fiscais_lancamento.html', notas_fiscais=notas_fiscais, page=page, total=total,
-                           per_page=per_page, search_query=search_query)
+    return render_template('cadastro_notas_fiscais_lancamento.html',
+                           notas_fiscais=notas_fiscais,
+                           page=page,
+                           total=total,
+                           per_page=per_page,
+                           cad_data_emissao_nf=cad_data_emissao_nf,
+                           cad_numero_nota=cad_numero_nota,
+                           cad_data_entrada_ars=cad_data_entrada_ars,
+                           cad_pedido=cad_pedido,
+                           cad_fornecedor=cad_fornecedor,
+                           cad_lancamento=cad_lancamento)
 
 
 @app.route('/pesquisar_notas_fiscais', methods=['GET', 'POST'])
@@ -5095,55 +5128,69 @@ def pesquisar_notas_fiscais():
 
     # Lida com a visualização da lista de notas fiscais
     search_query = request.args.get('search', '')
+    cad_data_emissao_nf = request.args.get('cad_data_emissao_nf', '')
+    cad_numero_nota = request.args.get('cad_numero_nota', '')
+    cad_data_entrada_ars = request.args.get('cad_data_entrada_ars', '')
+    cad_pedido = request.args.get('cad_pedido', '')
+    cad_fornecedor = request.args.get('cad_fornecedor', '')
+    cad_lancamento = request.args.get('cad_lancamento', '')
+
     page = request.args.get('page', 1, type=int)
     per_page = 20
     offset = (page - 1) * per_page
 
-    if search_query:
-        query = f"""
+    where_clauses = []
+    params = []
+
+    if cad_data_emissao_nf:
+        where_clauses.append("cad_data_emissao_nf LIKE ?")
+        params.append('%' + cad_data_emissao_nf + '%')
+    if cad_numero_nota:
+        where_clauses.append("cad_numero_nota LIKE ?")
+        params.append('%' + cad_numero_nota + '%')
+    if cad_data_entrada_ars:
+        where_clauses.append("cad_data_entrada_ars LIKE ?")
+        params.append('%' + cad_data_entrada_ars + '%')
+    if cad_pedido:
+        where_clauses.append("cad_pedido LIKE ?")
+        params.append('%' + cad_pedido + '%')
+    if cad_fornecedor:
+        where_clauses.append("cad_fornecedor LIKE ?")
+        params.append('%' + cad_fornecedor + '%')
+    if cad_lancamento:
+        where_clauses.append("cad_lancamento LIKE ?")
+        params.append('%' + cad_lancamento + '%')
+
+    where_clause = ' AND '.join(where_clauses) if where_clauses else '1=1'
+
+    query = f"""
                 SELECT id, cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
                        cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, 
                        cad_lancamento, cad_arquivo_xml
                 FROM dbo.cadastro_notas_fiscais
-                WHERE (cad_data_emissao_nf LIKE ? OR cad_numero_nota LIKE ? OR cad_data_entrada_ars LIKE ? 
-                OR cad_pedido LIKE ? OR cad_fornecedor LIKE ? OR cad_volume LIKE ? OR cad_peso LIKE ? 
-                OR cad_natureza LIKE ? OR cad_certificado LIKE ? OR cad_observacao LIKE ?)
+                WHERE {where_clause}
                 ORDER BY id DESC
                 OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
             """
-        params = tuple(['%' + search_query + '%'] * 10) + (offset, per_page)
+    params.extend([offset, per_page])
+    cursor.execute(query, params)
+    notas_fiscais = cursor.fetchall()
 
-        cursor.execute(query, params)
-        notas_fiscais = cursor.fetchall()
-
-        cursor.execute(f"""
+    cursor.execute(f"""
                 SELECT COUNT(*)
                 FROM dbo.cadastro_notas_fiscais
-                WHERE (cad_data_emissao_nf LIKE ? OR cad_numero_nota LIKE ? OR cad_data_entrada_ars LIKE ? 
-                OR cad_pedido LIKE ? OR cad_fornecedor LIKE ? OR cad_volume LIKE ? OR cad_peso LIKE ? 
-                OR cad_natureza LIKE ? OR cad_certificado LIKE ? OR cad_observacao LIKE ?)
-            """, tuple(['%' + search_query + '%'] * 10))
-
-    else:
-        cursor.execute("""
-                SELECT id, cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
-                       cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, 
-                       cad_lancamento, cad_arquivo_xml
-                FROM dbo.cadastro_notas_fiscais
-                ORDER BY id DESC
-                OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-            """, (offset, per_page))
-        notas_fiscais = cursor.fetchall()
-
-        cursor.execute("SELECT COUNT(*) FROM dbo.cadastro_notas_fiscais")
-
+                WHERE {where_clause}
+            """, params[:-2])  # Remove os parâmetros de paginação
     total_row = cursor.fetchone()
     total = total_row[0] if total_row else 0
 
     connection.close()
 
     return render_template('pesquisar_notas_fiscais.html', notas_fiscais=notas_fiscais, page=page, total=total,
-                           per_page=per_page, search_query=search_query)
+                           per_page=per_page, search_query=search_query,
+                           cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota,
+                           cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido,
+                           cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento)
 
 
 @app.route('/get_nota_fiscal_by_cod_xml', methods=['GET'])
@@ -5207,6 +5254,152 @@ def download_xml(nota_id):
         print(f"Nenhum arquivo encontrado para nota_id: {nota_id}")
         flash("Arquivo XML não encontrado.")
         return redirect(url_for('cadastro_notas_fiscais'))
+
+
+@app.route('/pesquisar_notas_fiscais_download', methods=['GET'])
+@requires_privilege(9, 13)
+def pesquisar_notas_fiscais_download():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    # Lida com a visualização da lista de notas fiscais
+    search_query = request.args.get('search', '')
+    cad_data_emissao_nf = request.args.get('cad_data_emissao_nf', '')
+    cad_numero_nota = request.args.get('cad_numero_nota', '')
+    cad_data_entrada_ars = request.args.get('cad_data_entrada_ars', '')
+    cad_pedido = request.args.get('cad_pedido', '')
+    cad_fornecedor = request.args.get('cad_fornecedor', '')
+    cad_lancamento = request.args.get('cad_lancamento', '')
+
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    where_clauses = []
+    params = []
+
+    if cad_data_emissao_nf:
+        where_clauses.append("cad_data_emissao_nf LIKE ?")
+        params.append('%' + cad_data_emissao_nf + '%')
+    if cad_numero_nota:
+        where_clauses.append("cad_numero_nota LIKE ?")
+        params.append('%' + cad_numero_nota + '%')
+    if cad_data_entrada_ars:
+        where_clauses.append("cad_data_entrada_ars LIKE ?")
+        params.append('%' + cad_data_entrada_ars + '%')
+    if cad_pedido:
+        where_clauses.append("cad_pedido LIKE ?")
+        params.append('%' + cad_pedido + '%')
+    if cad_fornecedor:
+        where_clauses.append("cad_fornecedor LIKE ?")
+        params.append('%' + cad_fornecedor + '%')
+    if cad_lancamento:
+        where_clauses.append("cad_lancamento LIKE ?")
+        params.append('%' + cad_lancamento + '%')
+
+    where_clause = ' AND '.join(where_clauses) if where_clauses else '1=1'
+
+    query = f"""
+            SELECT id, cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
+                   cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, 
+                   cad_lancamento, cad_arquivo_xml
+            FROM dbo.cadastro_notas_fiscais
+            WHERE {where_clause}
+            ORDER BY id DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """
+    params.extend([offset, per_page])
+    cursor.execute(query, params)
+    notas_fiscais = cursor.fetchall()
+
+    cursor.execute(f"""
+            SELECT COUNT(*)
+            FROM dbo.cadastro_notas_fiscais
+            WHERE {where_clause}
+        """, params[:-2])  # Remove os parâmetros de paginação
+    total_row = cursor.fetchone()
+    total = total_row[0] if total_row else 0
+
+    connection.close()
+
+    return render_template('pesquisar_notas_fiscais_download.html', notas_fiscais=notas_fiscais, page=page, total=total,
+                           per_page=per_page, search_query=search_query,
+                           cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota,
+                           cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido,
+                           cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento)
+
+
+@app.route('/get_products_imposto/<int:nota_id>')
+def get_products_com_imposto(nota_id):
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT cad_arquivo_xml FROM dbo.cadastro_notas_fiscais WHERE id = ?
+    """, (nota_id,))
+    row = cursor.fetchone()
+    connection.close()
+
+    if row and row[0]:
+        try:
+            xml_content = row[0]
+            if isinstance(xml_content, bytes):
+                xml_content = xml_content.decode('utf-8')
+
+            root = ET.fromstring(xml_content)
+            ns = {'nfe': root.tag.split('}')[0].strip('{')}
+
+            products = []
+            for det in root.findall('.//nfe:det', ns):
+                prod = det.find('nfe:prod', ns)
+                imposto = det.find('nfe:imposto', ns)
+                ipi = imposto.find('nfe:IPI/nfe:IPITrib', ns) if imposto is not None else None
+
+                icms = None
+                icms_tags = ['ICMS00', 'ICMS10', 'ICMS20', 'ICMS30', 'ICMS40', 'ICMS51', 'ICMS60', 'ICMS70', 'ICMS90']
+                for tag in icms_tags:
+                    icms = imposto.find(f'nfe:ICMS/nfe:{tag}', ns)
+                    if icms is not None:
+                        break
+
+                icms_st = {
+                    'orig': icms.find('nfe:orig', ns).text if icms is not None and icms.find('nfe:orig',
+                                                                                             ns) is not None else '',
+                    'pICMSST': icms.find('nfe:pICMSST', ns).text if icms is not None and icms.find('nfe:pICMSST',
+                                                                                                   ns) is not None else '',
+                    'vICMSST': icms.find('nfe:vICMSST', ns).text if icms is not None and icms.find('nfe:vICMSST',
+                                                                                                   ns) is not None else '',
+                }
+
+                if prod is not None:
+                    products.append({
+                        'pedido': prod.find('nfe:xPed', ns).text if prod.find('nfe:xPed', ns) is not None else '',
+                        'produto': prod.find('nfe:xProd', ns).text if prod.find('nfe:xProd', ns) is not None else '',
+                        'unidade': prod.find('nfe:uCom', ns).text if prod.find('nfe:uCom', ns) is not None else '',
+                        'quantidade': prod.find('nfe:qCom', ns).text if prod.find('nfe:qCom', ns) is not None else '',
+                        'icms_percentual': icms.find('nfe:pICMS', ns).text if icms is not None and icms.find(
+                            'nfe:pICMS', ns) is not None else '',
+                        'icms_valor': icms.find('nfe:vICMS', ns).text if icms is not None and icms.find('nfe:vICMS',
+                                                                                                        ns) is not None else '',
+                        'orig': icms_st['orig'],
+                        'pICMSST': icms_st['pICMSST'],
+                        'vICMSST': icms_st['vICMSST'],
+                        'ipi_percentual': ipi.find('nfe:pIPI', ns).text if ipi is not None and ipi.find('nfe:pIPI',
+                                                                                                        ns) is not None else '',
+                        'ipi_valor': ipi.find('nfe:vIPI', ns).text if ipi is not None and ipi.find('nfe:vIPI',
+                                                                                                   ns) is not None else '',
+                    })
+
+            return jsonify(products)
+
+        except Exception as e:
+            print(f"Erro ao processar XML: {e}")
+            return jsonify({'error': 'Erro ao processar o XML da nota fiscal.'}), 500
+
+    return jsonify([]), 404
 
 
 if __name__ == '__main__':

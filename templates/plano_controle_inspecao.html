@@ -12,6 +12,8 @@
     {% extends "base_faturamento_lancamento.html" %}
 {% elif session['privilegio'] == 99 %}
     {% extends "base_pesquisar.html" %}
+{% elif session['privilegio'] == 13 %}
+    {% extends "base_faturamento_pesquisar_xml.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}

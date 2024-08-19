@@ -12,6 +12,8 @@
     {% extends "base_faturamento_lancamento.html" %}
 {% elif session['privilegio'] == 99 %}
     {% extends "base_pesquisar.html" %}
+{% elif session['privilegio'] == 13 %}
+    {% extends "base_faturamento_pesquisar_xml.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -26,16 +28,41 @@
     <div class="container">
         <form method="GET" action="{{ url_for('pesquisar_notas_fiscais') }}">
             <div class="row">
-                <div class="col-md-10">
-                    <input type="text" class="form-control" name="search" placeholder="Buscar notas fiscais..." value="{{ search_query }}">
+                <div class="col-md-2">
+                    <label for="cad_data_emissao_nf">Data Emissão NF:</label>
+                    <input type="date" class="form-control" id="cad_data_emissao_nf" name="cad_data_emissao_nf" value="{{ cad_data_emissao_nf }}">
                 </div>
                 <div class="col-md-2">
+                    <label for="cad_numero_nota">Número da Nota:</label>
+                    <input type="text" class="form-control" id="cad_numero_nota" name="cad_numero_nota" placeholder="Número da Nota" value="{{ cad_numero_nota }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="cad_data_entrada_ars">Data Entrada ARS:</label>
+                    <input type="date" class="form-control" id="cad_data_entrada_ars" name="cad_data_entrada_ars" value="{{ cad_data_entrada_ars }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="cad_pedido">Pedido:</label>
+                    <input type="text" class="form-control" id="cad_pedido" name="cad_pedido" placeholder="Pedido" value="{{ cad_pedido }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="cad_fornecedor">Fornecedor:</label>
+                    <input type="text" class="form-control" id="cad_fornecedor" name="cad_fornecedor" placeholder="Fornecedor" value="{{ cad_fornecedor }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="cad_lancamento">Lançamento:</label>
+                    <input type="text" class="form-control" id="cad_lancamento" name="cad_lancamento" placeholder="Lançamento" value="{{ cad_lancamento }}">
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-12">
                     <button type="submit" class="btn btn-secondary w-100">Buscar</button>
                 </div>
             </div>
         </form>
     </div>
 </div>
+
 
 <!-- Tabela para exibir as notas fiscais cadastradas -->
 <div class="py-1">
@@ -88,20 +115,19 @@
                 </table>
             </div>
 
-            <!-- Paginação -->
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
                     <!-- Link para a primeira página -->
                     {% if page > 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais', page=1, search=search_query) }}">Primeira</a>
+                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais', page=1, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Primeira</a>
                     </li>
                     {% endif %}
 
                     <!-- Link para a página anterior -->
                     {% if page > 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais', page=page-1, search=search_query) }}">Anterior</a>
+                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais', page=page-1, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Anterior</a>
                     </li>
                     {% endif %}
 
@@ -110,25 +136,26 @@
                     {% set end = min((total // per_page) + 1, page + 5) %}
                     {% for p in range(start, end + 1) %}
                     <li class="page-item {% if p == page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais', page=p, search=search_query) }}">{{ p }}</a>
+                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais', page=p, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">{{ p }}</a>
                     </li>
                     {% endfor %}
 
                     <!-- Link para a próxima página -->
                     {% if page < (total // per_page) + 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais', page=page+1, search=search_query) }}">Próxima</a>
+                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais', page=page+1, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Próxima</a>
                     </li>
                     {% endif %}
 
                     <!-- Link para a última página -->
                     {% if page < (total // per_page) + 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais', page=(total // per_page) + 1, search=search_query) }}">Última</a>
+                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais', page=(total // per_page) + 1, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Última</a>
                     </li>
                     {% endif %}
                 </ul>
             </nav>
+
         </div>
     </div>
 </div>

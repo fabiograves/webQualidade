@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="">
+        <meta name="author" content="Fabio">
+        <meta name="generator" content="Hugo 0.118.2">
+        <title>ARS - Certificados</title>
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+        <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+        <!-- jQuery Versão Completa -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+        <!-- jQuery Mask Plugin -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+        <!-- Bootstrap JS -->
+        <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
+        <!-- Incluir CSS do Select2 -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+
+        <!-- Incluir JS do Select2 após o jQuery -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
+        <style>
+            .mensagem-aviso {
+                color: #ff0000; /* Cor vermelha para o texto do aviso */
+                font-weight: bold;
+                margin-left: 20px; /* Espaço entre o título e a mensagem de aviso */
+            }
+        </style>
+
+        <link href="{{ url_for('static', filename='navbars-offcanvas.css') }}" rel="stylesheet">
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </head>
+    <body>
+
+        <main>
+            <nav class="navbar navbar-dark custom-bg" aria-label="Dark offcanvas navbar">
+                <div class="container-fluid">
+                    <a class="navbar-brand">ARS - Controle de Qualidade</a>
+                    <a id="mensagemAviso" class="mensagem-aviso"></a>
+                    <div class="ms-auto d-flex align-items-center">
+                        <span class="navbar-text text-white">
+                            {{ session['nome_assinatura'] if session['nome_assinatura'] else '' }}
+                        </span>
+                        <a class="nav-link text-white" aria-current="page" href="{{ url_for('logout') }}">Logout</a>
+                    </div>
+                </div>
+            </nav>
+
+            <nav class="navbar navbar-expand-lg navbar-dark custom-bg" aria-label="Offcanvas navbar large">
+                <div class="container-fluid">
+                    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar2" aria-controls="offcanvasNavbar2" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasNavbar2" aria-labelledby="offcanvasNavbar2Label">
+                        <div class="offcanvas-header">
+                            <h5 class="offcanvas-title" id="offcanvasNavbar2Label">Menu</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                        </div>
+                        <div class="offcanvas-body">
+                            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                                <li class="nav-item">
+                                    <a class="nav-link active" aria-current="page" href="{{ url_for('home') }}">Home</a>
+                                </li>
+
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Faturamento
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais_download') }}">Pesquisar Nota Fiscal</a></li>
+                                                                            </ul>
+                                </li>
+
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Mensagens de Aviso -->
+        <script type="application/json" id="mensagensAvisoData">
+            {{ mensagens_aviso | tojson | safe }}
+        </script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log("Script carregado corretamente - Avisos");
+                const mensagensDataElement = document.getElementById('mensagensAvisoData');
+                const mensagens = JSON.parse(mensagensDataElement.textContent);
+                let indiceAtual = 0;
+
+                function alternarMensagem() {
+                    indiceAtual = (indiceAtual + 1) % mensagens.length;
+                    document.getElementById("mensagemAviso").textContent = mensagens[indiceAtual];
+                }
+
+                setInterval(alternarMensagem, 5000);
+            });
+
+            document.getElementById('abrirCalculadora').addEventListener('click', function(event) {
+                event.preventDefault();
+                window.open('https://www.calculator.net/', 'Calculadora', 'width=400,height=400');
+            });
+
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log("Script carregado corretamente - Tema");
+                if (localStorage.getItem('theme')) {
+                    localStorage.setItem('theme', 'light');
+                    document.body.classList.add('light-mode');
+                }
+            });
+        </script>
+
+        <!-- Teste de Carregamento de jQuery -->
+        <script>
+            if (typeof jQuery !== 'undefined') {
+                console.log("jQuery está carregado corretamente.");
+            } else {
+                console.log("jQuery não está carregado.");
+            }
+        </script>
+
+        <!-- Teste de Carregamento de Script -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log("Script de teste carregado corretamente");
+            });
+        </script>
+    {% block scripts %}{% endblock %}
+    </body>
+</html>
