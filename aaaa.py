@@ -21,6 +21,7 @@ def conectar_db():
 def inserir_xml_no_bd(caminho_pasta, conn):
     cursor = conn.cursor()
     erros = []
+    nao_encontrados = []
     total_processados = 0
     total_inseridos = 0
 
@@ -50,6 +51,8 @@ def inserir_xml_no_bd(caminho_pasta, conn):
                     total_inseridos += 1
                     print(f"Arquivo {nome_arquivo} inserido no banco de dados.")
                 else:
+                    # Adiciona o nome do arquivo à lista de não encontrados
+                    nao_encontrados.append(nome_arquivo)
                     print(f"Registro não encontrado para o arquivo {nome_arquivo}.")
 
             except Exception as e:
@@ -64,6 +67,12 @@ def inserir_xml_no_bd(caminho_pasta, conn):
 
     print(f"Total de arquivos processados: {total_processados}")
     print(f"Total de arquivos inseridos no banco de dados: {total_inseridos}")
+
+    # Escrever os arquivos que não foram encontrados em um arquivo de texto
+    if nao_encontrados:
+        with open("nao_encontrados.txt", "w") as file:
+            for nome in nao_encontrados:
+                file.write(nome + "\n")
 
     for item in erros:
         print(item)

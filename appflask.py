@@ -5304,7 +5304,7 @@ def pesquisar_notas_fiscais_download():
 
     query = f"""
             SELECT id, cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
-                   cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, 
+                   cad_volume, cad_peso, cad_natureza, cad_certificado, cad_cod_xml, cad_observacao, 
                    cad_lancamento, cad_arquivo_xml
             FROM dbo.cadastro_notas_fiscais
             WHERE {where_clause}
@@ -5375,11 +5375,26 @@ def get_products_com_imposto(nota_id):
                 }
 
                 if prod is not None:
+                    # Formatar o valor unitário removendo zeros à direita
+                    valor_unitario = prod.find('nfe:vUnCom', ns).text if prod.find('nfe:vUnCom', ns) is not None else ''
+                    valor_unitario_formatado = valor_unitario.rstrip('0').rstrip('.') if valor_unitario else ''
+
+                    # Garantir que o valor tenha pelo menos duas casas decimais
+                    if valor_unitario_formatado:
+                        partes = valor_unitario_formatado.split('.')
+                        if len(partes) == 1:  # Caso não tenha decimais
+                            valor_unitario_formatado += '.00'
+                        elif len(partes[1]) == 1:  # Caso tenha apenas uma casa decimal
+                            valor_unitario_formatado += '0'
+
                     products.append({
                         'pedido': prod.find('nfe:xPed', ns).text if prod.find('nfe:xPed', ns) is not None else '',
                         'produto': prod.find('nfe:xProd', ns).text if prod.find('nfe:xProd', ns) is not None else '',
                         'unidade': prod.find('nfe:uCom', ns).text if prod.find('nfe:uCom', ns) is not None else '',
                         'quantidade': prod.find('nfe:qCom', ns).text if prod.find('nfe:qCom', ns) is not None else '',
+                        'valorunitario': valor_unitario_formatado,
+                        'cst': icms.find('nfe:CST', ns).text if icms is not None and icms.find(
+                            'nfe:CST', ns) is not None else '',
                         'icms_percentual': icms.find('nfe:pICMS', ns).text if icms is not None and icms.find(
                             'nfe:pICMS', ns) is not None else '',
                         'icms_valor': icms.find('nfe:vICMS', ns).text if icms is not None and icms.find('nfe:vICMS',

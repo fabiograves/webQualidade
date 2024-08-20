@@ -190,9 +190,11 @@
                             <th>Produto</th>
                             <th>Unidade</th>
                             <th>Quantidade</th>
+                            <th>Valor Unitário</th>
                             <th>ICMS (%)</th>
                             <th>ICMS (Valor)</th>
                             <th>Origem</th>
+                            <th>CST</th>
                             <th>ICMS ST (%)</th>
                             <th>ICMS ST (Valor)</th>
                             <th>IPI (%)</th>
@@ -242,6 +244,10 @@
                                 quantidadeCell.textContent = product.quantidade;
                                 row.appendChild(quantidadeCell);
 
+                                var valorunitarioCell = document.createElement('td');
+                                valorunitarioCell.textContent = product.valorunitario;
+                                row.appendChild(valorunitarioCell);
+
                                 var icmsPercentCell = document.createElement('td');
                                 icmsPercentCell.textContent = product.icms_percentual;
                                 row.appendChild(icmsPercentCell);
@@ -253,6 +259,10 @@
                                 var origCell = document.createElement('td');
                                 origCell.textContent = product.orig;
                                 row.appendChild(origCell);
+
+                                var cstCell = document.createElement('td');
+                                cstCell.textContent = product.cst;
+                                row.appendChild(cstCell);
 
                                 var icmsSTPercentCell = document.createElement('td');
                                 icmsSTPercentCell.textContent = product.pICMSST;
