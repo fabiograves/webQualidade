@@ -60,7 +60,7 @@ def inserir_xml_no_bd(caminho_pasta, conn):
                 print(f"Erro ao processar o arquivo {nome_arquivo}: {e}")
 
             total_processados += 1
-            print(f"Processando {nome_arquivo}... ({total_processados})")
+            print(f"Total Processados: {total_processados}")
 
     conn.commit()
     cursor.close()

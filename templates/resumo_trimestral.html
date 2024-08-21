@@ -21,22 +21,35 @@
 {% block content %}
 <div class="container mt-4">
     <form method="POST" action="{{ url_for('resumo_trimestral') }}" enctype="multipart/form-data">
-        <!-- Formulário de Seleção de Ano -->
+        <!-- Formulário de Filtros -->
         <div class="py-5">
             <div class="container">
                 <div class="row justify-content-center">
                     <div class="col-md-12">
                         <h1 class="text-center mb-4">Resumo Trimestral de Fornecedores</h1>
                         <div class="form-row">
-                            <div class="form-group col-md-3">
-                                <label for="ano">Ano</label>
-                                <select class="form-control" id="ano" name="ano">
-                                    {% for ano in anos_disponiveis %}
-                                        <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+                            <!-- Filtro por Fornecedor -->
+                            <div class="form-group col-md-6">
+                                <label for="fornecedor_selecionado">Fornecedor</label>
+                                <select class="form-control" id="fornecedor_selecionado" name="fornecedor_selecionado">
+                                    <option value="">Todos</option>
+                                    {% for fornecedor in fornecedores %}
+                                        <option value="{{ fornecedor['id'] }}" {% if fornecedor['id'] == fornecedor_selecionado %}selected{% endif %}>{{ fornecedor['nome_fornecedor'] }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
+
+                            <!-- Filtro por Status de Validade -->
+                            <div class="form-group col-md-6">
+                                <label for="status_validade">Status de Validade</label>
+                                <select class="form-control" id="status_validade" name="status_validade">
+                                    <option value="">Todos</option>
+                                    <option value="vencidos" {% if status_validade == 'vencidos' %}selected{% endif %}>Vencidos</option>
+                                    <option value="a_vencer" {% if status_validade == 'a_vencer' %}selected{% endif %}>A Vencer</option>
+                                </select>
+                            </div>
                         </div>
+
                         <div class="row justify-content-center">
                             <div class="form-group col-md-12">
                                 <button type="submit" class="btn btn-secondary w-100">Pesquisar</button>

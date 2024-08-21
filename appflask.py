@@ -23,7 +23,7 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from collections import defaultdict
-from io import BytesIO
+from io import BytesIO, StringIO
 import pdfplumber
 import re
 import zipfile
@@ -3967,11 +3967,9 @@ def resumo_trimestral():
     dados_organizados = defaultdict(lambda: defaultdict(dict))
     resumo_trimestral = defaultdict(lambda: defaultdict(lambda: {'soma_nao_conformidade': 0, 'soma_atraso_entrega': 0, 'qtd_dias_com_valor': 0}))
     notas_finais_trimestres = defaultdict(lambda: defaultdict(float))
-    anos_disponiveis = [2024, 2025, 2026, 2027]
-    ano_selecionado = 2024  # Padrão
 
-    if request.method == 'POST':
-        ano_selecionado = int(request.form['ano'])
+    fornecedor_selecionado = request.form.get('fornecedor_selecionado', None)
+    status_validade = request.form.get('status_validade', None)
 
     try:
         with connection.cursor() as cursor:
@@ -3980,12 +3978,15 @@ def resumo_trimestral():
             cursor.execute(sql_fornecedores)
             fornecedores = cursor.fetchall()
 
-            # Para cada fornecedor, buscar os dados de avaliação do ano selecionado
+            if fornecedor_selecionado:
+                fornecedores = [f for f in fornecedores if f[0] == int(fornecedor_selecionado)]
+
+            # Para cada fornecedor, buscar os dados de avaliação
             for fornecedor in fornecedores:
                 id_fornecedor = fornecedor[0]
                 cursor.execute("""
-                SELECT * FROM dbo.avaliacao_diaria WHERE id_fornecedor = ? AND CONVERT(VARCHAR, data, 23) LIKE ?
-                """, (id_fornecedor, f"{ano_selecionado}%"))
+                SELECT * FROM dbo.avaliacao_diaria WHERE id_fornecedor = ?
+                """, (id_fornecedor,))
 
                 resultado = fetch_dictn(cursor)
                 while resultado:
@@ -4013,7 +4014,6 @@ def resumo_trimestral():
 
             # Calcular as notas finais trimestrais para cada fornecedor
             for id_fornecedor, trimestres in resumo_trimestral.items():
-
                 for trimestre, dados in trimestres.items():
                     if dados['qtd_dias_com_valor'] > 0:
                         dados['valor_final'] = (((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega']) / dados['qtd_dias_com_valor']) * 5)
@@ -4021,6 +4021,24 @@ def resumo_trimestral():
                         dados['valor_final'] = 0
 
                     notas_finais_trimestres[id_fornecedor][trimestre] = dados['valor_final']
+
+            # Filtro de status de validade
+            if status_validade:
+                fornecedores_filtrados = []
+                for fornecedor in fornecedores:
+                    validade_str = fornecedor[3]  # Acessando campo2 (data de validade) pela posição 3
+
+                    # Verificação se validade_str não é None e não é uma string vazia
+                    if validade_str:
+                        validade_date = datetime.datetime.strptime(validade_str, '%d/%m/%Y')
+                        dias_restantes = (validade_date - datetime.datetime.now()).days
+
+                        if status_validade == 'vencidos' and dias_restantes <= 0:
+                            fornecedores_filtrados.append(fornecedor)
+                        elif status_validade == 'a_vencer' and 0 < dias_restantes <= 30:
+                            fornecedores_filtrados.append(fornecedor)
+
+                fornecedores = fornecedores_filtrados
 
     except Exception as e:
         print(f"Erro: {e}")
@@ -4032,8 +4050,8 @@ def resumo_trimestral():
                            fornecedores=fornecedores,
                            resumo_trimestral=resumo_trimestral,
                            notas_finais_trimestres=notas_finais_trimestres,
-                           anos_disponiveis=anos_disponiveis,
-                           ano_selecionado=ano_selecionado)
+                           fornecedor_selecionado=fornecedor_selecionado,
+                           status_validade=status_validade)
 
 
 @app.route('/salvar_fornecedores', methods=['POST'])
