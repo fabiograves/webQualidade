@@ -404,6 +404,18 @@ def generate_pdf():
                 ["TORQUE 864,5 Nm (30% A MAIS TABELA)", request.form.get(f'torque_8645_{table_id}_1', ''), request.form.get(f'torque_8645_{table_id}_2', ''), request.form.get(f'torque_8645_{table_id}_3', '')],
                 ["% DE ALONGAMENTO", request.form.get(f'alongamento_8645_{table_id}_1', ''), request.form.get(f'alongamento_8645_{table_id}_2', ''), request.form.get(f'alongamento_8645_{table_id}_3', '')]
             ]
+        elif table_type == '11':
+            rows = [
+                ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
+                ["TORQUE 333 Nm (CONF.TABELA)", request.form.get(f'torque_333_{table_id}_1', ''), request.form.get(f'torque_333_{table_id}_2', ''), request.form.get(f'torque_333_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_333_{table_id}_1', ''), request.form.get(f'alongamento_333_{table_id}_2', ''), request.form.get(f'alongamento_333_{table_id}_3', '')],
+                ["TORQUE 366,3 Nm (10% A MAIS TABELA)", request.form.get(f'torque_3663_{table_id}_1', ''), request.form.get(f'torque_3663_{table_id}_2', ''), request.form.get(f'torque_3663_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_3663_{table_id}_1', ''), request.form.get(f'alongamento_3663_{table_id}_2', ''), request.form.get(f'alongamento_3663_{table_id}_3', '')],
+                ["TORQUE 399,6 Nm (20% A MAIS TABELA)", request.form.get(f'torque_3996_{table_id}_1', ''), request.form.get(f'torque_3996_{table_id}_2', ''), request.form.get(f'torque_3996_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_3996_{table_id}_1', ''), request.form.get(f'alongamento_3996_{table_id}_2', ''), request.form.get(f'alongamento_3996_{table_id}_3', '')],
+                ["TORQUE 432,9 Nm (30% A MAIS TABELA)", request.form.get(f'torque_4329_{table_id}_1', ''), request.form.get(f'torque_4329_{table_id}_2', ''), request.form.get(f'torque_4329_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_4329_{table_id}_1', ''), request.form.get(f'alongamento_4329_{table_id}_2', ''), request.form.get(f'alongamento_4329_{table_id}_3', '')]
+            ]
         tables_data.append((table_header, rows))
 
     add_header(p)
@@ -3401,7 +3413,7 @@ def rncf_records():
 
     query = """
         SELECT rncf_numero, rncf_fornecedor, rncf_nota_fiscal, rncf_descricao_material,
-               rncf_data_notificacao, rncf_prazo, rncf_tratativa_final, rncf_status, rncf_data_finalizado
+               rncf_data_notificacao, rncf_prazo, rncf_tratativa_final, rncf_status, rncf_data_finalizado, rncf_relatorio_pdf
         FROM dbo.rncf WHERE 1=1
     """
     count_query = "SELECT COUNT(*) FROM dbo.rncf WHERE 1=1"
@@ -3457,7 +3469,8 @@ def rncf_records():
             'rncf_tratativa_final': record.rncf_tratativa_final,
             'rncf_status': record.rncf_status,
             'rncf_data_final': data_final.strftime('%d-%m-%Y'),
-            'rncf_data_finalizado': record.rncf_data_finalizado.strftime('%d-%m-%Y') if record.rncf_data_finalizado else None
+            'rncf_data_finalizado': record.rncf_data_finalizado.strftime('%d-%m-%Y') if record.rncf_data_finalizado else None,
+            'rncf_relatorio_pdf': bool(record.rncf_relatorio_pdf)  # Converter para booleano para facilitar no frontend
         })
 
     return jsonify({

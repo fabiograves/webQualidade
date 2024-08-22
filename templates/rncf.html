@@ -270,99 +270,107 @@
     }
 
     function loadRecords(filters = {}, page = 1, perPage = 5) {
-      const params = new URLSearchParams(filters);
-      params.append('page', page);
-      params.append('per_page', perPage);
-      fetch(`{{ url_for('rncf_records') }}?${params.toString()}`, {
-          method: 'GET',
-          headers: {
-              'Content-Type': 'application/json'
-          }
-      })
-      .then(response => response.json())
-      .then(data => {
-          const records = data.records;
-          const totalRecords = data.total;
-          const totalPages = Math.ceil(totalRecords / perPage);
+       const params = new URLSearchParams(filters);
+       params.append('page', page);
+       params.append('per_page', perPage);
+       fetch(`{{ url_for('rncf_records') }}?${params.toString()}`, {
+           method: 'GET',
+           headers: {
+               'Content-Type': 'application/json'
+           }
+       })
+       .then(response => response.json())
+       .then(data => {
+           const records = data.records;
+           const totalRecords = data.total;
+           const totalPages = Math.ceil(totalRecords / perPage);
 
-          const recordsRow = document.getElementById('recordsRow');
-          recordsRow.innerHTML = '';
-          records.forEach(record => {
-              const color = calculateColor(record.rncf_data_final, record.rncf_data_notificacao, record.rncf_prazo, record.rncf_status);
-              const recordBlock = document.createElement('div');
-              recordBlock.classList.add('col-md-12', 'mb-4');
-              recordBlock.innerHTML = `
-                  <div class="card card-border-thick" style="border-color: ${color};">
-                      <div class="card-body">
-                          <h5 class="card-title">Relatório Nº: ${record.rncf_numero} - Status: ${record.rncf_status}</h5>
-                          <div class="row">
-                              <div class="col-md-12">
-                                  <p class="card-text"><strong>Data Finalizado:</strong> ${record.rncf_data_finalizado ? record.rncf_data_finalizado : 'Em Aberto'}</p>
-                              </div>
-                          </div>
-                          <div class="row">
-                              <div class="col-md-7">
-                                  <p class="card-text"><strong>Fornecedor:</strong> ${record.rncf_fornecedor}</p>
-                              </div>
-                              <div class="col-md-5">
-                                  <p class="card-text"><strong>Nota Fiscal:</strong> ${record.rncf_nota_fiscal}</p>
-                              </div>
-                          </div>
-                          <div class="row">
-                              <div class="col-md-12">
-                                  <p class="card-text"><strong>Descrição do material:</strong> ${record.rncf_descricao_material}</p>
-                              </div>
-                          </div>
-                          <div class="row">
-                              <div class="col-md-7">
-                                  <p class="card-text"><strong>Data de notificação:</strong> ${record.rncf_data_notificacao}</p>
-                              </div>
-                              <div class="col-md-5">
+           const recordsRow = document.getElementById('recordsRow');
+           recordsRow.innerHTML = '';
+           records.forEach(record => {
+               const color = calculateColor(record.rncf_data_final, record.rncf_data_notificacao, record.rncf_prazo, record.rncf_status);
+               const recordBlock = document.createElement('div');
+               recordBlock.classList.add('col-md-12', 'mb-4');
+               let pdfButton = '';
+               // Verificar se há um PDF associado ao registro
+               if (record.rncf_relatorio_pdf) {
+                   pdfButton = `
+                       <div class="col-md-2 text-right">
+                           <a href="/download_pdf/${record.rncf_numero}" class="btn btn-primary">Baixar PDF</a>
+                       </div>`;
+               }
+               recordBlock.innerHTML = `
+                   <div class="card card-border-thick" style="border-color: ${color};">
+                       <div class="card-body">
+                           <h5 class="card-title">Relatório Nº: ${record.rncf_numero} - Status: ${record.rncf_status}</h5>
+                           <div class="row">
+                               <div class="col-md-12">
+                                   <p class="card-text"><strong>Data Finalizado:</strong> ${record.rncf_data_finalizado ? record.rncf_data_finalizado : 'Em Aberto'}</p>
+                               </div>
+                           </div>
+                           <div class="row">
+                               <div class="col-md-8">
+                                   <p class="card-text"><strong>Fornecedor:</strong> ${record.rncf_fornecedor}</p>
+                               </div>
+                               <div class="col-md-4">
+                                   <p class="card-text"><strong>Nota Fiscal:</strong> ${record.rncf_nota_fiscal}</p>
+                               </div>
+                           </div>
+                           <div class="row">
+                               <div class="col-md-12">
+                                   <p class="card-text"><strong>Descrição do material:</strong> ${record.rncf_descricao_material}</p>
+                               </div>
+                           </div>
+                           <div class="row">
+                               <div class="col-md-8">
                                   <p class="card-text"><strong>Prazo responder:</strong> ${record.rncf_prazo} dias</p>
+                               </div>
+                               <div class="col-md-4">
+                                  <p class="card-text"><strong>Data de notificação:</strong> ${record.rncf_data_notificacao}</p>
+                               </div>
+                           </div>
+                           <div class="row">
+                                <div class="col-md-8">
+                               <p class="card-text"><strong>Tratativa Final:</strong> ${record.rncf_tratativa_final}</p>
                               </div>
-                          </div>
-                          <div class="row">
-                              <div class="col-md-7">
-                                  <p class="card-text"><strong>Tratativa final:</strong> ${record.rncf_tratativa_final}</p>
-                              </div>
-                              <div class="col-md-5">
-                                  <p class="card-text"><strong>Data Final:</strong> ${record.rncf_data_final}</p>
-                              </div>
-                          </div>
-                          <div class="row">
-                              <div class="col-md-10">
-                                  <p class="card-text"><strong>Status:</strong> ${record.rncf_status}</p>
-                              </div>
-                              <div class="col-md-2 text-right">
-                                  <a href="/download_pdf/${record.rncf_numero}" class="btn btn-primary">Baixar PDF</a>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              `;
-              recordsRow.appendChild(recordBlock);
-          });
+                              <div class="col-md-4">
+                                   <p class="card-text"><strong>Prazo responder:</strong> ${record.rncf_data_final}</p>
+                               </div>
+                           </div>
+                           <div class="row">
+                               <div class="col-md-10">
+                                   <p class="card-text"><strong>Status:</strong> ${record.rncf_status}</p>
+                               </div>
+                               ${pdfButton} <!-- Exibe o botão apenas se o PDF existir -->
+                           </div>
+                       </div>
+                   </div>
+               `;
+               recordsRow.appendChild(recordBlock);
+           });
 
-          // Atualizar paginação
-          const pagination = document.getElementById('pagination');
-          pagination.innerHTML = '';
-          for (let i = 1; i <= totalPages; i++) {
-              const pageItem = document.createElement('li');
-              pageItem.classList.add('page-item');
-              if (i === page) {
-                  pageItem.classList.add('active');
-              }
-              pageItem.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-              pageItem.addEventListener('click', (e) => {
-                  e.preventDefault();
-                  currentPage = i;
-                  loadRecords(filters, currentPage, recordsPerPage);
-              });
-              pagination.appendChild(pageItem);
-          }
-      })
-      .catch(error => console.error('Error loading records:', error));
-  }
+           // Atualizar paginação
+           const pagination = document.getElementById('pagination');
+           pagination.innerHTML = '';
+           for (let i = 1; i <= totalPages; i++) {
+               const pageItem = document.createElement('li');
+               pageItem.classList.add('page-item');
+               if (i === page) {
+                   pageItem.classList.add('active');
+               }
+               pageItem.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+               pageItem.addEventListener('click', (e) => {
+                   e.preventDefault();
+                   currentPage = i;
+                   loadRecords(filters, currentPage, recordsPerPage);
+               });
+               pagination.appendChild(pageItem);
+           }
+       })
+       .catch(error => console.error('Error loading records:', error));
+    }
+
+
 
   document.getElementById('apply_filter').addEventListener('click', function() {
       const filterFornecedor = document.getElementById('filter_fornecedor').value;
