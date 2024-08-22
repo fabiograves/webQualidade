@@ -493,7 +493,8 @@ def cadastro_equipamento():
 
             # Busca todos os equipamentos cadastrados
             cursor.execute("SELECT id, numero_instrumento, cod_equipamento, equipamento, local_calibracao, "
-                           "vencimento_calibracao, status, certificado FROM dbo.cadastro_equipamento ORDER BY numero_instrumento ASC")
+                           "vencimento_calibracao, status, CASE WHEN certificado IS NOT NULL THEN 1 ELSE 0 END AS certificado_existe "
+                           "FROM dbo.cadastro_equipamento ORDER BY numero_instrumento ASC")
             equipamentos = cursor.fetchall()
 
     except Exception as e:
@@ -3260,7 +3261,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 @app.route('/rncf', methods=['GET', 'POST'])
-@requires_privilege(9)
+@requires_privilege(9, 21)
 def rncf():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4158,15 +4159,14 @@ def fetch_dictn(cursor):
 
 
 @app.route('/quantidade_inspecao', methods=['GET', 'POST'])
-@requires_privilege(9)
+@requires_privilege(9, 21)
 def get_quantidade_inspecao():
     if not is_logged_in():
         return redirect(url_for('login'))
 
-    ano = request.form.get('ano')
-    mes = request.form.get('mes')
-    dia = request.form.get('dia')
-    responsavel = request.form.get('responsavel')
+    ano_inicio = request.form.get('ano_inicio')
+    ano_fim = request.form.get('ano_fim')
+    fornecedor = request.form.get('fornecedor')
 
     connection = conectar_db()
     cursor = connection.cursor()
@@ -4175,26 +4175,21 @@ def get_quantidade_inspecao():
         SELECT 
             COUNT(*) AS total,
             SUM(CASE WHEN ri_opcao = 'Reprovado' THEN 1 ELSE 0 END) AS reprovados,
-            SUM(CASE WHEN ri_opcao != 'Reprovado' THEN 1 ELSE 0 END) AS aprovados
+            SUM(CASE WHEN ri_opcao = 'Aprovado' THEN 1 ELSE 0 END) AS aprovados,
+            SUM(CASE WHEN ri_opcao = 'Condicional' THEN 1 ELSE 0 END) AS condicionais
         FROM dbo.registro_inspecao
         WHERE 
-            TRY_CONVERT(date, ri_data) IS NOT NULL
-            AND ri_data <> '' -- Ignora datas vazias
-            AND (? IS NULL OR YEAR(TRY_CONVERT(date, ri_data)) = ?)
-            AND (? IS NULL OR MONTH(TRY_CONVERT(date, ri_data)) = ?)
-            AND (? IS NULL OR DAY(TRY_CONVERT(date, ri_data)) = ?)
-            AND (? IS NULL OR ri_resp_inspecao = ?)
+            TRY_CONVERT(date, ri_data_inspecao) IS NOT NULL
+            AND ri_data_inspecao <> ''
+            AND (? IS NULL OR TRY_CONVERT(date, ri_data_inspecao) >= ?)
+            AND (? IS NULL OR TRY_CONVERT(date, ri_data_inspecao) <= ?)
+            AND (? IS NULL OR ri_fornecedor = ?)
     """
 
     parameters = [
-        ano if ano else None,
-        ano if ano else 0,
-        mes if mes else None,
-        mes if mes else 0,
-        dia if dia else None,
-        dia if dia else 0,
-        responsavel if responsavel else None,
-        responsavel if responsavel else ''
+        ano_inicio, ano_inicio if ano_inicio else '0001-01-01',  # Parâmetros para o início
+        ano_fim, ano_fim if ano_fim else '9999-12-31',  # Parâmetros para o fim
+        fornecedor, fornecedor  # Parâmetros para o fornecedor
     ]
 
     cursor.execute(query, parameters)
@@ -4203,20 +4198,11 @@ def get_quantidade_inspecao():
     total = result[0]
     reprovados = result[1]
     aprovados = result[2]
+    condicionais = result[3]
 
-    # Obter lista de responsáveis
-    cursor.execute("SELECT DISTINCT ri_resp_inspecao FROM dbo.registro_inspecao ORDER BY ri_resp_inspecao")
-    responsaveis = cursor.fetchall()
-
-    # Obter lista de anos, meses e dias disponíveis
-    cursor.execute("SELECT DISTINCT YEAR(TRY_CONVERT(date, ri_data)) AS ano FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL AND ri_data <> '' ORDER BY ano")
-    anos_disponiveis = cursor.fetchall()
-
-    cursor.execute("SELECT DISTINCT MONTH(TRY_CONVERT(date, ri_data)) AS mes FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL AND ri_data <> '' ORDER BY mes")
-    meses_disponiveis = cursor.fetchall()
-
-    cursor.execute("SELECT DISTINCT DAY(TRY_CONVERT(date, ri_data)) AS dia FROM dbo.registro_inspecao WHERE TRY_CONVERT(date, ri_data) IS NOT NULL AND ri_data <> '' ORDER BY dia")
-    dias_disponiveis = cursor.fetchall()
+    # Obter lista de fornecedores
+    cursor.execute("SELECT DISTINCT ri_fornecedor FROM dbo.registro_inspecao ORDER BY ri_fornecedor")
+    fornecedores = [fornecedor[0] for fornecedor in cursor.fetchall()]  # Extraindo o valor da tupla
 
     connection.close()
 
@@ -4224,10 +4210,58 @@ def get_quantidade_inspecao():
                            total=total,
                            reprovados=reprovados,
                            aprovados=aprovados,
-                           anos_disponiveis=anos_disponiveis,
-                           meses_disponiveis=meses_disponiveis,
-                           dias_disponiveis=dias_disponiveis,
-                           responsaveis=responsaveis)
+                           condicionais=condicionais,
+                           fornecedores=fornecedores)
+
+
+@app.route('/dados_grafico_inspecao', methods=['GET'])
+def dados_grafico_inspecao():
+    ano_inicio = request.args.get('ano_inicio')
+    ano_fim = request.args.get('ano_fim')
+    fornecedor = request.args.get('fornecedor')
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    query = """
+        SELECT 
+            COUNT(*) AS total,
+            SUM(CASE WHEN ri_opcao = 'Reprovado' THEN 1 ELSE 0 END) AS reprovados,
+            SUM(CASE WHEN ri_opcao = 'Aprovado' THEN 1 ELSE 0 END) AS aprovados,
+            SUM(CASE WHEN ri_opcao = 'Condicional' THEN 1 ELSE 0 END) AS condicionais
+        FROM dbo.registro_inspecao
+        WHERE 
+            TRY_CONVERT(date, ri_data_inspecao) IS NOT NULL
+            AND ri_data_inspecao <> ''
+            AND (? IS NULL OR TRY_CONVERT(date, ri_data_inspecao) >= ?)
+            AND (? IS NULL OR TRY_CONVERT(date, ri_data_inspecao) <= ?)
+            AND (? IS NULL OR ri_fornecedor = ?)
+    """
+
+    # Corrigindo a lista de parâmetros
+    parameters = [
+        ano_inicio, ano_inicio if ano_inicio else '0001-01-01',  # Parâmetros para a data inicial
+        ano_fim, ano_fim if ano_fim else '9999-12-31',  # Parâmetros para a data final
+        fornecedor, fornecedor  # Parâmetros para o fornecedor
+    ]
+
+    cursor.execute(query, parameters)
+    result = cursor.fetchone()
+
+    total = result[0]
+    reprovados = result[1]
+    aprovados = result[2]
+    condicionais = result[3]
+
+    connection.close()
+
+    # Retornar os dados em formato JSON
+    return jsonify({
+        'total': total,
+        'reprovados': reprovados,
+        'aprovados': aprovados,
+        'condicionais': condicionais
+    })
 
 
 app.jinja_env.globals.update(max=max, min=min)
@@ -5275,7 +5309,7 @@ def download_xml(nota_id):
 
 
 @app.route('/pesquisar_notas_fiscais_download', methods=['GET'])
-@requires_privilege(9, 13)
+@requires_privilege(9, 13, 21)
 def pesquisar_notas_fiscais_download():
     if not is_logged_in():
         return redirect(url_for('login'))

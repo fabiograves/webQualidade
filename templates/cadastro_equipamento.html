@@ -14,6 +14,8 @@
     {% extends "base_pesquisar.html" %}
 {% elif session['privilegio'] == 13 %}
     {% extends "base_faturamento_pesquisar_xml.html" %}
+{% elif session['privilegio'] == 21 %}
+    {% extends "base_compras.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -187,7 +189,7 @@
                         <td>{{ equipamento.vencimento_calibracao }}</td>
                         <td>{{ equipamento.status }}</td>
                         <td>
-                            {% if equipamento.certificado %}
+                            {% if equipamento.certificado_existe %}
                             <a href="{{ url_for('download_certificado_equipamento', equipamento_id=equipamento.id) }}" class="btn btn-outline-primary"><i class="fas fa-download"></i> Baixar</a>
                             {% endif %}
                         </td>
@@ -205,8 +207,8 @@ function atualizarVencimentoCalibracao() {
     const ultimaCalibracao = new Date(document.getElementById('cad_ultima_calibracao').value);
     const intervalo = parseInt(document.getElementById('cad_intervalo').value, 10);
 
-    console.log("Última calibração: ", ultimaCalibracao);
-    console.log("Intervalo: ", intervalo);
+    //console.log("Última calibração: ", ultimaCalibracao);
+    //console.log("Intervalo: ", intervalo);
 
     if (ultimaCalibracao && !isNaN(intervalo)) {
         // Clonar a data original para evitar modificar `ultimaCalibracao`
@@ -223,7 +225,7 @@ function atualizarVencimentoCalibracao() {
         const vencimentoFormatted = `${dia}/${mes}/${ano}`; // Formato dd/mm/aaaa
 
         document.getElementById('cad_vencimento_calibracao').value = vencimentoFormatted;
-        console.log("Vencimento calculado: ", vencimentoFormatted);
+        //console.log("Vencimento calculado: ", vencimentoFormatted);
     }
 }
 
@@ -232,12 +234,12 @@ function buscarDadosInstrumento(numeroInstrumento) {
     if (!numeroInstrumento) {
         return;
     }
-    console.log("Buscando dados para o número do instrumento: ", numeroInstrumento);
+    //console.log("Buscando dados para o número do instrumento: ", numeroInstrumento);
 
     fetch(`/buscar_dados_instrumento/${numeroInstrumento}`)
         .then(response => response.json())
         .then(data => {
-            console.log("Dados recebidos: ", data);
+            //console.log("Dados recebidos: ", data);
 
             if (data) {
                 document.getElementById('cad_cod_equipamento').value = data.cod_equipamento || '';
@@ -274,13 +276,13 @@ $(document).ready(function() {
 
     // Evento para atualizar o vencimento quando a última calibração mudar
     document.getElementById('cad_ultima_calibracao').addEventListener('change', function() {
-        console.log("Última calibração alterada.");
+        //console.log("Última calibração alterada.");
         atualizarVencimentoCalibracao();
     });
 
     // Evento para atualizar o vencimento quando o intervalo mudar
     document.getElementById('cad_intervalo').addEventListener('input', function() {
-        console.log("Intervalo alterado.");
+        //console.log("Intervalo alterado.");
         atualizarVencimentoCalibracao();
     });
 

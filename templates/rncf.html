@@ -14,6 +14,8 @@
     {% extends "base_pesquisar.html" %}
 {% elif session['privilegio'] == 13 %}
     {% extends "base_faturamento_pesquisar_xml.html" %}
+{% elif session['privilegio'] == 21 %}
+    {% extends "base_compras.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -33,86 +35,90 @@
       </div>
     </div>
   </div>
-  <div class="">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-2">
-          <div class="form-group">
-            <label>Nº Relatório</label>
-            <input type="text" class="form-control" id="rncf_numero_relatorio" name="rncf_numero_relatorio" value="{{ data.rncf_numero_relatorio if data else '' }}" required>
+    {% if session['privilegio'] == 9 %}
+    <div class="">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-2">
+              <div class="form-group">
+                <label>Nº Relatório</label>
+                <input type="text" class="form-control" id="rncf_numero_relatorio" name="rncf_numero_relatorio" value="{{ data.rncf_numero_relatorio if data else '' }}" required>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="form-group">
+                <label>Fornecedor</label>
+                <input type="text" class="form-control" id="rncf_fornecedor" name="rncf_fornecedor" value="{{ data.rncf_fornecedor if data else '' }}" required>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="form-group">
+                <label>Nota Fiscal</label>
+                <input type="text" class="form-control" id="rncf_nota_fiscal" name="rncf_nota_fiscal" value="{{ data.rncf_nota_fiscal if data else '' }}" required>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="col-md-5">
-          <div class="form-group">
-            <label>Fornecedor</label>
-            <input type="text" class="form-control" id="rncf_fornecedor" name="rncf_fornecedor" value="{{ data.rncf_fornecedor if data else '' }}" required>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>Descrição do material</label>
+                <input type="text" class="form-control" id="rncf_descricao_material" name="rncf_descricao_material" value="{{ data.rncf_descricao_material if data else '' }}" required>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Tratativa final</label>
+                <input type="text" class="form-control" id="rncf_tratativa_final" name="rncf_tratativa_final" value="{{ data.rncf_tratativa_final if data else '' }}" required>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Data de notificação</label>
+                <input type="date" class="form-control" id="rncf_data_notificacao" name="rncf_data_notificacao" value="{{ data.rncf_data_notificacao if data else '' }}" required>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label>Prazo responder (dias)</label>
+                <input type="number" class="form-control" id="rncf_prazo_responder" name="rncf_prazo_responder" value="{{ data.rncf_prazo_responder if data else '' }}" required>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="col-md-5">
-          <div class="form-group">
-            <label>Nota Fiscal</label>
-            <input type="text" class="form-control" id="rncf_nota_fiscal" name="rncf_nota_fiscal" value="{{ data.rncf_nota_fiscal if data else '' }}" required>
+          <div class="row">
+            <div class="col-md-2">
+              <div class="form-group">
+                <label>Data final</label>
+                <input type="text" class="form-control" id="rncf_data_final" name="rncf_data_final" value="{{ data.rncf_data_final if data else '' }}" readonly>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Status</label>
+                <select class="form-control" id="rncf_status" name="rncf_status" required>
+                  <option value="Selecione" {% if not data or data.rncf_status=='Selecione' %} selected {% endif %}>Selecione</option>
+                  <option value="Pendente" {% if data and data.rncf_status=='Pendente' %} selected {% endif %}>Pendente</option>
+                  <option value="Finalizado" {% if data and data.rncf_status=='Finalizado' %} selected {% endif %}>Finalizado</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-7">
+              <div class="form-group">
+                <label>Relatório preenchido - Somente arquivo .PDF</label>
+                <input type="file" class="form-control" id="rncf_relatorio_pdf" name="rncf_relatorio_pdf" accept=".pdf">
+              </div>
+            </div>
           </div>
+          <!-- Botão de envio -->
+          {% if data %}
+          <button type="submit" formaction="{{ url_for('update_rncf_view') }}" class="btn btn-secondary w-100 mb-3" onclick="return confirm('Tem certeza que deseja atualizar o relatório?')">Atualizar Relatório</button>
+          {% else %}
+          <button type="submit" class="btn btn-secondary w-100 mb-3" onclick="return confirm('Tem certeza que deseja cadastrar o relatório?')">Cadastrar Relatório</button>
+          {% endif %}
         </div>
       </div>
-      <div class="row">
-        <div class="col-md-4">
-          <div class="form-group">
-            <label>Descrição do material</label>
-            <input type="text" class="form-control" id="rncf_descricao_material" name="rncf_descricao_material" value="{{ data.rncf_descricao_material if data else '' }}" required>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="form-group">
-            <label>Tratativa final</label>
-            <input type="text" class="form-control" id="rncf_tratativa_final" name="rncf_tratativa_final" value="{{ data.rncf_tratativa_final if data else '' }}" required>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="form-group">
-            <label>Data de notificação</label>
-            <input type="date" class="form-control" id="rncf_data_notificacao" name="rncf_data_notificacao" value="{{ data.rncf_data_notificacao if data else '' }}" required>
-          </div>
-        </div>
-        <div class="col-md-2">
-          <div class="form-group">
-            <label>Prazo responder (dias)</label>
-            <input type="number" class="form-control" id="rncf_prazo_responder" name="rncf_prazo_responder" value="{{ data.rncf_prazo_responder if data else '' }}" required>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-2">
-          <div class="form-group">
-            <label>Data final</label>
-            <input type="text" class="form-control" id="rncf_data_final" name="rncf_data_final" value="{{ data.rncf_data_final if data else '' }}" readonly>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="form-group">
-            <label>Status</label>
-            <select class="form-control" id="rncf_status" name="rncf_status" required>
-              <option value="Selecione" {% if not data or data.rncf_status=='Selecione' %} selected {% endif %}>Selecione</option>
-              <option value="Pendente" {% if data and data.rncf_status=='Pendente' %} selected {% endif %}>Pendente</option>
-              <option value="Finalizado" {% if data and data.rncf_status=='Finalizado' %} selected {% endif %}>Finalizado</option>
-            </select>
-          </div>
-        </div>
-        <div class="col-md-7">
-          <div class="form-group">
-            <label>Relatório preenchido - Somente arquivo .PDF</label>
-            <input type="file" class="form-control" id="rncf_relatorio_pdf" name="rncf_relatorio_pdf" accept=".pdf">
-          </div>
-        </div>
-      </div>
-      <!-- Botão de envio -->
-      {% if data %}
-      <button type="submit" formaction="{{ url_for('update_rncf_view') }}" class="btn btn-secondary w-100 mb-3" onclick="return confirm('Tem certeza que deseja atualizar o relatório?')">Atualizar Relatório</button>
-      {% else %}
-      <button type="submit" class="btn btn-secondary w-100 mb-3" onclick="return confirm('Tem certeza que deseja cadastrar o relatório?')">Cadastrar Relatório</button>
-      {% endif %}
-    </div>
-  </div>
+    {% endif %}
+
+
 </form>
 
   <!-- Bloco de filtro -->
@@ -181,7 +187,7 @@
     const filterFornecedor = document.getElementById('filter_fornecedor');
 
     let currentPage = 1;
-    let recordsPerPage = parseInt(recordsPerPageSelect.value);
+    let recordsPerPage = parseInt(recordsPerPageSelect ? recordsPerPageSelect.value : 5);
 
     function calculateFinalDate() {
       const dataNotificacaoValue = dataNotificacao.value;
@@ -189,7 +195,7 @@
 
       if (dataNotificacaoValue && !isNaN(prazoResponderValue)) {
         const data = new Date(dataNotificacaoValue);
-        data.setDate(data.getDate() + prazoResponderValue +1);
+        data.setDate(data.getDate() + prazoResponderValue + 1);
 
         const day = String(data.getDate()).padStart(2, '0');
         const month = String(data.getMonth() + 1).padStart(2, '0');
@@ -199,57 +205,46 @@
       }
     }
 
-    dataNotificacao.addEventListener('change', calculateFinalDate);
-    prazoResponder.addEventListener('input', calculateFinalDate);
-
-    rncfNumeroRelatorio.addEventListener('change', function() {
-      const numeroRelatorio = rncfNumeroRelatorio.value;
-      if (numeroRelatorio) {
-        fetch('{{ url_for("get_rncf_data") }}', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ rncf_numero_relatorio: numeroRelatorio })
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(data => {
-          document.getElementById('rncf_fornecedor').value = data.rncf_fornecedor;
-          document.getElementById('rncf_nota_fiscal').value = data.rncf_nota_fiscal;
-          document.getElementById('rncf_descricao_material').value = data.rncf_descricao_material;
-          document.getElementById('rncf_data_notificacao').value = data.rncf_data_notificacao;
-          document.getElementById('rncf_prazo_responder').value = data.rncf_prazo_responder;
-          document.getElementById('rncf_tratativa_final').value = data.rncf_tratativa_final;
-          document.getElementById('rncf_status').value = data.rncf_status;
-          calculateFinalDate();
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Número de relatório não existe no banco de dados.');
-        });
-      }
-    });
-
-    // Função para carregar o próximo número
-    function loadNextRncfNumero() {
-        fetch('{{ url_for("get_next_rncf_numero") }}')
-            .then(response => response.json())
-            .then(data => {
-                rncfNumeroRelatorio.value = data.next_numero;
-            })
-            .catch(error => {
-                console.error('Error fetching next RNCF number:', error);
-            });
+    // Só adiciona os EventListeners se os elementos existirem
+    if (dataNotificacao && prazoResponder && dataFinal) {
+        dataNotificacao.addEventListener('change', calculateFinalDate);
+        prazoResponder.addEventListener('input', calculateFinalDate);
     }
 
-    //if (!rncfNumeroRelatorio.value) {
-    //    loadNextRncfNumero();
-    //}
+    if (rncfNumeroRelatorio) {
+        rncfNumeroRelatorio.addEventListener('change', function() {
+            const numeroRelatorio = rncfNumeroRelatorio.value;
+            if (numeroRelatorio) {
+                fetch('{{ url_for("get_rncf_data") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ rncf_numero_relatorio: numeroRelatorio })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('rncf_fornecedor').value = data.rncf_fornecedor;
+                    document.getElementById('rncf_nota_fiscal').value = data.rncf_nota_fiscal;
+                    document.getElementById('rncf_descricao_material').value = data.rncf_descricao_material;
+                    document.getElementById('rncf_data_notificacao').value = data.rncf_data_notificacao;
+                    document.getElementById('rncf_prazo_responder').value = data.rncf_prazo_responder;
+                    document.getElementById('rncf_tratativa_final').value = data.rncf_tratativa_final;
+                    document.getElementById('rncf_status').value = data.rncf_status;
+                    calculateFinalDate();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Número de relatório não existe no banco de dados.');
+                });
+            }
+        });
+    }
 
     // Função para calcular a cor com base no tempo restante
     function calculateColor(dataFinal, dataNotificacao, prazo, status) {
@@ -273,8 +268,6 @@
         }
       }
     }
-
-    // Função para carregar registros
 
     function loadRecords(filters = {}, page = 1, perPage = 5) {
       const params = new URLSearchParams(filters);
@@ -394,17 +387,19 @@
 
   // Função para carregar fornecedores
   function loadFornecedores() {
-      fetch('/api/fornecedores')
-          .then(response => response.json())
-          .then(data => {
-              data.forEach(fornecedor => {
-                  const option = document.createElement('option');
-                  option.value = fornecedor.nome;
-                  option.textContent = fornecedor.nome;
-                  filterFornecedor.appendChild(option);
-              });
-          })
-          .catch(error => console.error('Error loading fornecedores:', error));
+      if (filterFornecedor) {
+          fetch('/api/fornecedores')
+              .then(response => response.json())
+              .then(data => {
+                  data.forEach(fornecedor => {
+                      const option = document.createElement('option');
+                      option.value = fornecedor.nome;
+                      option.textContent = fornecedor.nome;
+                      filterFornecedor.appendChild(option);
+                  });
+              })
+              .catch(error => console.error('Error loading fornecedores:', error));
+      }
   }
 
   // Carregar fornecedores no filtro

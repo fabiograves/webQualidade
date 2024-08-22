@@ -14,105 +14,95 @@
     {% extends "base_pesquisar.html" %}
 {% elif session['privilegio'] == 13 %}
     {% extends "base_faturamento_pesquisar_xml.html" %}
+{% elif session['privilegio'] == 21 %}
+    {% extends "base_compras.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
 
 {% block content %}
-<div class="container mt-4">
+<!-- Inclua Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <div class="py-5">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-12">
-                    <h1 class="text-center mb-4">Quantidade inspeção</h1>
-
-                    <!-- Resumo Geral -->
-                    <div class="form-row">
-                        <div class="col-md-4">
-                            <div class="alert alert-info text-center">
-                                <h4>Total registros:</h4>
-                                <p>{{ total }}</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="alert alert-danger text-center">
-                                <h4>Total Reprovados:</h4>
-                                <p>{{ reprovados }}</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="alert alert-success text-center">
-                                <h4>Total Aprovados:</h4>
-                                <p>{{ aprovados }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Formulário de Seleção de Filtros -->
-                    <form method="POST" action="{{ url_for('get_quantidade_inspecao') }}">
-                        <div class="form-row">
-                            <div class="form-group col-md-2">
-                                <label for="ano">Ano</label>
-                                <select class="form-control" id="ano" name="ano">
-                                    <option value="">Selecione</option>
-                                    {% for ano in anos_disponiveis %}
-                                        <option value="{{ ano.ano }}">{{ ano.ano }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="form-group col-md-2">
-                                <label for="mes">Mês</label>
-                                <select class="form-control" id="mes" name="mes">
-                                    <option value="">Selecione</option>
-                                    {% for mes in meses_disponiveis %}
-                                        <option value="{{ mes.mes }}">{{ mes.mes }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="form-group col-md-2">
-                                <label for="dia">Dia</label>
-                                <select class="form-control" id="dia" name="dia">
-                                    <option value="">Selecione</option>
-                                    {% for dia in dias_disponiveis %}
-                                        <option value="{{ dia.dia }}">{{ dia.dia }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label for="responsavel">Responsável</label>
-                                <select class="form-control" id="responsavel" name="responsavel">
-                                    <option value="">Selecione</option>
-                                    {% for responsavel in responsaveis %}
-                                        <option value="{{ responsavel.ri_resp_inspecao }}">{{ responsavel.ri_resp_inspecao }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-12">
-                                <button type="submit" class="btn btn-secondary w-100">Pesquisar</button>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-12">
-                                {% with messages = get_flashed_messages() %}
-                                    {% if messages %}
-                                        <div class="flash-messages">
-                                            {% for message in messages %}
-                                            <div class="alert alert-warning" role="alert">{{ message }}</div>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                {% endwith %}
-                            </div>
-                        </div>
-                    </form>
-
-                </div>
+<div class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="text-center">Quantidade Inspeção</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <label for="ano_inicio">Data Inicial:</label>
+                <input type="date" id="ano_inicio" name="ano_inicio" class="form-control" onchange="atualizarGrafico()">
+            </div>
+            <div class="col-md-3">
+                <label for="ano_fim">Data Final:</label>
+                <input type="date" id="ano_fim" name="ano_fim" class="form-control" onchange="atualizarGrafico()">
+            </div>
+            <div class="col-md-3">
+                <label for="fornecedor">Fornecedor:</label>
+                <select id="fornecedor" name="fornecedor" class="form-select" onchange="atualizarGrafico()">
+                    <option value="">Todos</option>
+                    {% for fornecedor in fornecedores %}
+                        <option value="{{ fornecedor }}">{{ fornecedor }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-12 mt-3">
+                <canvas id="graficoCanvas"></canvas>
             </div>
         </div>
     </div>
-
 </div>
+
+<script>
+    let grafico;
+
+    const ctx = document.getElementById('graficoCanvas').getContext('2d');
+
+    function atualizarGrafico() {
+        const ano_inicio = document.getElementById('ano_inicio').value;
+        const ano_fim = document.getElementById('ano_fim').value;
+        const fornecedor = document.getElementById('fornecedor').value;
+
+        const url = new URL('/dados_grafico_inspecao', window.location.origin);
+        if (ano_inicio) url.searchParams.append('ano_inicio', ano_inicio);
+        if (ano_fim) url.searchParams.append('ano_fim', ano_fim);
+        if (fornecedor) url.searchParams.append('fornecedor', fornecedor);
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (grafico) {
+                    grafico.destroy();
+                }
+
+                grafico = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Total', 'Aprovados', 'Condicionais', 'Reprovados'],
+                        datasets: [{
+                            label: 'Quantidade',
+                            data: [data.total, data.aprovados, data.condicionais, data.reprovados],
+                            backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(75, 192, 192, 0.2)', 'rgba(255, 205, 86, 0.2)', 'rgba(255, 99, 132, 0.2)'],
+                            borderColor: ['rgba(54, 162, 235, 1)', 'rgba(75, 192, 192, 1)', 'rgba(255, 205, 86, 1)', 'rgba(255, 99, 132, 1)'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        atualizarGrafico();
+    });
+</script>
 {% endblock %}
