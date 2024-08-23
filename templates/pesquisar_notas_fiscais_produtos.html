@@ -28,7 +28,7 @@
 <!-- Formulário de busca -->
 <div class="py-3">
     <div class="container">
-        <form method="GET" action="{{ url_for('pesquisar_notas_fiscais_download') }}">
+        <form method="GET" action="{{ url_for('pesquisar_notas_fiscais_produtos') }}">
             <div class="row">
                 <div class="col-md-2">
                     <label for="cad_data_emissao_nf">Data Emissão NF:</label>
@@ -65,6 +65,7 @@
     </div>
 </div>
 
+
 <!-- Tabela para exibir as notas fiscais cadastradas -->
 <div class="py-1">
     <div class="container mt-4">
@@ -73,7 +74,7 @@
                 <h2 class="text-center">Notas Fiscais Cadastradas</h2>
                 <div class="table-responsive">
                     {% for nota in notas_fiscais %}
-                    <div class="card mb-2" style="border: 3px solid {% if nota.cad_lancamento|lower == 'ok' %}#28a745{% else %}#000{% endif %};">
+                    <div class="card mb-2" style="border: 3px solid {% if nota.cad_lancamento|lower == 'ok' %}#28a745{% else %}#000{% endif %};" data-nota-id="{{ nota.id }}">
                         <div class="card-body">
                             <!-- Primeira Linha -->
                             <div class="row">
@@ -99,31 +100,9 @@
                                 <div class="col-md-12 text-left"><strong>Natureza:</strong> {{ nota.cad_natureza }}</div>
                             </div>
                             <!-- Quinta Linha -->
-                            <div class="row">
-                                <div class="col-md-12 text-left"><strong>Código XML:</strong> {{ nota.cad_cod_xml }}</div>
-                            </div>
                             <div class="row mt-3">
-                                <div class="col-md-6 text-center">
-                                    {% if nota.cad_arquivo_xml %}
-                                        <button class="btn btn-outline-secondary w-100 openProductsModal" data-nota-id="{{ nota.id }}">
-                                            <i class="fas fa-box-open"></i> Ver Produtos
-                                        </button>
-                                    {% else %}
-                                        <button class="btn btn-outline-secondary w-100" disabled>
-                                            XML não anexado
-                                        </button>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-6 text-center">
-                                    {% if nota.cad_arquivo_xml %}
-                                        <a href="{{ url_for('download_xml', nota_id=nota.id) }}" class="btn btn-outline-primary w-100">
-                                            <i class="fas fa-download"></i> Baixar XML
-                                        </a>
-                                    {% else %}
-                                        <button class="btn btn-outline-primary w-100" disabled>
-                                            XML não disponível
-                                        </button>
-                                    {% endif %}
+                                <div class="col-md-12">
+                                    <div id="produtos-{{ nota.id }}" class="products-list"></div>
                                 </div>
                             </div>
                         </div>
@@ -133,20 +112,19 @@
                 </table>
             </div>
 
-            <!-- Paginação -->
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
                     <!-- Link para a primeira página -->
                     {% if page > 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais_download', page=1, search=search_query, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Primeira</a>
+                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais_produtos', page=1, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Primeira</a>
                     </li>
                     {% endif %}
 
                     <!-- Link para a página anterior -->
                     {% if page > 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais_download', page=page-1, search=search_query, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Anterior</a>
+                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais_produtos', page=page-1, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Anterior</a>
                     </li>
                     {% endif %}
 
@@ -155,81 +133,54 @@
                     {% set end = min((total // per_page) + 1, page + 5) %}
                     {% for p in range(start, end + 1) %}
                     <li class="page-item {% if p == page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais_download', page=p, search=search_query, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">{{ p }}</a>
+                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais_produtos', page=p, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">{{ p }}</a>
                     </li>
                     {% endfor %}
 
                     <!-- Link para a próxima página -->
                     {% if page < (total // per_page) + 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais_download', page=page+1, search=search_query, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Próxima</a>
+                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais_produtos', page=page+1, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Próxima</a>
                     </li>
                     {% endif %}
 
                     <!-- Link para a última página -->
                     {% if page < (total // per_page) + 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais_download', page=(total // per_page) + 1, search=search_query, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Última</a>
+                        <a class="page-link" href="{{ url_for('pesquisar_notas_fiscais_produtos', page=(total // per_page) + 1, cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota, cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido, cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento) }}">Última</a>
                     </li>
                     {% endif %}
                 </ul>
             </nav>
+
         </div>
     </div>
 </div>
-
 </div>
-
-<!-- Modal para exibir os produtos -->
-<div class="modal fade" id="productsModal" tabindex="-1" role="dialog" aria-labelledby="productsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document"> <!-- Aqui aumenta a largura do modal -->
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="productsModalLabel">Produtos da Nota Fiscal</h5>
-            </div>
-            <div class="modal-body" style="max-height: 500px; overflow-y: auto;"> <!-- Aqui adiciona a barra de rolagem -->
-                <table class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>Pedido</th>
-                            <th>Produto</th>
-                            <th>Unidade</th>
-                            <th>Quantidade</th>
-                            <th>Valor Unitário</th>
-                            <th>ICMS (%)</th>
-                            <th>ICMS (Valor)</th>
-                            <th>Origem</th>
-                            <th>CST</th>
-                            <th>ICMS ST (%)</th>
-                            <th>ICMS ST (Valor)</th>
-                            <th>IPI (%)</th>
-                            <th>IPI (Valor)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="productsTableBody">
-                        <!-- Os produtos serão inseridos aqui dinamicamente -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.openProductsModal').forEach(function(button) {
-            button.addEventListener('click', function() {
-                var notaId = this.getAttribute('data-nota-id');
-                var modal = new bootstrap.Modal(document.getElementById('productsModal'));
+        document.querySelectorAll('.card').forEach(function(card) {
+            var notaId = card.getAttribute('data-nota-id');
+            var produtosDiv = document.getElementById('produtos-' + notaId);
 
-                fetch(`/get_products_imposto/${notaId}`)
+            if (notaId) {
+                fetch(`/get_products_lista/${notaId}`)
                     .then(response => response.json())
                     .then(data => {
-                        var productsTableBody = document.getElementById('productsTableBody');
-                        productsTableBody.innerHTML = '';
-
                         if (data.length > 0) {
+                            var table = document.createElement('table');
+                            table.className = 'table table-bordered table-hover';
+                            var thead = document.createElement('thead');
+                            thead.innerHTML = `
+                                <tr>
+                                    <th>Pedido</th>
+                                    <th>Produto</th>
+                                    <th>Unidade</th>
+                                    <th>Quantidade</th>
+                                </tr>`;
+                            table.appendChild(thead);
+
+                            var tbody = document.createElement('tbody');
                             data.forEach(function(product) {
                                 var row = document.createElement('tr');
 
@@ -249,62 +200,31 @@
                                 quantidadeCell.textContent = product.quantidade;
                                 row.appendChild(quantidadeCell);
 
-                                var valorunitarioCell = document.createElement('td');
-                                valorunitarioCell.textContent = product.valorunitario;
-                                row.appendChild(valorunitarioCell);
-
-                                var icmsPercentCell = document.createElement('td');
-                                icmsPercentCell.textContent = product.icms_percentual;
-                                row.appendChild(icmsPercentCell);
-
-                                var icmsValorCell = document.createElement('td');
-                                icmsValorCell.textContent = product.icms_valor;
-                                row.appendChild(icmsValorCell);
-
-                                var origCell = document.createElement('td');
-                                origCell.textContent = product.orig;
-                                row.appendChild(origCell);
-
-                                var cstCell = document.createElement('td');
-                                cstCell.textContent = product.cst;
-                                row.appendChild(cstCell);
-
-                                var icmsSTPercentCell = document.createElement('td');
-                                icmsSTPercentCell.textContent = product.pICMSST;
-                                row.appendChild(icmsSTPercentCell);
-
-                                var icmsSTValorCell = document.createElement('td');
-                                icmsSTValorCell.textContent = product.vICMSST;
-                                row.appendChild(icmsSTValorCell);
-
-                                var ipiPercentCell = document.createElement('td');
-                                ipiPercentCell.textContent = product.ipi_percentual;
-                                row.appendChild(ipiPercentCell);
-
-                                var ipiValorCell = document.createElement('td');
-                                ipiValorCell.textContent = product.ipi_valor;
-                                row.appendChild(ipiValorCell);
-
-                                productsTableBody.appendChild(row);
+                                tbody.appendChild(row);
                             });
-                        } else {
-                            var row = document.createElement('tr');
-                            var noDataCell = document.createElement('td');
-                            noDataCell.textContent = 'Nenhum produto encontrado.';
-                            noDataCell.colSpan = 9;
-                            noDataCell.className = 'text-center';
-                            row.appendChild(noDataCell);
-                            productsTableBody.appendChild(row);
-                        }
 
-                        modal.show();
+                            table.appendChild(tbody);
+                            produtosDiv.appendChild(table);
+                        } else {
+                            var noData = document.createElement('p');
+                            noData.textContent = 'Nenhum produto encontrado.';
+                            noData.className = 'text-center text-muted';
+                            produtosDiv.appendChild(noData);
+                        }
                     })
                     .catch(error => {
                         console.error('Erro ao buscar os produtos:', error);
+                        var errorMessage = document.createElement('p');
+                        errorMessage.textContent = 'Erro ao carregar os produtos.';
+                        errorMessage.className = 'text-center text-danger';
+                        produtosDiv.appendChild(errorMessage);
                     });
-            });
+            } else {
+                console.error('notaId é null ou indefinido para o card:', card);
+            }
         });
     });
+
 
 </script>
 {% endblock %}

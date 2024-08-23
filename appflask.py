@@ -5197,7 +5197,7 @@ def pesquisar_notas_fiscais():
     cad_numero_nota = request.args.get('cad_numero_nota', '')
     cad_data_entrada_ars = request.args.get('cad_data_entrada_ars', '')
     cad_pedido = request.args.get('cad_pedido', '')
-    cad_fornecedor = request.args.get('cad_fornecedor', '')
+    cad_fornecedor = request.args.get('cad_fornecedor', '').upper()
     cad_lancamento = request.args.get('cad_lancamento', '')
 
     page = request.args.get('page', 1, type=int)
@@ -5336,7 +5336,7 @@ def pesquisar_notas_fiscais_download():
     cad_numero_nota = request.args.get('cad_numero_nota', '')
     cad_data_entrada_ars = request.args.get('cad_data_entrada_ars', '')
     cad_pedido = request.args.get('cad_pedido', '')
-    cad_fornecedor = request.args.get('cad_fornecedor', '')
+    cad_fornecedor = request.args.get('cad_fornecedor', '').upper()
     cad_lancamento = request.args.get('cad_lancamento', '')
 
     page = request.args.get('page', 1, type=int)
@@ -5476,6 +5476,126 @@ def get_products_com_imposto(nota_id):
             return jsonify(products)
 
         except Exception as e:
+            print(f"Erro ao processar XML: {e}")
+            return jsonify({'error': 'Erro ao processar o XML da nota fiscal.'}), 500
+
+    return jsonify([]), 404
+
+
+@app.route('/pesquisar_notas_fiscais_produtos', methods=['GET', 'POST'])
+def pesquisar_notas_fiscais_produtos():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    # Lida com a visualização da lista de notas fiscais
+    search_query = request.args.get('search', '')
+    cad_data_emissao_nf = request.args.get('cad_data_emissao_nf', '')
+    cad_numero_nota = request.args.get('cad_numero_nota', '')
+    cad_data_entrada_ars = request.args.get('cad_data_entrada_ars', '')
+    cad_pedido = request.args.get('cad_pedido', '')
+    cad_fornecedor = request.args.get('cad_fornecedor', '').upper()
+    cad_lancamento = request.args.get('cad_lancamento', '')
+
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    where_clauses = []
+    params = []
+
+    if cad_data_emissao_nf:
+        where_clauses.append("cad_data_emissao_nf LIKE ?")
+        params.append('%' + cad_data_emissao_nf + '%')
+    if cad_numero_nota:
+        where_clauses.append("cad_numero_nota LIKE ?")
+        params.append('%' + cad_numero_nota + '%')
+    if cad_data_entrada_ars:
+        where_clauses.append("cad_data_entrada_ars LIKE ?")
+        params.append('%' + cad_data_entrada_ars + '%')
+    if cad_pedido:
+        where_clauses.append("cad_pedido LIKE ?")
+        params.append('%' + cad_pedido + '%')
+    if cad_fornecedor:
+        where_clauses.append("cad_fornecedor LIKE ?")
+        params.append('%' + cad_fornecedor + '%')
+    if cad_lancamento:
+        where_clauses.append("cad_lancamento LIKE ?")
+        params.append('%' + cad_lancamento + '%')
+
+    where_clause = ' AND '.join(where_clauses) if where_clauses else '1=1'
+
+    query = f"""
+                SELECT id, cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
+                       cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, 
+                       cad_lancamento, cad_arquivo_xml
+                FROM dbo.cadastro_notas_fiscais
+                WHERE {where_clause}
+                ORDER BY id DESC
+                OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+            """
+    params.extend([offset, per_page])
+    cursor.execute(query, params)
+    notas_fiscais = cursor.fetchall()
+
+    cursor.execute(f"""
+                SELECT COUNT(*)
+                FROM dbo.cadastro_notas_fiscais
+                WHERE {where_clause}
+            """, params[:-2])  # Remove os parâmetros de paginação
+    total_row = cursor.fetchone()
+    total = total_row[0] if total_row else 0
+
+    connection.close()
+
+    return render_template('pesquisar_notas_fiscais_produtos.html', notas_fiscais=notas_fiscais, page=page, total=total,
+                           per_page=per_page, search_query=search_query,
+                           cad_data_emissao_nf=cad_data_emissao_nf, cad_numero_nota=cad_numero_nota,
+                           cad_data_entrada_ars=cad_data_entrada_ars, cad_pedido=cad_pedido,
+                           cad_fornecedor=cad_fornecedor, cad_lancamento=cad_lancamento)
+
+
+@app.route('/get_products_lista/<int:nota_id>')
+def get_products_lista(nota_id):
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT cad_arquivo_xml FROM dbo.cadastro_notas_fiscais WHERE id = ?
+    """, (nota_id,))
+    row = cursor.fetchone()
+    connection.close()
+
+    if row and row[0]:
+        try:
+            # Se o XML foi armazenado como bytes, precisamos decodificá-lo
+            xml_content = row[0]
+            if isinstance(xml_content, bytes):
+                xml_content = xml_content.decode('utf-8')  # Ajuste a codificação conforme necessário
+
+            # Parse do XML
+            root = ET.fromstring(xml_content)
+
+            # Detecta automaticamente o namespace
+            ns = {'nfe': root.tag.split('}')[0].strip('{')}
+
+            products = []
+            for det in root.findall('.//nfe:det', ns):
+                prod = det.find('nfe:prod', ns)
+                if prod is not None:
+                    products.append({
+                        'pedido': prod.find('nfe:xPed', ns).text if prod.find('nfe:xPed', ns) is not None else '',
+                        'produto': prod.find('nfe:xProd', ns).text if prod.find('nfe:xProd', ns) is not None else '',
+                        'unidade': prod.find('nfe:uCom', ns).text if prod.find('nfe:uCom', ns) is not None else '',
+                        'quantidade': prod.find('nfe:qCom', ns).text if prod.find('nfe:qCom', ns) is not None else '',
+                    })
+
+            return jsonify(products)
+
+        except Exception as e:
+            # Adiciona uma mensagem de erro no log para depuração
             print(f"Erro ao processar XML: {e}")
             return jsonify({'error': 'Erro ao processar o XML da nota fiscal.'}), 500
 
