@@ -337,12 +337,12 @@ def generate_pdf():
                 ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
                 ["TORQUE 1071 Nm (CONF.TABELA)", request.form.get(f'torque_1071_{table_id}_1', ''), request.form.get(f'torque_1071_{table_id}_2', ''), request.form.get(f'torque_1071_{table_id}_3', '')],
                 ["% DE ALONGAMENTO", request.form.get(f'alongamento_1071_{table_id}_1', ''), request.form.get(f'alongamento_1071_{table_id}_2', ''), request.form.get(f'alongamento_1071_{table_id}_3', '')],
-                ["TORQUE 1091 Nm (10% A MAIS TABELA)", request.form.get(f'torque_1091_{table_id}_1', ''), request.form.get(f'torque_1091_{table_id}_2', ''), request.form.get(f'torque_1091_{table_id}_3', '')],
-                ["% DE ALONGAMENTO", request.form.get(f'alongamento_1091_{table_id}_1', ''), request.form.get(f'alongamento_1091_{table_id}_2', ''), request.form.get(f'alongamento_1091_{table_id}_3', '')],
-                ["TORQUE 1111 Nm (20% A MAIS TABELA)", request.form.get(f'torque_1111_{table_id}_1', ''), request.form.get(f'torque_1111_{table_id}_2', ''), request.form.get(f'torque_1111_{table_id}_3', '')],
-                ["% DE ALONGAMENTO", request.form.get(f'alongamento_1111_{table_id}_1', ''), request.form.get(f'alongamento_1111_{table_id}_2', ''), request.form.get(f'alongamento_1111_{table_id}_3', '')],
-                ["TORQUE 1131 Nm (30% A MAIS TABELA)", request.form.get(f'torque_1131_{table_id}_1', ''), request.form.get(f'torque_1131_{table_id}_2', ''), request.form.get(f'torque_1131_{table_id}_3', '')],
-                ["% DE ALONGAMENTO", request.form.get(f'alongamento_1131_{table_id}_1', ''), request.form.get(f'alongamento_1131_{table_id}_2', ''), request.form.get(f'alongamento_1131_{table_id}_3', '')]
+                ["TORQUE 1178,1 Nm (10% A MAIS TABELA)", request.form.get(f'torque_11781_{table_id}_1', ''), request.form.get(f'torque_11781_{table_id}_2', ''), request.form.get(f'torque_11781_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_11781_{table_id}_1', ''), request.form.get(f'alongamento_11781_{table_id}_2', ''), request.form.get(f'alongamento_11781_{table_id}_3', '')],
+                ["TORQUE 1285,2 Nm (20% A MAIS TABELA)", request.form.get(f'torque_12852_{table_id}_1', ''), request.form.get(f'torque_12852_{table_id}_2', ''), request.form.get(f'torque_12852_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_12852_{table_id}_1', ''), request.form.get(f'alongamento_12852_{table_id}_2', ''), request.form.get(f'alongamento_12852_{table_id}_3', '')],
+                ["TORQUE 1392,3 Nm (30% A MAIS TABELA)", request.form.get(f'torque_13923_{table_id}_1', ''), request.form.get(f'torque_13923_{table_id}_2', ''), request.form.get(f'torque_13923_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_13923_{table_id}_1', ''), request.form.get(f'alongamento_13923_{table_id}_2', ''), request.form.get(f'alongamento_13923_{table_id}_3', '')]
             ]
         elif table_type == '6':
             rows = [
@@ -415,6 +415,18 @@ def generate_pdf():
                 ["% DE ALONGAMENTO", request.form.get(f'alongamento_3996_{table_id}_1', ''), request.form.get(f'alongamento_3996_{table_id}_2', ''), request.form.get(f'alongamento_3996_{table_id}_3', '')],
                 ["TORQUE 432,9 Nm (30% A MAIS TABELA)", request.form.get(f'torque_4329_{table_id}_1', ''), request.form.get(f'torque_4329_{table_id}_2', ''), request.form.get(f'torque_4329_{table_id}_3', '')],
                 ["% DE ALONGAMENTO", request.form.get(f'alongamento_4329_{table_id}_1', ''), request.form.get(f'alongamento_4329_{table_id}_2', ''), request.form.get(f'alongamento_4329_{table_id}_3', '')]
+            ]
+        elif table_type == '12':
+            rows = [
+                ["DIMENSIONAL DE PARTIDA", request.form.get(f'dimensional_partida_{table_id}_1', ''), request.form.get(f'dimensional_partida_{table_id}_2', ''), request.form.get(f'dimensional_partida_{table_id}_3', '')],
+                ["TORQUE 649 Nm (CONF.TABELA)", request.form.get(f'torque_649_{table_id}_1', ''), request.form.get(f'torque_649_{table_id}_2', ''), request.form.get(f'torque_649_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_649_{table_id}_1', ''), request.form.get(f'alongamento_649_{table_id}_2', ''), request.form.get(f'alongamento_649_{table_id}_3', '')],
+                ["TORQUE 713,9 Nm (10% A MAIS TABELA)", request.form.get(f'torque_7139_{table_id}_1', ''), request.form.get(f'torque_7139_{table_id}_2', ''), request.form.get(f'torque_7139_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_7139_{table_id}_1', ''), request.form.get(f'alongamento_7139_{table_id}_2', ''), request.form.get(f'alongamento_7139_{table_id}_3', '')],
+                ["TORQUE 778,8 Nm (20% A MAIS TABELA)", request.form.get(f'torque_7788_{table_id}_1', ''), request.form.get(f'torque_7788_{table_id}_2', ''), request.form.get(f'torque_7788_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_7788_{table_id}_1', ''), request.form.get(f'alongamento_7788_{table_id}_2', ''), request.form.get(f'alongamento_7788_{table_id}_3', '')],
+                ["TORQUE 843,7 Nm (30% A MAIS TABELA)", request.form.get(f'torque_8437_{table_id}_1', ''), request.form.get(f'torque_8437_{table_id}_2', ''), request.form.get(f'torque_8437_{table_id}_3', '')],
+                ["% DE ALONGAMENTO", request.form.get(f'alongamento_8437_{table_id}_1', ''), request.form.get(f'alongamento_8437_{table_id}_2', ''), request.form.get(f'alongamento_8437_{table_id}_3', '')]
             ]
         tables_data.append((table_header, rows))
 

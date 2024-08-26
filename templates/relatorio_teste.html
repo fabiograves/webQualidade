@@ -158,15 +158,16 @@
                     <input type="text" class="form-control" id="bt_table5" name="bt_table5" placeholder='Ø - 1"'>
                 </div>
             </div>
+
+        </div>
+
+        <div class="row mt-3">
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(6)">+</button>
                 <div class="form-group mb-0">
                     <input type="text" class="form-control" id="bt_table6" name="bt_table6" placeholder='M10 - 8.8'>
                 </div>
             </div>
-        </div>
-
-        <div class="row mt-3">
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(7)">+</button>
                 <div class="form-group mb-0">
@@ -191,10 +192,19 @@
                     <input type="text" class="form-control" id="bt_table10" name="bt_table10" placeholder='M24 - 8.8'>
                 </div>
             </div>
+        </div>
+
+        <div class="row mt-3">
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(11)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table11" name="bt_table11" placeholder='M16 - 12.9'>
+                    <input type="text" class="form-control" id="bt_table11" name="bt_table11" placeholder='M16 - 12,9'>
+                </div>
+            </div>
+            <div class="col-md-2 d-flex align-items-center">
+                <button type="button" class="btn btn-primary mr-2" onclick="addTable(12)">+</button>
+                <div class="form-group mb-0">
+                    <input type="text" class="form-control" id="bt_table12" name="bt_table12" placeholder='M20 - 12,9'>
                 </div>
             </div>
         </div>
@@ -252,6 +262,7 @@
         const tableHeader9 = document.getElementById('bt_table9').value;
         const tableHeader10 = document.getElementById('bt_table10').value;
         const tableHeader11 = document.getElementById('bt_table11').value;
+        const tableHeader12 = document.getElementById('bt_table12').value;
         let tableHeader = '';
         let rows = '';
 
@@ -510,40 +521,40 @@
                         <td><input type="text" class="form-control" name="alongamento_1071_${tableId}_3" readonly></td>
                     </tr>
                     <tr>
-                        <td>TORQUE 1091 Nm (10% A MAIS TABELA)</td>
-                        <td><input type="text" class="form-control" name="torque_1091_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
-                        <td><input type="text" class="form-control" name="torque_1091_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
-                        <td><input type="text" class="form-control" name="torque_1091_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                        <td>TORQUE 1178,1 Nm (10% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_11781_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_11781_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_11781_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
                     </tr>
                     <tr>
                         <td>% DE ALONGAMENTO</td>
-                        <td><input type="text" class="form-control" name="alongamento_1091_${tableId}_1" readonly></td>
-                        <td><input type="text" class="form-control" name="alongamento_1091_${tableId}_2" readonly></td>
-                        <td><input type="text" class="form-control" name="alongamento_1091_${tableId}_3" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_11781_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_11781_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_11781_${tableId}_3" readonly></td>
                     </tr>
                     <tr>
-                        <td>TORQUE 1111 Nm (20% A MAIS TABELA)</td>
-                        <td><input type="text" class="form-control" name="torque_1111_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
-                        <td><input type="text" class="form-control" name="torque_1111_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
-                        <td><input type="text" class="form-control" name="torque_1111_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
-                    </tr>
-                    <tr>
-                        <td>% DE ALONGAMENTO</td>
-                        <td><input type="text" class="form-control" name="alongamento_1111_${tableId}_1" readonly></td>
-                        <td><input type="text" class="form-control" name="alongamento_1111_${tableId}_2" readonly></td>
-                        <td><input type="text" class="form-control" name="alongamento_1111_${tableId}_3" readonly></td>
-                    </tr>
-                    <tr>
-                        <td>TORQUE 1131 Nm (30% A MAIS TABELA)</td>
-                        <td><input type="text" class="form-control" name="torque_1131_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
-                        <td><input type="text" class="form-control" name="torque_1131_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
-                        <td><input type="text" class="form-control" name="torque_1131_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                        <td>TORQUE 1285,2 Nm (20% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_12852_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_12852_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_12852_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
                     </tr>
                     <tr>
                         <td>% DE ALONGAMENTO</td>
-                        <td><input type="text" class="form-control" name="alongamento_1131_${tableId}_1" readonly></td>
-                        <td><input type="text" class="form-control" name="alongamento_1131_${tableId}_2" readonly></td>
-                        <td><input type="text" class="form-control" name="alongamento_1131_${tableId}_3" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_12852_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_12852_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_12852_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 1392,3 Nm (30% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_13923_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_13923_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_13923_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_13923_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_13923_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_13923_${tableId}_3" readonly></td>
                     </tr>`;
                 break;
             case 6:
@@ -892,6 +903,64 @@
                         <td><input type="text" class="form-control" name="alongamento_4329_${tableId}_1" readonly></td>
                         <td><input type="text" class="form-control" name="alongamento_4329_${tableId}_2" readonly></td>
                         <td><input type="text" class="form-control" name="alongamento_4329_${tableId}_3" readonly></td>
+                    </tr>`;
+                break;
+            case 12:
+                tableHeader = tableHeader12;
+                rows = `
+                    <tr>
+                        <td>DIMENSIONAL DE PARTIDA</td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="dimensional_partida_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 649 Nm (CONF.TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_649_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_649_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_649_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_649_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_649_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_649_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 713,9 Nm (10% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_7139_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_7139_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_7139_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_7139_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_7139_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_7139_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 778,8 Nm (20% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_7788_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_7788_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_7788_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_7788_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_7788_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_7788_${tableId}_3" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>TORQUE 843,7 Nm (30% A MAIS TABELA)</td>
+                        <td><input type="text" class="form-control" name="torque_8437_${tableId}_1" oninput="calculateAlongamento('${tableId}', 1)"></td>
+                        <td><input type="text" class="form-control" name="torque_8437_${tableId}_2" oninput="calculateAlongamento('${tableId}', 2)"></td>
+                        <td><input type="text" class="form-control" name="torque_8437_${tableId}_3" oninput="calculateAlongamento('${tableId}', 3)"></td>
+                    </tr>
+                    <tr>
+                        <td>% DE ALONGAMENTO</td>
+                        <td><input type="text" class="form-control" name="alongamento_8437_${tableId}_1" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_8437_${tableId}_2" readonly></td>
+                        <td><input type="text" class="form-control" name="alongamento_8437_${tableId}_3" readonly></td>
                     </tr>`;
                 break;
         }
