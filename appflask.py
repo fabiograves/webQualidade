@@ -4933,7 +4933,7 @@ def cadastro_notas_fiscais():
         cad_cod_xml = request.form['cad_cod_xml']
         cad_certificado = request.form['cad_certificado']
         cad_observacao = request.form['cad_observacao']
-        cad_lancamento = 'Não'  # Definido como 'Desativado' por padrão
+        cad_lancamento = request.form.get('cad_lancamento', '').strip() or 'Não'
 
         # Verifica se o código XML já existe
         cursor.execute("SELECT id FROM dbo.cadastro_notas_fiscais WHERE cad_cod_xml = ?", (cad_cod_xml,))
