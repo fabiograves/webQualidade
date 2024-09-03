@@ -27,7 +27,6 @@ from io import BytesIO, StringIO
 import pdfplumber
 import re
 import zipfile
-
 import matplotlib.pyplot as plt
 import pandas as pd
 from sqlalchemy import create_engine
@@ -37,6 +36,11 @@ from flask import Flask, render_template, redirect, url_for, flash, jsonify, ses
 import datetime
 import xml.etree.ElementTree as ET
 
+from PyPDF2 import PdfReader, PdfWriter #add servidor pip install svglib
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPDF
+
+from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -675,6 +679,18 @@ def baixar_certificado_por_id():
 
     numero_certificado = request.form.get('dc_numero_certificado')
     nota_saida = request.form.get('dc_nota_saida')
+    assinado = request.form.get('assinado')
+    x = request.form.get('dc_x')
+    y = request.form.get('dc_y')
+
+    if assinado:
+        if x is None or y is None:
+            return "As coordenadas da assinatura não foram fornecidas.", 400
+        try:
+            x = int(x)
+            y = int(y)
+        except ValueError:
+            return "As coordenadas da assinatura devem ser números inteiros.", 400
 
     connection = conectar_db()
     cursor = connection.cursor()
@@ -690,8 +706,11 @@ def baixar_certificado_por_id():
 
         if arquivos:
             if len(arquivos) == 1:
-                # Se apenas um arquivo, envie diretamente
-                response = make_response(arquivos[0][0])
+                pdf_data = arquivos[0][0]
+                if assinado:
+                    pdf_data = add_signature_to_pdf(pdf_data, session['username'], x, y)
+
+                response = make_response(pdf_data)
                 content_filename = f'certificado_{numero_certificado}.pdf' if numero_certificado else f'certificados_nota_{nota_saida}.pdf'
                 response.headers['Content-Type'] = 'application/pdf'
                 response.headers['Content-Disposition'] = f'attachment; filename={content_filename}'
@@ -701,8 +720,11 @@ def baixar_certificado_por_id():
                 zip_buffer = io.BytesIO()
                 with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zf:
                     for i, arquivo in enumerate(arquivos):
+                        pdf_data = arquivo[0]
+                        if assinado:
+                            pdf_data = add_signature_to_pdf(pdf_data, session['username'], x, y)
                         pdf_filename = f'certificado_{i + 1}.pdf'
-                        zf.writestr(pdf_filename, arquivo[0])
+                        zf.writestr(pdf_filename, pdf_data)
 
                 zip_buffer.seek(0)
                 response = make_response(zip_buffer.read())
@@ -721,6 +743,44 @@ def baixar_certificado_por_id():
         print(f"Ação realizada por: {username}, Baixar Certificado NF:{numero_certificado} - NS:{nota_saida}")
         cursor.close()
         connection.close()
+
+def add_signature_to_pdf(pdf_data, username, x, y):
+    # Caminho da assinatura do usuário
+    signature_path = os.path.join('static', 'assinaturas', f'{username}.svg')
+
+    if not os.path.exists(signature_path):
+        return pdf_data  # Se a assinatura não existir, retorna o PDF original
+
+    # Carrega o SVG como um desenho
+    drawing = svg2rlg(signature_path)
+
+    # Cria um novo PDF com a assinatura
+    packet = io.BytesIO()
+    can = canvas.Canvas(packet)
+
+    # Defina a posição e o tamanho da assinatura
+    # x = 525  # posição horizontal (ajuste conforme necessário)
+    # y = 50   # posição vertical (ajuste conforme necessário)
+    renderPDF.draw(drawing, can, x, y)
+    can.save()
+
+    # Mesclar o novo PDF com a assinatura no PDF original
+    packet.seek(0)
+    signature_pdf = PdfReader(packet)
+    existing_pdf = PdfReader(io.BytesIO(pdf_data))
+    output = PdfWriter()
+
+    # Assumindo que o PDF tem apenas uma página. Se tiver mais, é necessário iterar sobre elas
+    page = existing_pdf.pages[0]
+    page.merge_page(signature_pdf.pages[0])
+    output.add_page(page)
+
+    # Salve o PDF modificado em um buffer
+    output_buffer = io.BytesIO()
+    output.write(output_buffer)
+    output_buffer.seek(0)
+
+    return output_buffer.read()
 
 
 @app.route('/criar_certificado')
@@ -1122,25 +1182,20 @@ def gerar_pdf():
 
         # Cria um arquivo PDF na memória
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4)
-        page_width, page_height = letter
+        doc = BaseDocTemplate(buffer, pagesize=A4,
+                              leftMargin=0.5 * inch,
+                              rightMargin=0.5 * inch,
+                              topMargin=0.25 * inch,  # Ajuste a margem superior aqui
+                              bottomMargin=0.25 * inch)
+
+        page_width, page_height = A4
 
         # Estilo personalizado para parágrafos centralizados
         estilo_centralizado = ParagraphStyle(name='Centralizado', alignment=TA_CENTER, fontSize=8)
 
-        # Defina as margens da página
-        left_margin = 0.4 * inch
-        right_margin = 0.4 * inch
-        top_margin = 0.4 * inch
-        bottom_margin = 0.4 * inch
-
-        # Remove cabeçalho e rodapé
-        doc.topMargin = top_margin
-        doc.bottomMargin = bottom_margin
-
         # Defina a largura e altura efetivas da página
-        effective_page_width = page_width - left_margin - right_margin
-        effective_page_height = page_height - top_margin - bottom_margin
+        effective_page_width = page_width - doc.leftMargin - doc.rightMargin
+        effective_page_height = page_height - doc.topMargin - doc.bottomMargin
 
         elements = []
 
@@ -1175,7 +1230,7 @@ def gerar_pdf():
 
         elements.append(table)
 
-        elements.append(Spacer(0.1, 0.1 * inch))
+        elements.append(Spacer(0.05, 0.05 * inch))
 
         styles = getSampleStyleSheet()
         normal_style = styles['Normal']
@@ -1192,7 +1247,7 @@ def gerar_pdf():
 
         elements.append(table)
 
-        elements.append(Spacer(0.1, 0.1 * inch))
+        elements.append(Spacer(0.05, 0.05 * inch))
 
         data = [
             [Paragraph(f"<font size='6'>Cliente<br/>Customer: </font><font size='10'>{criar_cliente}</font>",
@@ -1236,7 +1291,7 @@ def gerar_pdf():
 
         elements.append(table)
 
-        elements.append(Spacer(0.1, 0.1 * inch))
+        elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_comp_quimica:
             c = dados_pdf['comp_quimica'].get('cc_c', '') or '---'
@@ -1274,7 +1329,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), 8),
             ]))
             elements.append(comp_quimica_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_prop_mecanicas:
             escoamento = dados_pdf['prop_mecanicas'].get('cc_escoamento', '') or '---'
@@ -1334,7 +1389,7 @@ def gerar_pdf():
                 ('FONTSIZE', (0, 0), (-1, -1), 8),
             ]))
             elements.append(prop_mecanicas_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
 
         revenimento = cc_revenimento or '---'
@@ -1372,7 +1427,7 @@ def gerar_pdf():
         tratamentos_table.setStyle(TableStyle(cell_styles))
 
         elements.append(tratamentos_table)
-        elements.append(Spacer(0.1, 0.1 * inch))
+        elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_porcas:
             dureza = dados_pdf['ad_porcas'].get('cc_adporcas_dureza', '') or '---'
@@ -1419,7 +1474,7 @@ def gerar_pdf():
             adporcas_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adporcas_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_pinos:
             dureza = dados_pdf['ad_pinos'].get('cc_adpinos_dureza', '') or '---'
@@ -1467,7 +1522,7 @@ def gerar_pdf():
             adpinos_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adpinos_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_parafusos:
             dureza = dados_pdf['ad_parafusos'].get('cc_adparafusos_dureza', "") or '---'
@@ -1517,7 +1572,7 @@ def gerar_pdf():
             adparafusos_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adparafusos_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_grampos:
             dureza = dados_pdf['ad_grampos'].get('cc_adgrampos_dureza', '') or '---'
@@ -1558,7 +1613,7 @@ def gerar_pdf():
             adgrampos_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adgrampos_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_arruelas:
             dureza = dados_pdf['ad_arruelas'].get('cc_adarruelas_dureza', '') or '---'
@@ -1596,7 +1651,7 @@ def gerar_pdf():
             adarruelas_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adarruelas_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_anel:
             dureza = dados_pdf['ad_anel'].get('cc_adanel_dureza', '') or '---'
@@ -1634,7 +1689,7 @@ def gerar_pdf():
             adanel_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adanel_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_prisioneiro_estojo:
             dureza = dados_pdf['ad_prisioneiro_estojo'].get('cc_adprisioneiroestojo_dureza', '') or '---'
@@ -1672,7 +1727,7 @@ def gerar_pdf():
             adprisioneiroestojo_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adprisioneiroestojo_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_especial:
             dureza = dados_pdf['ad_especial'].get('cc_adespecial_dureza', '') or '---'
@@ -1726,7 +1781,7 @@ def gerar_pdf():
             adespecial_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adespecial_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_chumbador:
             dureza = dados_pdf['ad_chumbador'].get('cc_adchumbador_dureza', '') or '---'
@@ -1761,7 +1816,7 @@ def gerar_pdf():
             adchumbador_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adchumbador_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_rebite:
             dureza = dados_pdf['ad_rebite'].get('cc_adrebite_dureza', '') or '---'
@@ -1798,7 +1853,7 @@ def gerar_pdf():
             adrebite_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adrebite_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_chaveta:
             dureza = dados_pdf['ad_chaveta'].get('cc_adchaveta_dureza', '') or '---'
@@ -1836,7 +1891,7 @@ def gerar_pdf():
             adchaveta_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adchaveta_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if tem_dados_ad_contrapino:
             dureza = dados_pdf['ad_contrapino'].get('cc_adcontrapino_dureza', '') or '---'
@@ -1871,7 +1926,7 @@ def gerar_pdf():
             adcontrapino_table.setStyle(TableStyle(cell_styles))
 
             elements.append(adcontrapino_table)
-            elements.append(Spacer(0.1, 0.1 * inch))
+            elements.append(Spacer(0.05, 0.05 * inch))
 
         if imagens:
             imagem_cells = []
@@ -1890,48 +1945,103 @@ def gerar_pdf():
 
             elements.append(imagem_table)
 
-        nome_assinatura = session.get('nome_assinatura')
-        setor_assinatura = session.get('setor_assinatura')
-        telefone_assinatura = session.get('telefone_assinatura')
-        email_assinatura = session.get('email_assinatura')
+            # Função para desenhar o rodapé na parte inferior da página
+        def add_footer(canvas, doc):
+            canvas.saveState()
+            width, height = A4
 
-        tamanho_da_fonte = 8
+            # Adiciona o bloco de assinatura na parte inferior
+            nome_assinatura = session.get('nome_assinatura')
+            setor_assinatura = session.get('setor_assinatura')
+            telefone_assinatura = session.get('telefone_assinatura')
+            email_assinatura = session.get('email_assinatura')
 
-        data = [
-            ["Observação - Comments", f"Visto - Signs / Data - Date: {criar_data}"],
-            [Paragraph("* Com base nos resultados obtidos, certificamos<br/>"
-                       "que o produto encontra-se dentro das normas citadas.<br/>"
-                       "* In according with test results, we certify that the<br/>"
-                       "product is in according with reference standards.<br/> ", estilo_centralizado),
-             Paragraph(f"{nome_assinatura}<br/><b>{setor_assinatura}</b><br/>"
-                       f"{telefone_assinatura}<br/>{email_assinatura}", estilo_centralizado)
-             ]
-        ]
+            footer_data = [
+                ["Observação - Comments", f"Visto - Signs / Data - Date: {criar_data}"],
+                [Paragraph("* Com base nos resultados obtidos, certificamos<br/>"
+                           "que o produto encontra-se dentro das normas citadas.<br/>"
+                           "* In according with test results, we certify that the<br/>"
+                           "product is in according with reference standards.<br/> ", estilo_centralizado),
+                 Paragraph(f"{nome_assinatura}<br/><b>{setor_assinatura}</b><br/>"
+                           f"{telefone_assinatura}<br/>{email_assinatura}", estilo_centralizado)
+                 ]
+            ]
 
-        cell_styles = [
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), tamanho_da_fonte),
-        ]
+            footer_table = Table(footer_data, colWidths=doc.width / 2)
+            footer_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ]))
 
-        rodape_table = Table(data, colWidths=effective_page_width / 2)
-        rodape_table.setStyle(TableStyle(cell_styles))
+            footer_table.wrapOn(canvas, doc.width, doc.bottomMargin)
+            footer_table.drawOn(canvas, doc.leftMargin, doc.bottomMargin - 0.5 * inch)
 
-        elements.append(rodape_table)
-        elements.append(Spacer(0.1, 0.1 * inch))
+            canvas.restoreState()
 
+        # Crie o template do documento com o rodapé fixo
+        doc = BaseDocTemplate(buffer, pagesize=A4,
+                              leftMargin=0.5 * inch,
+                              rightMargin=0.5 * inch,
+                              topMargin=0.4 * inch,  # Ajuste a margem superior aqui
+                              bottomMargin=1.1 * inch)
+
+        # Frame que abrange toda a página, menos o espaço reservado para o rodapé
+        frame_main = Frame(doc.leftMargin, doc.bottomMargin,
+                           doc.width, doc.height, id='normal')
+
+        # Página com o rodapé personalizado
+        template = PageTemplate(id='test', frames=frame_main, onPage=add_footer)
+        doc.addPageTemplates([template])
+
+        # Construa o documento com o conteúdo e rodapé
         doc.build(elements)
+
+        # Agora, desenha a assinatura SVG em cima do PDF
+        buffer.seek(0)
+        pdf_reader = PdfReader(buffer)
+        output_buffer = io.BytesIO()
+        pdf_writer = PdfWriter()
+
+        # Caminho do SVG da assinatura
+        signature_path = os.path.join('static', 'assinaturas', f'{session.get("username")}.svg')
+        if os.path.exists(signature_path):
+            signature_drawing = svg2rlg(signature_path)
+            scale_factor = 0.9 * inch / max(signature_drawing.width, signature_drawing.height)
+            signature_drawing.scale(scale_factor, scale_factor)
+
+        # Adiciona a assinatura na primeira página
+        for page in pdf_reader.pages:
+            packet = io.BytesIO()
+            can = canvas.Canvas(packet, pagesize=A4)
+
+            # Coordenadas fixas para a posição da assinatura na parte inferior da página
+            if os.path.exists(signature_path):
+                signature_x = 495  # Ajuste conforme necessário
+                signature_y = 55  # Altura fixa na parte inferior da página
+
+                # Desenhar a assinatura
+                renderPDF.draw(signature_drawing, can, signature_x, signature_y)
+
+            can.save()
+            packet.seek(0)
+            signature_pdf = PdfReader(packet)
+            page.merge_page(signature_pdf.pages[0])
+            pdf_writer.add_page(page)
+
+        # Salva o PDF final com a assinatura no buffer
+        pdf_writer.write(output_buffer)
+        output_buffer.seek(0)
 
         session.pop('dados_pdf', None)
 
-        inserir_certificado_gerado(buffer, nota_saida, cod_produto)
+        inserir_certificado_gerado(output_buffer, nota_saida, cod_produto)
 
         # Define o nome do arquivo PDF
         nome_arquivo_pdf = f"{numero_certificado}-{criar_desc_material}.pdf"
 
-        buffer.seek(0)
-        return Response(buffer.getvalue(), mimetype='application/pdf',
+        return Response(output_buffer.getvalue(), mimetype='application/pdf',
                         headers={"Content-Disposition": f"attachment;filename={nome_arquivo_pdf}"})
 
     else:
