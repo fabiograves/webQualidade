@@ -35,12 +35,14 @@ import sqlalchemy
 from flask import Flask, render_template, redirect, url_for, flash, jsonify, session, request
 import datetime
 import xml.etree.ElementTree as ET
-
-from PyPDF2 import PdfReader, PdfWriter #add servidor pip install svglib
+from PyPDF2 import PdfReader, PdfWriter
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
-
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
+
+#pip install xlsxwriter
+import xlsxwriter
+
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -5444,7 +5446,7 @@ def download_xml(nota_id):
 
 
 @app.route('/pesquisar_notas_fiscais_download', methods=['GET'])
-@requires_privilege(9, 13, 21)
+@requires_privilege(9, 13, 21, 31)
 def pesquisar_notas_fiscais_download():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -5722,6 +5724,229 @@ def get_products_lista(nota_id):
             return jsonify({'error': 'Erro ao processar o XML da nota fiscal.'}), 500
 
     return jsonify([]), 404
+
+
+@app.route('/cadastro_estoque_vendas2', methods=['GET', 'POST'])
+@requires_privilege(9, 31)
+def cadastro_estoque_vendas2():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        cad_cliente = request.form['cad_cliente']
+        numero_contrato = request.form['cad_numero_contrato']
+        cod_cliente = request.form['cad_codigo_cliente']
+        desc_cliente = request.form['cad_desc_cliente']
+        codigo_ars = request.form['cad_codigo_ars']
+        desc_ars = request.form['cad_desc_ars']
+        preco_ars = request.form['cad_preco_ars']
+        quantidade = request.form['cad_quantidade']
+        quantidade_minima = request.form['cad_quantidade_minima']
+        data_atual = datetime.datetime.now().strftime('%Y-%m-%d')
+        connection = conectar_db()
+        try:
+            with connection.cursor() as cursor:
+                sql = ("INSERT INTO dbo.cadastro_estoque_vendas2 (numero_contrato, cod_cliente, desc_cliente, cod_ars,"
+                       "desc_ars, preco_venda_ars, quantidade, quantidade_minima, data_ult_mod) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                cursor.execute(sql, numero_contrato, cod_cliente, desc_cliente, codigo_ars, desc_ars, preco_ars,
+                               quantidade, quantidade_minima, data_atual)
+                connection.commit()
+            flash('Formulário enviado com sucesso!')
+            username = session['username']
+            print(f"Ação realizada por: {username}, Cadastro Item C ARS:{codigo_ars}")
+            return redirect(url_for('cadastro_estoque_vendas2'))
+        except Exception as e:
+            print(f"Erro ao inserir o fornecedor no banco de dados: {e}")
+            flash(f"Erro ao inserir o fornecedor no banco de dados: {e}")
+            return redirect(url_for('cadastro_estoque_vendas2'))
+        finally:
+            connection.close()
+    else:
+        return render_template('cadastro_estoque_vendas2.html')
+
+
+@app.route('/movimentar_estoque', methods=['POST'])
+@requires_privilege(9, 31)
+def movimentar_estoque():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    cod_ars = request.form['cod_ars']
+    quantidade = int(request.form['quantidade'])
+    tipo_movimentacao = request.form['tipo_movimentacao']
+    numero_contrato = request.form['numero_contrato']  # Recuperar o contrato selecionado
+    data_movimentacao = datetime.datetime.now().strftime('%Y-%m-%d')
+
+    # Conectar ao banco de dados
+    connection = conectar_db()
+
+    try:
+        with connection.cursor() as cursor:
+            # Atualiza a quantidade do estoque de acordo com o tipo de movimentação, para o contrato específico
+            if tipo_movimentacao == 'entrada':
+                cursor.execute(
+                    "UPDATE dbo.cadastro_estoque_vendas2 SET quantidade = quantidade + ? WHERE cod_ars = ? AND numero_contrato = ?",
+                    (quantidade, cod_ars, numero_contrato)
+                )
+            elif tipo_movimentacao == 'saida':
+                cursor.execute(
+                    "UPDATE dbo.cadastro_estoque_vendas2 SET quantidade = quantidade - ? WHERE cod_ars = ? AND numero_contrato = ?",
+                    (quantidade, cod_ars, numero_contrato)
+                )
+
+            # Registra a movimentação no banco de dados
+            sql_movimentacao = (
+                "INSERT INTO dbo.cadastro_movimentacao_vendas2 (cod_ars, numero_contrato, tipo_movimentacao, "
+                "quantidade, data_movimentacao) VALUES (?, ?, ?, ?, ?)"
+            )
+            cursor.execute(sql_movimentacao, (cod_ars, numero_contrato, tipo_movimentacao, quantidade, data_movimentacao))
+
+            connection.commit()
+            flash(f'Movimentação de {tipo_movimentacao} quantidade {quantidade} código ARS: {cod_ars}')
+    except Exception as e:
+        print(f"Erro ao registrar a movimentação: {e}")
+        flash(f"Erro ao registrar a movimentação: {e}")
+    finally:
+        connection.close()
+
+    # Redireciona de volta para a página de movimentação com o contrato selecionado
+    return redirect(url_for('movimentacao_vendas2', numero_contrato=numero_contrato))
+
+
+@app.route('/movimentacao_vendas2', methods=['GET', 'POST'])
+@requires_privilege(9, 31)
+def movimentacao_vendas2():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    username = session['username']  # Obter o nome de usuário da sessão
+    connection = conectar_db()
+    items = []
+    contratos = []
+    numero_contrato = request.form.get('numero_contrato') or request.args.get('numero_contrato')
+
+    try:
+        with connection.cursor() as cursor:
+            # Buscar os contratos permitidos para o usuário atual
+            cursor.execute("SELECT numero_contrato FROM dbo.usuario_contrato WHERE username = ?", (username,))
+            contratos = cursor.fetchall()
+
+            # Se nenhum contrato for selecionado (primeiro acesso), pegar o primeiro contrato e redirecionar
+            if not numero_contrato and contratos:
+                numero_contrato = contratos[0][0]  # Acessa o primeiro elemento da tupla
+                return redirect(url_for('movimentacao_vendas2', numero_contrato=numero_contrato))
+
+            # Buscar os itens filtrados pelo contrato selecionado
+            if numero_contrato:
+                cursor.execute(
+                    "SELECT cod_cliente, cod_ars, desc_ars,preco_venda_ars, quantidade, quantidade_minima FROM dbo.cadastro_estoque_vendas2 WHERE numero_contrato = ?",
+                    (numero_contrato,)
+                )
+                items = cursor.fetchall()
+
+    except Exception as e:
+        print(f"Erro ao buscar os itens: {e}")
+        flash(f"Erro ao buscar os itens: {e}")
+    finally:
+        connection.close()
+
+    # Renderizar a página com o contrato selecionado e os itens filtrados
+    return render_template('movimentacao_vendas2.html', items=items, contratos=contratos, contrato_selecionado=numero_contrato)
+
+
+@app.route('/relatorio_cod_vendas2', methods=['GET', 'POST'])
+@requires_privilege(9, 31)
+def relatorio_cod_vendas2():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    contratos = []
+    relatorio = []
+    numero_contrato = request.form.get('numero_contrato')
+    data_inicio = request.form.get('data_inicio')
+    data_fim = request.form.get('data_fim')
+
+    try:
+        with connection.cursor() as cursor:
+            # Obter os contratos para o seletor
+            cursor.execute("SELECT DISTINCT numero_contrato FROM dbo.cadastro_estoque_vendas2")
+            contratos = cursor.fetchall()
+
+            # Se contrato e datas forem selecionados, buscar as informações para o relatório
+            if numero_contrato and data_inicio and data_fim:
+                try:
+                    # Obter os dados do relatório
+                    sql = ("""
+                        SELECT estoque.cod_ars, estoque.desc_ars, estoque.cod_cliente, estoque.quantidade,
+                            SUM(CASE WHEN mov.tipo_movimentacao = 'entrada' THEN mov.quantidade ELSE 0 END) AS total_entrada,
+                            SUM(CASE WHEN mov.tipo_movimentacao = 'saida' THEN mov.quantidade ELSE 0 END) AS total_saida
+                        FROM dbo.cadastro_estoque_vendas2 estoque
+                        LEFT JOIN dbo.cadastro_movimentacao_vendas2 mov ON estoque.cod_ars = mov.cod_ars
+                        WHERE estoque.numero_contrato = ? AND mov.data_movimentacao BETWEEN ? AND ?
+                        GROUP BY estoque.cod_ars, estoque.desc_ars, estoque.cod_cliente, estoque.quantidade
+                    """)
+                    cursor.execute(sql, (numero_contrato, data_inicio, data_fim))
+                    rows = cursor.fetchall()
+
+                    # Converter os dados para uma lista de dicionários
+                    relatorio = [
+                        {
+                            'cod_ars': row.cod_ars,
+                            'desc_ars': row.desc_ars,
+                            'cod_cliente': row.cod_cliente,
+                            'quantidade': row.quantidade,
+                            'total_entrada': row.total_entrada,
+                            'total_saida': row.total_saida
+                        } for row in rows
+                    ]
+
+                except ValueError:
+                    flash("Formato de data inválido. Use o formato dd/mm/aaaa.")
+            else:
+                flash("Por favor, selecione um contrato e um intervalo de datas válido.")
+    except Exception as e:
+        flash(f"Erro ao gerar o relatório: {e}")
+    finally:
+        connection.close()
+
+    return render_template('relatorio_cod_vendas2.html', contratos=contratos, relatorio=relatorio,
+                           numero_contrato=numero_contrato, data_inicio=data_inicio, data_fim=data_fim)
+
+
+@app.route('/export_relatorio_excel', methods=['POST'])
+@requires_privilege(9, 31)
+def export_relatorio_excel():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    # Recebe os dados do relatório no formato JSON
+    relatorio_data = request.form.get('relatorio_data')
+
+    try:
+        # Converte os dados de JSON para uma lista de dicionários
+        relatorio = json.loads(relatorio_data)
+
+        # Cria o DataFrame a partir dos dados do relatório
+        df = pd.DataFrame(relatorio)
+
+        # Gerar o arquivo Excel em memória
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        df.to_excel(writer, index=False, sheet_name='Relatório')
+
+        # Fechar o writer para garantir que o arquivo seja salvo corretamente
+        writer.close()
+
+        # Definir o ponteiro de leitura para o início do arquivo
+        output.seek(0)
+
+        # Enviar o arquivo Excel para o download
+        return send_file(output, download_name="relatorio_cod_vendas2.xlsx", as_attachment=True)
+
+    except Exception as e:
+        flash(f"Erro ao gerar o arquivo Excel: {e}")
+        return redirect(url_for('relatorio_cod_vendas2'))
 
 
 if __name__ == '__main__':

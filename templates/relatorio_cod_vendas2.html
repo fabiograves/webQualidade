@@ -1,0 +1,120 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
+{% elif session['privilegio'] == 4 %}
+    {% extends "base_inspecao_final.html" %}
+{% elif session['privilegio'] == 11 %}
+    {% extends "base_faturamento.html" %}
+{% elif session['privilegio'] == 12 %}
+    {% extends "base_faturamento_lancamento.html" %}
+{% elif session['privilegio'] == 99 %}
+    {% extends "base_pesquisar.html" %}
+{% elif session['privilegio'] == 13 %}
+    {% extends "base_faturamento_pesquisar_xml.html" %}
+{% elif session['privilegio'] == 21 %}
+    {% extends "base_compras.html" %}
+{% elif session['privilegio'] == 31 %}
+    {% extends "base_vendas2.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<form method="POST" action="{{ url_for('relatorio_cod_vendas2') }}">
+    <div class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="numero_contrato">Selecione o contrato:</label>
+                        <select name="numero_contrato" id="numero_contrato" class="form-control">
+                            {% for contrato in contratos %}
+                                <option value="{{ contrato.numero_contrato }}" {% if contrato.numero_contrato == numero_contrato %}selected{% endif %}>
+                                    {{ contrato.numero_contrato }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="data_inicio">Data início:</label>
+                        <input type="date" class="form-control" id="data_inicio" name="data_inicio" placeholder="dd/mm/aaaa" value="{{ data_inicio }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="data_fim">Data fim:</label>
+                        <input type="date" class="form-control" id="data_fim" name="data_fim" placeholder="dd/mm/aaaa" value="{{ data_fim }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exibir mensagens de feedback -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+                        <ul>
+                            {% for message in messages %}
+                            <li>{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Botões de Ação -->
+            <div class="row mt-3">
+                <div class="col-md-12 d-flex justify-content-between">
+                    <button type="submit" class="btn btn-primary">Gerar Relatório</button>
+
+                    <!-- Botão de exportar para Excel, alinhado à direita -->
+                    <button type="submit" formaction="{{ url_for('export_relatorio_excel') }}" class="btn btn-secondary ms-auto">Exportar para Excel</button>
+
+                    <!-- Campo oculto para passar os dados do relatório como JSON -->
+                    <input type="hidden" name="relatorio_data" value='{{ relatorio | tojson }}'>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+<!-- Exibição do relatório -->
+{% if relatorio %}
+    <div class="container mt-4">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Código ARS</th>
+                    <th>Descrição ARS</th>
+                    <th>Código Cliente</th>
+                    <th>Quantidade Atual</th>
+                    <th>Total Entrada</th>
+                    <th>Total Saída</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in relatorio %}
+                <tr>
+                    <td>{{ item.cod_ars }}</td>
+                    <td>{{ item.desc_ars }}</td>
+                    <td>{{ item.cod_cliente }}</td>
+                    <td>{{ item.quantidade }}</td>
+                    <td>{{ item.total_entrada }}</td>
+                    <td>{{ item.total_saida }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,147 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
+{% elif session['privilegio'] == 4 %}
+    {% extends "base_inspecao_final.html" %}
+{% elif session['privilegio'] == 11 %}
+    {% extends "base_faturamento.html" %}
+{% elif session['privilegio'] == 12 %}
+    {% extends "base_faturamento_lancamento.html" %}
+{% elif session['privilegio'] == 99 %}
+    {% extends "base_pesquisar.html" %}
+{% elif session['privilegio'] == 13 %}
+    {% extends "base_faturamento_pesquisar_xml.html" %}
+{% elif session['privilegio'] == 21 %}
+    {% extends "base_compras.html" %}
+{% elif session['privilegio'] == 31 %}
+    {% extends "base_vendas2.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <form method="POST" action="{{ url_for('cadastro_estoque_vendas2') }}" enctype="multipart/form-data">
+        <div class="py-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="text-center">Cadastro de Itens Vendas 2</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Cliente??</label>
+                            <input type="text" class="form-control" id="cad_cliente" name="cad_cliente" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Numero Contrato</label>
+                            <input type="text" class="form-control" id="cad_numero_contrato" name="cad_numero_contrato" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Código ARS</label>
+                            <input type="text" class="form-control" id="cad_codigo_ars" name="cad_codigo_ars" required>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label>Descrição ARS</label>
+                            <input type="text" class="form-control" id="cad_desc_ars" name="cad_desc_ars" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Código Cliente</label>
+                            <input type="text" class="form-control" id="cad_codigo_cliente" name="cad_codigo_cliente" required>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-group">
+                            <label>Descrição Cliente</label>
+                            <input type="text" class="form-control" id="cad_desc_cliente" name="cad_desc_cliente" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Preço Vendas ARS</label>
+                            <input type="text" class="form-control" id="cad_preco_ars" name="cad_preco_ars" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Quantidade Atual</label>
+                            <input type="number" class="form-control" id="cad_quantidade" name="cad_quantidade" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Quantidade Mínima</label>
+                            <input type="number" class="form-control" id="cad_quantidade_minima" name="cad_quantidade_minima">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Item</button>
+                </div>
+
+                <div class="row">
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            <div class="flash-messages">
+                                {% for message in messages %}
+                                <div class="alert alert-warning" role="alert">{{ message }}</div>
+                                    {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+            </div>
+        </div>
+    </form>
+
+<script>
+    document.getElementById('cad_preco_ars').addEventListener('input', function (e) {
+        var value = e.target.value.replace(/\D/g, ''); // Remove tudo que não for dígito
+        value = (value / 100).toFixed(2); // Divide por 100 e fixa em duas casas decimais
+        e.target.value = 'R$ ' + value.replace('.', ','); // Formata como R$ xx,xx
+    });
+
+    document.querySelector('form').addEventListener('submit', function (e) {
+        var precoField = document.getElementById('cad_preco_ars');
+        precoField.value = precoField.value.replace(/[^\d,.-]/g, ''); // Remove o símbolo 'R$' antes de enviar
+
+        // Adicionando a confirmação antes de submeter o formulário
+        var confirmation = confirm("Tem certeza que deseja cadastrar este item?");
+        if (!confirmation) {
+            e.preventDefault(); // Cancela o envio se o usuário clicar em "Cancelar"
+        }
+    });
+
+</script>
+
+{% endblock %}

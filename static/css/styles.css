@@ -95,6 +95,57 @@
     padding: 10px; /* Espaçamento interno dentro dos "cards" */
 }
 
+/* Estilização do botão de Entrada */
+.btn-entrada {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 5px 5px; /* Aumentar padding para botões maiores */
+    font-size: 16px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    width: 120px; /* Definir largura fixa para os botões */
+    justify-content: center; /* Centralizar o conteúdo */
+    margin-right: 10px; /* Espaço entre os botões */
+    transition: background-color 0.3s ease;
+}
 
+.btn-entrada i {
+    margin-right: 5px;
+}
 
+/* Hover no botão de Entrada */
+.btn-entrada:hover {
+    background-color: #218838;
+}
+
+/* Estilização do botão de Saída */
+.btn-saida {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 5px; /* Aumentar padding para botões maiores */
+    font-size: 16px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    width: 120px; /* Definir largura fixa para os botões */
+    justify-content: center; /* Centralizar o conteúdo */
+    transition: background-color 0.3s ease;
+}
+
+.btn-saida i {
+    margin-right: 5px;
+}
+
+/* Hover no botão de Saída */
+.btn-saida:hover {
+    background-color: #c82333;
+}
+
+.custom-container {
+    max-width: 80%; /* Define 80% da largura da tela, você pode ajustar este valor */
+    margin: 0 auto; /* Centraliza o conteúdo horizontalmente */
+}
 

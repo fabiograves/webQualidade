@@ -1,0 +1,166 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
+{% elif session['privilegio'] == 4 %}
+    {% extends "base_inspecao_final.html" %}
+{% elif session['privilegio'] == 11 %}
+    {% extends "base_faturamento.html" %}
+{% elif session['privilegio'] == 12 %}
+    {% extends "base_faturamento_lancamento.html" %}
+{% elif session['privilegio'] == 99 %}
+    {% extends "base_pesquisar.html" %}
+{% elif session['privilegio'] == 13 %}
+    {% extends "base_faturamento_pesquisar_xml.html" %}
+{% elif session['privilegio'] == 21 %}
+    {% extends "base_compras.html" %}
+{% elif session['privilegio'] == 31 %}
+    {% extends "base_vendas2.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<form method="POST" action="{{ url_for('movimentacao_vendas2') }}">
+
+<div class="py-5">
+    <div class="container">
+        <div class="row d-flex align-items-center">
+            <div class="col-md-2">
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="numero_contrato">Selecione o contrato:</label>
+                    <select name="numero_contrato" id="numero_contrato" class="form-control">
+                        {% for contrato in contratos %}
+                            <option value="{{ contrato.numero_contrato }}" {% if contrato.numero_contrato == contrato_selecionado %}selected{% endif %}>
+                                {{ contrato.numero_contrato }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2 d-flex align-items-stretch">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+        </div>
+        <div class="row">
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            <div class="flash-messages">
+                                {% for message in messages %}
+                                <div class="alert alert-warning" role="alert">{{ message }}</div>
+                                    {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+    </div>
+</div>
+
+</form>
+
+<div class="container custom-container">
+    <h1 class="text-center">Movimentação de Itens - Vendas 2</h1>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Código Cliente</th>
+                <th>Código ARS</th>
+                <th>Descrição ARS</th>
+                <th>Preço</th>
+                <th>Quantidade Atual</th>
+                <th>Quantidade Minima</th>
+                <th>Entrada</th>
+                <th>Saída</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr class="{% if item.quantidade|int < item.quantidade_minima|int %}table-danger{% endif %}">
+                <td>{{ item.cod_cliente }}</td>
+                <td>{{ item.cod_ars }}</td>
+                <td>{{ item.desc_ars }}</td>
+                <td>{{ item.preco_venda_ars }}</td>
+                <td>{{ item.quantidade }}</td>
+                <td>{{ item.quantidade_minima }}</td>
+                <td>
+                    <!-- Botão Entrada -->
+                    <button class="btn btn-entrada" onclick="showModal('{{ item.cod_ars }}', 'entrada')">
+                        <i class="fas fa-plus-circle"></i> Entrada
+                    </button>
+                </td>
+                <td>
+                    <!-- Botão Saída -->
+                    <button class="btn btn-saida" onclick="showModal('{{ item.cod_ars }}', 'saida')">
+                        <i class="fas fa-minus-circle"></i> Saída
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal para movimentação -->
+<div class="modal fade" id="modalMovimentacao" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Movimentação de Estoque</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('movimentar_estoque') }}">
+                <input type="hidden" name="numero_contrato" value="{{ contrato_selecionado }}">
+                <div class="modal-body">
+                    <input type="hidden" name="cod_ars" id="modalCodArs">
+                    <input type="hidden" name="tipo_movimentacao" id="modalTipoMovimentacao">
+                    <div class="form-group">
+                        <label for="modalQuantidade">Quantidade</label>
+                        <input type="number" class="form-control" id="modalQuantidade" name="quantidade" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showModal(cod_ars, tipo) {
+        // Certifica-se de que os campos de ID existem
+        const modalCodArs = document.getElementById('modalCodArs');
+        const modalTipoMovimentacao = document.getElementById('modalTipoMovimentacao');
+        const modalQuantidade = document.getElementById('modalQuantidade');
+        const modalTitle = document.getElementById('modalTitle');
+
+        // Define os valores para os campos ocultos e o título do modal
+        if (modalCodArs && modalTipoMovimentacao && modalQuantidade) {
+            modalCodArs.value = cod_ars;
+            modalTipoMovimentacao.value = tipo;
+
+            if (tipo === 'entrada') {
+                modalTitle.innerText = 'Adicionar Quantidade';
+            } else {
+                modalTitle.innerText = 'Remover Quantidade';
+            }
+
+            // Exibe o modal
+            var modal = new bootstrap.Modal(document.getElementById('modalMovimentacao'));
+            modal.show();
+        } else {
+            console.error('Elementos de entrada não encontrados.');
+        }
+    }
+</script>
+
+{% endblock %}

@@ -70,6 +70,7 @@
                                 <li class="nav-item">
                                     <a class="nav-link active" aria-current="page" href="{{ url_for('home') }}">Home</a>
                                 </li>
+
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Vendas 2
@@ -82,75 +83,18 @@
                                         </li>
                                     </ul>
                                 </li>
+
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Faturamento
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais') }}">Pesquisar Nota Fiscal</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais_produtos') }}">Pesquisar Nota Fiscal - Lista</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais_download') }}">Pesquisar Nota Fiscal - Valor</a></li>
                                         <li>
-                                            <hr class="dropdown-divider">
+                                            <a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais_download') }}">Pesquisar Nota Fiscal</a>
                                         </li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_notas_fiscais') }}">Cadastro Nota Fiscal</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_notas_fiscais_lancamento') }}">Lançamento Nota Fiscal</a></li>
                                     </ul>
                                 </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Inspeção
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ url_for('reprova_inspecao') }}">Reprova Inspeção</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_itens_ars') }}">Cadastro Itens</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_picker') }}">Cadastro Picker</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_separador') }}">Cadastro Separador</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_recusa') }}">Cadastro Recusa</a></li>
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_reprova_inspecao') }}">Pesquisar Reprova</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('relatorio_reprovados') }}">Relatório Reprovados</a></li>
 
-                                    </ul>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Qualidade
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_certificados') }}">Cadastro Certificado</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_equipamento') }}">Cadastro Equipamento</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_fornecedor') }}">Cadastro Fornecedor</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('criar_certificado') }}">Criar Certificado</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('relatorio_teste') }}">Criar Relatório Torque</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('download_certificado') }}">Download Certificado</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_avaliacao_diaria') }}">IQF Mensal</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_certificado') }}">Pesquisar Certificado</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('resumo_trimestral') }}">Resumo Trimestral</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('get_quantidade_inspecao') }}">Quantidade Inspeção</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('rncf') }}">Não Conformidade</a></li>
-
-                                    </ul>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Recebimento
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ url_for('avaliacao_diaria') }}">Avaliação Diária</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_norma') }}">Cadastro Normas</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_recebimento_concluido') }}">Cadastro Recebimento Concluido</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('lista_norma') }}">Lista Normas</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_registro_inspecao') }}">Pesquisar Registro Inspeção</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_recebimento_concluido') }}">Pesquisar Recebimento Concluido</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('plano_controle_inspecao') }}">Plano de Controle</a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('registro_inspecao') }}">Registrar Inspeção</a></li>
-
-                                        <li id="abrirCalculadora"><a class="dropdown-item" href="#">Abrir Calculadora</a></li>
-                                    </ul>
-                                </li>
                             </ul>
                         </div>
                     </div>
