@@ -41,14 +41,18 @@
                 <div class="row">
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label>Cliente??</label>
-                            <input type="text" class="form-control" id="cad_cliente" name="cad_cliente" required>
+                            <label>Cliente</label>
+                            <select class="form-control" id="cad_numero_contrato" name="cad_numero_contrato" required>
+                                {% for contrato in contratos %}
+                                    <option value="{{ contrato[0] }}">{{ contrato[0] }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label>Numero Contrato</label>
-                            <input type="text" class="form-control" id="cad_numero_contrato" name="cad_numero_contrato" required>
+                            <label>Contrato</label>
+                            <input type="text" class="form-control" id="cad_contrato_interno" name="cad_contrato_interno" required>
                         </div>
                     </div>
                 </div>

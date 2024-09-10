@@ -5732,8 +5732,23 @@ def cadastro_estoque_vendas2():
     if not is_logged_in():
         return redirect(url_for('login'))
 
+    username = session['username']  # Obter o nome de usuário logado
+    connection = conectar_db()
+    contratos = []
+
+    try:
+        with connection.cursor() as cursor:
+            # Buscar os contratos permitidos para o usuário atual
+            cursor.execute("SELECT numero_contrato FROM dbo.usuario_contrato WHERE username = ?", (username,))
+            contratos = cursor.fetchall()
+    except Exception as e:
+        print(f"Erro ao buscar os contratos: {e}")
+        flash(f"Erro ao buscar os contratos: {e}")
+    finally:
+        connection.close()
+
     if request.method == 'POST':
-        cad_cliente = request.form['cad_cliente']
+        contrato_interno = request.form['cad_contrato_interno']
         numero_contrato = request.form['cad_numero_contrato']
         cod_cliente = request.form['cad_codigo_cliente']
         desc_cliente = request.form['cad_desc_cliente']
@@ -5743,26 +5758,25 @@ def cadastro_estoque_vendas2():
         quantidade = request.form['cad_quantidade']
         quantidade_minima = request.form['cad_quantidade_minima']
         data_atual = datetime.datetime.now().strftime('%Y-%m-%d')
+
         connection = conectar_db()
         try:
             with connection.cursor() as cursor:
-                sql = ("INSERT INTO dbo.cadastro_estoque_vendas2 (numero_contrato, cod_cliente, desc_cliente, cod_ars,"
-                       "desc_ars, preco_venda_ars, quantidade, quantidade_minima, data_ult_mod) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-                cursor.execute(sql, numero_contrato, cod_cliente, desc_cliente, codigo_ars, desc_ars, preco_ars,
+                sql = ("INSERT INTO dbo.cadastro_estoque_vendas2 (numero_contrato, contrato_interno, cod_cliente, desc_cliente, cod_ars,"
+                       "desc_ars, preco_venda_ars, quantidade, quantidade_minima, data_ult_mod) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                cursor.execute(sql, numero_contrato, contrato_interno, cod_cliente, desc_cliente, codigo_ars, desc_ars, preco_ars,
                                quantidade, quantidade_minima, data_atual)
                 connection.commit()
             flash('Formulário enviado com sucesso!')
-            username = session['username']
-            print(f"Ação realizada por: {username}, Cadastro Item C ARS:{codigo_ars}")
             return redirect(url_for('cadastro_estoque_vendas2'))
         except Exception as e:
-            print(f"Erro ao inserir o fornecedor no banco de dados: {e}")
-            flash(f"Erro ao inserir o fornecedor no banco de dados: {e}")
+            print(f"Erro ao inserir no banco de dados: {e}")
+            flash(f"Erro ao inserir no banco de dados: {e}")
             return redirect(url_for('cadastro_estoque_vendas2'))
         finally:
             connection.close()
     else:
-        return render_template('cadastro_estoque_vendas2.html')
+        return render_template('cadastro_estoque_vendas2.html', contratos=contratos)
 
 
 @app.route('/movimentar_estoque', methods=['POST'])
@@ -5771,6 +5785,8 @@ def movimentar_estoque():
     if not is_logged_in():
         return redirect(url_for('login'))
 
+    contrato_interno = request.form['contrato_interno']
+    print("contrato interno: ", contrato_interno)
     cod_ars = request.form['cod_ars']
     quantidade = int(request.form['quantidade'])
     tipo_movimentacao = request.form['tipo_movimentacao']
@@ -5785,21 +5801,21 @@ def movimentar_estoque():
             # Atualiza a quantidade do estoque de acordo com o tipo de movimentação, para o contrato específico
             if tipo_movimentacao == 'entrada':
                 cursor.execute(
-                    "UPDATE dbo.cadastro_estoque_vendas2 SET quantidade = quantidade + ? WHERE cod_ars = ? AND numero_contrato = ?",
-                    (quantidade, cod_ars, numero_contrato)
+                    "UPDATE dbo.cadastro_estoque_vendas2 SET quantidade = quantidade + ? WHERE cod_ars = ? AND numero_contrato = ? AND contrato_interno = ?",
+                    (quantidade, cod_ars, numero_contrato, contrato_interno)
                 )
             elif tipo_movimentacao == 'saida':
                 cursor.execute(
-                    "UPDATE dbo.cadastro_estoque_vendas2 SET quantidade = quantidade - ? WHERE cod_ars = ? AND numero_contrato = ?",
-                    (quantidade, cod_ars, numero_contrato)
+                    "UPDATE dbo.cadastro_estoque_vendas2 SET quantidade = quantidade - ? WHERE cod_ars = ? AND numero_contrato = ? AND contrato_interno = ?",
+                    (quantidade, cod_ars, numero_contrato, contrato_interno)
                 )
 
             # Registra a movimentação no banco de dados
             sql_movimentacao = (
-                "INSERT INTO dbo.cadastro_movimentacao_vendas2 (cod_ars, numero_contrato, tipo_movimentacao, "
-                "quantidade, data_movimentacao) VALUES (?, ?, ?, ?, ?)"
+                "INSERT INTO dbo.cadastro_movimentacao_vendas2 (cod_ars, numero_contrato, contrato_interno, tipo_movimentacao, "
+                "quantidade, data_movimentacao) VALUES (?, ?, ?, ?, ?, ?)"
             )
-            cursor.execute(sql_movimentacao, (cod_ars, numero_contrato, tipo_movimentacao, quantidade, data_movimentacao))
+            cursor.execute(sql_movimentacao, (cod_ars, numero_contrato, contrato_interno, tipo_movimentacao, quantidade, data_movimentacao))
 
             connection.commit()
             flash(f'Movimentação de {tipo_movimentacao} quantidade {quantidade} código ARS: {cod_ars}')
@@ -5839,7 +5855,7 @@ def movimentacao_vendas2():
             # Buscar os itens filtrados pelo contrato selecionado
             if numero_contrato:
                 cursor.execute(
-                    "SELECT cod_cliente, cod_ars, desc_ars,preco_venda_ars, quantidade, quantidade_minima FROM dbo.cadastro_estoque_vendas2 WHERE numero_contrato = ?",
+                    "SELECT contrato_interno, cod_cliente, cod_ars, desc_ars, preco_venda_ars, quantidade, quantidade_minima FROM dbo.cadastro_estoque_vendas2 WHERE numero_contrato = ?",
                     (numero_contrato,)
                 )
                 items = cursor.fetchall()
@@ -5878,13 +5894,13 @@ def relatorio_cod_vendas2():
                 try:
                     # Obter os dados do relatório
                     sql = ("""
-                        SELECT estoque.cod_ars, estoque.desc_ars, estoque.cod_cliente, estoque.quantidade,
+                        SELECT estoque.cod_ars, estoque.desc_ars, estoque.cod_cliente, estoque.quantidade, estoque.contrato_interno,
                             SUM(CASE WHEN mov.tipo_movimentacao = 'entrada' THEN mov.quantidade ELSE 0 END) AS total_entrada,
                             SUM(CASE WHEN mov.tipo_movimentacao = 'saida' THEN mov.quantidade ELSE 0 END) AS total_saida
                         FROM dbo.cadastro_estoque_vendas2 estoque
                         LEFT JOIN dbo.cadastro_movimentacao_vendas2 mov ON estoque.cod_ars = mov.cod_ars
                         WHERE estoque.numero_contrato = ? AND mov.data_movimentacao BETWEEN ? AND ?
-                        GROUP BY estoque.cod_ars, estoque.desc_ars, estoque.cod_cliente, estoque.quantidade
+                        GROUP BY estoque.contrato_interno, estoque.cod_ars, estoque.desc_ars, estoque.cod_cliente, estoque.quantidade
                     """)
                     cursor.execute(sql, (numero_contrato, data_inicio, data_fim))
                     rows = cursor.fetchall()
@@ -5892,6 +5908,7 @@ def relatorio_cod_vendas2():
                     # Converter os dados para uma lista de dicionários
                     relatorio = [
                         {
+                            'contrato_interno': row.contrato_interno,
                             'cod_ars': row.cod_ars,
                             'desc_ars': row.desc_ars,
                             'cod_cliente': row.cod_cliente,

@@ -36,7 +36,7 @@
             </div>
             <div class="col-md-6">
                 <div class="form-group">
-                    <label for="numero_contrato">Selecione o contrato:</label>
+                    <label for="numero_contrato">Selecione o cliente:</label>
                     <select name="numero_contrato" id="numero_contrato" class="form-control">
                         {% for contrato in contratos %}
                             <option value="{{ contrato.numero_contrato }}" {% if contrato.numero_contrato == contrato_selecionado %}selected{% endif %}>
@@ -71,6 +71,7 @@
     <table class="table table-bordered">
         <thead>
             <tr>
+                <th>Contrato</th>
                 <th>Código Cliente</th>
                 <th>Código ARS</th>
                 <th>Descrição ARS</th>
@@ -84,6 +85,7 @@
         <tbody>
             {% for item in items %}
             <tr class="{% if item.quantidade|int < item.quantidade_minima|int %}table-danger{% endif %}">
+                <td>{{ item.contrato_interno }}</td>
                 <td>{{ item.cod_cliente }}</td>
                 <td>{{ item.cod_ars }}</td>
                 <td>{{ item.desc_ars }}</td>
@@ -92,13 +94,13 @@
                 <td>{{ item.quantidade_minima }}</td>
                 <td>
                     <!-- Botão Entrada -->
-                    <button class="btn btn-entrada" onclick="showModal('{{ item.cod_ars }}', 'entrada')">
+                    <button class="btn btn-entrada" onclick="showModal('{{ item.cod_ars }}', 'entrada', '{{ item.contrato_interno }}')">
                         <i class="fas fa-plus-circle"></i> Entrada
                     </button>
                 </td>
                 <td>
                     <!-- Botão Saída -->
-                    <button class="btn btn-saida" onclick="showModal('{{ item.cod_ars }}', 'saida')">
+                    <button class="btn btn-saida" onclick="showModal('{{ item.cod_ars }}', 'saida', '{{ item.contrato_interno }}')">
                         <i class="fas fa-minus-circle"></i> Saída
                     </button>
                 </td>
@@ -117,8 +119,10 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('movimentar_estoque') }}">
+                <input type="hidden" name="contrato" value="{{ contrato }}">
                 <input type="hidden" name="numero_contrato" value="{{ contrato_selecionado }}">
                 <div class="modal-body">
+                    <input type="hidden" name="contrato_interno" id="modalContratoInterno">
                     <input type="hidden" name="cod_ars" id="modalCodArs">
                     <input type="hidden" name="tipo_movimentacao" id="modalTipoMovimentacao">
                     <div class="form-group">
@@ -136,17 +140,19 @@
 </div>
 
 <script>
-    function showModal(cod_ars, tipo) {
+    function showModal(cod_ars, tipo, contrato_interno) {
         // Certifica-se de que os campos de ID existem
         const modalCodArs = document.getElementById('modalCodArs');
         const modalTipoMovimentacao = document.getElementById('modalTipoMovimentacao');
+        const modalContratoInterno = document.getElementById('modalContratoInterno');
         const modalQuantidade = document.getElementById('modalQuantidade');
         const modalTitle = document.getElementById('modalTitle');
 
         // Define os valores para os campos ocultos e o título do modal
-        if (modalCodArs && modalTipoMovimentacao && modalQuantidade) {
+        if (modalCodArs && modalTipoMovimentacao && modalQuantidade && modalContratoInterno) {
             modalCodArs.value = cod_ars;
             modalTipoMovimentacao.value = tipo;
+            modalContratoInterno.value = contrato_interno;
 
             if (tipo === 'entrada') {
                 modalTitle.innerText = 'Adicionar Quantidade';

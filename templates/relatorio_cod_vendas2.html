@@ -33,7 +33,7 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="numero_contrato">Selecione o contrato:</label>
+                        <label for="numero_contrato">Selecione o Cliente:</label>
                         <select name="numero_contrato" id="numero_contrato" class="form-control">
                             {% for contrato in contratos %}
                                 <option value="{{ contrato.numero_contrato }}" {% if contrato.numero_contrato == numero_contrato %}selected{% endif %}>
@@ -93,6 +93,7 @@
         <table class="table table-bordered">
             <thead>
                 <tr>
+                    <th>Contrato</th>
                     <th>Código ARS</th>
                     <th>Descrição ARS</th>
                     <th>Código Cliente</th>
@@ -104,6 +105,7 @@
             <tbody>
                 {% for item in relatorio %}
                 <tr>
+                    <td>{{ item.contrato_interno }}</td>
                     <td>{{ item.cod_ars }}</td>
                     <td>{{ item.desc_ars }}</td>
                     <td>{{ item.cod_cliente }}</td>
