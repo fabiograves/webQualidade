@@ -105,7 +105,7 @@
     border-radius: 5px;
     display: inline-flex;
     align-items: center;
-    width: 120px; /* Definir largura fixa para os botões */
+    width: 100px; /* Definir largura fixa para os botões */
     justify-content: center; /* Centralizar o conteúdo */
     margin-right: 10px; /* Espaço entre os botões */
     transition: background-color 0.3s ease;
@@ -122,7 +122,7 @@
 
 /* Estilização do botão de Saída */
 .btn-saida {
-    background-color: #dc3545;
+    background-color: #387ae7;
     color: white;
     border: none;
     padding: 5px 5px; /* Aumentar padding para botões maiores */
@@ -130,7 +130,7 @@
     border-radius: 5px;
     display: inline-flex;
     align-items: center;
-    width: 120px; /* Definir largura fixa para os botões */
+    width: 100px; /* Definir largura fixa para os botões */
     justify-content: center; /* Centralizar o conteúdo */
     transition: background-color 0.3s ease;
 }
@@ -141,6 +141,30 @@
 
 /* Hover no botão de Saída */
 .btn-saida:hover {
+    background-color: #387ae7;
+}
+
+/* Estilização do botão de Saída */
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 5px; /* Aumentar padding para botões maiores */
+    font-size: 16px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    width: 100px; /* Definir largura fixa para os botões */
+    justify-content: center; /* Centralizar o conteúdo */
+    transition: background-color 0.3s ease;
+}
+
+.btn-danger i {
+    margin-right: 5px;
+}
+
+/* Hover no botão de Saída */
+.btn-danger:hover {
     background-color: #c82333;
 }
 
@@ -148,4 +172,3 @@
     max-width: 80%; /* Define 80% da largura da tela, você pode ajustar este valor */
     margin: 0 auto; /* Centraliza o conteúdo horizontalmente */
 }
-

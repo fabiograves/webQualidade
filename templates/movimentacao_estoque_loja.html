@@ -66,7 +66,7 @@
         </thead>
         <tbody>
             {% for item in items %}
-            <tr class="{% if item.vencimento < hoje %}table-danger{% elif item.vencimento < quinze_dias %}table-warning{% elif item.vencimento < cinco_dias %}table-orange{% endif %}">
+            <tr class="{% if item.vencimento < hoje %}table-danger{% elif item.vencimento < cinco_dias %}table-warning{% elif item.vencimento < quinze_dias %}table-secondary{% endif %}">
                 <td>{{ item.cod_ars }}</td>
                 <td>{{ item.desc_ars }}</td>
                 <td>{{ item.lote }}</td>
