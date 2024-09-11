@@ -18,6 +18,8 @@
     {% extends "base_compras.html" %}
 {% elif session['privilegio'] == 31 %}
     {% extends "base_vendas2.html" %}
+{% elif session['privilegio'] == 41 %}
+    {% extends "base_loja.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -36,7 +38,7 @@
             </div>
             <div class="col-md-6">
                 <div class="form-group">
-                    <label for="numero_contrato">Selecione o cliente:</label>
+                    <label for="numero_contrato">Selecione o Cliente:</label>
                     <select name="numero_contrato" id="numero_contrato" class="form-control">
                         {% for contrato in contratos %}
                             <option value="{{ contrato.numero_contrato }}" {% if contrato.numero_contrato == contrato_selecionado %}selected{% endif %}>
@@ -77,7 +79,7 @@
                 <th>Descrição ARS</th>
                 <th>Preço</th>
                 <th>Quantidade Atual</th>
-                <th>Quantidade Minima</th>
+                <th>Quantidade Mínima</th>
                 <th>Entrada</th>
                 <th>Saída</th>
             </tr>

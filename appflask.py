@@ -40,8 +40,8 @@ from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
 
-#pip install xlsxwriter
-import xlsxwriter
+#add novo
+from datetime import timedelta
 
 
 app = Flask(__name__)
@@ -5964,6 +5964,135 @@ def export_relatorio_excel():
     except Exception as e:
         flash(f"Erro ao gerar o arquivo Excel: {e}")
         return redirect(url_for('relatorio_cod_vendas2'))
+
+
+@app.route('/cadastro_estoque_loja', methods=['GET', 'POST'])
+@requires_privilege(9, 41)  # Substitua de acordo com seus privilégios
+def cadastro_estoque_loja():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        # Captura os dados do formulário
+        cod_ars = request.form['cad_cod_ars']
+        desc_ars = request.form['cad_desc_ars']
+        lote = request.form.get('cad_lote', '')
+        quantidade = request.form.get('cad_quantidade', 0)
+        vencimento = request.form.get('cad_vencimento', None)
+
+        try:
+            # Conectar ao banco de dados
+            conn = conectar_db()
+            cursor = conn.cursor()
+
+            # Inserir os dados no banco de dados
+            cursor.execute("""
+                INSERT INTO [dbo].[cadastro_estoque_loja] 
+                (cod_ars, desc_ars, lote, quantidade, vencimento)
+                VALUES (?, ?, ?, ?, ?)
+            """, (cod_ars, desc_ars, lote, quantidade, vencimento))
+
+            # Commit para salvar as alterações
+            conn.commit()
+
+            # Fechar a conexão
+            cursor.close()
+            conn.close()
+
+            # Mensagem de sucesso
+            flash('Item cadastrado com sucesso!', 'success')
+            return redirect(url_for('cadastro_estoque_loja'))
+
+        except Exception as e:
+            # Mensagem de erro
+            flash(f'Erro ao cadastrar item: {str(e)}', 'danger')
+
+    return render_template('cadastro_estoque_loja.html')
+
+
+@app.route('/movimentacao_estoque_loja', methods=['GET', 'POST'])
+@requires_privilege(9, 41)
+def movimentacao_estoque_loja():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        # Captura os dados enviados pelo formulário
+        cod_ars = request.form['cod_ars']
+        lote = request.form['lote']
+        quantidade = int(request.form['quantidade'])
+        tipo_movimentacao = request.form['tipo_movimentacao']
+
+        # Conectar ao banco de dados
+        connection = conectar_db()
+
+        try:
+            with connection.cursor() as cursor:
+                # Atualiza a quantidade no estoque_loja de acordo com a movimentação
+                if tipo_movimentacao == 'entrada':
+                    cursor.execute(
+                        "UPDATE dbo.cadastro_estoque_loja SET quantidade = quantidade + ? WHERE cod_ars = ? AND lote = ?",
+                        (quantidade, cod_ars, lote)
+                    )
+                elif tipo_movimentacao == 'saida':
+                    cursor.execute(
+                        "UPDATE dbo.cadastro_estoque_loja SET quantidade = quantidade - ? WHERE cod_ars = ? AND lote = ?",
+                        (quantidade, cod_ars, lote)
+                    )
+
+                connection.commit()
+                flash(f'Movimentação de {tipo_movimentacao} realizada com sucesso. Quantidade: {quantidade}, Código ARS: {cod_ars}')
+
+        except Exception as e:
+            # Registrar o erro no console e notificar o usuário
+            print(f"Erro ao registrar a movimentação: {e}")
+            flash(f"Erro ao registrar a movimentação: {e}")
+        finally:
+            connection.close()
+
+        return redirect(url_for('movimentacao_estoque_loja'))
+
+    # Se for um GET, renderiza a página de movimentação de estoque
+    connection = conectar_db()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT cod_ars, desc_ars, lote, quantidade, vencimento FROM dbo.cadastro_estoque_loja ORDER BY vencimento ASC")
+        items = cursor.fetchall()
+
+    hoje = datetime.date.today()
+    quinze_dias = hoje + timedelta(days=15)
+    cinco_dias = hoje + timedelta(days=5)
+
+    return render_template('movimentacao_estoque_loja.html', items=items, hoje=hoje, quinze_dias=quinze_dias,
+                           cinco_dias=cinco_dias)
+
+
+@app.route('/deletar_estoque_loja', methods=['POST'])
+@requires_privilege(9, 41)
+def deletar_estoque_loja():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    cod_ars = request.form['cod_ars']
+    lote = request.form['lote']
+
+    # Conectar ao banco de dados
+    connection = conectar_db()
+
+    try:
+        with connection.cursor() as cursor:
+            # Deletar o item do estoque_loja
+            cursor.execute("DELETE FROM dbo.cadastro_estoque_loja WHERE cod_ars = ? AND lote = ?", (cod_ars, lote))
+
+            connection.commit()
+            flash(f'Item código ARS: {cod_ars} deletado com sucesso.')
+
+    except Exception as e:
+        print(f"Erro ao deletar o item: {e}")
+        flash(f"Erro ao deletar o item: {e}")
+    finally:
+        connection.close()
+
+    return redirect(url_for('movimentacao_estoque_loja'))
 
 
 if __name__ == '__main__':

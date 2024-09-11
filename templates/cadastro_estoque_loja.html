@@ -28,12 +28,12 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-    <form method="POST" action="{{ url_for('cadastro_estoque_vendas2') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('cadastro_estoque_loja') }}" enctype="multipart/form-data">
         <div class="py-5">
             <div class="container">
                 <div class="row">
                     <div class="col-md-12">
-                        <h1 class="text-center">Cadastro de Itens Vendas 2</h1>
+                        <h1 class="text-center">Cadastro de Itens Loja</h1>
                     </div>
                 </div>
             </div>
@@ -43,27 +43,8 @@
                 <div class="row">
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label>Cliente</label>
-                            <select class="form-control" id="cad_numero_contrato" name="cad_numero_contrato" required>
-                                {% for contrato in contratos %}
-                                    <option value="{{ contrato[0] }}">{{ contrato[0] }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Contrato</label>
-                            <input type="text" class="form-control" id="cad_contrato_interno" name="cad_contrato_interno" required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="form-group">
                             <label>Código ARS</label>
-                            <input type="text" class="form-control" id="cad_codigo_ars" name="cad_codigo_ars" required>
+                            <input type="text" class="form-control" id="cad_cod_ars" name="cad_cod_ars" required>
                         </div>
                     </div>
                     <div class="col-md-9">
@@ -77,35 +58,20 @@
                 <div class="row">
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label>Código Cliente</label>
-                            <input type="text" class="form-control" id="cad_codigo_cliente" name="cad_codigo_cliente">
-                        </div>
-                    </div>
-                    <div class="col-md-9">
-                        <div class="form-group">
-                            <label>Descrição Cliente</label>
-                            <input type="text" class="form-control" id="cad_desc_cliente" name="cad_desc_cliente">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Preço Vendas ARS</label>
-                            <input type="text" class="form-control" id="cad_preco_ars" name="cad_preco_ars">
+                            <label>Lote</label>
+                            <input type="text" class="form-control" id="cad_lote" name="cad_lote">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label>Quantidade Atual</label>
+                            <label>Quantidade</label>
                             <input type="number" class="form-control" id="cad_quantidade" name="cad_quantidade">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label>Quantidade Mínima</label>
-                            <input type="number" class="form-control" id="cad_quantidade_minima" name="cad_quantidade_minima">
+                            <label>Vencimento</label>
+                            <input type="date" class="form-control" id="cad_vencimento" name="cad_vencimento">
                         </div>
                     </div>
                 </div>
@@ -130,17 +96,9 @@
         </div>
     </form>
 
+
 <script>
-    document.getElementById('cad_preco_ars').addEventListener('input', function (e) {
-        var value = e.target.value.replace(/\D/g, ''); // Remove tudo que não for dígito
-        value = (value / 100).toFixed(2); // Divide por 100 e fixa em duas casas decimais
-        e.target.value = 'R$ ' + value.replace('.', ','); // Formata como R$ xx,xx
-    });
-
     document.querySelector('form').addEventListener('submit', function (e) {
-        var precoField = document.getElementById('cad_preco_ars');
-        precoField.value = precoField.value.replace(/[^\d,.-]/g, ''); // Remove o símbolo 'R$' antes de enviar
-
         // Adicionando a confirmação antes de submeter o formulário
         var confirmation = confirm("Tem certeza que deseja cadastrar este item?");
         if (!confirmation) {

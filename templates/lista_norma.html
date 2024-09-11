@@ -18,6 +18,8 @@
     {% extends "base_compras.html" %}
 {% elif session['privilegio'] == 31 %}
     {% extends "base_vendas2.html" %}
+{% elif session['privilegio'] == 41 %}
+    {% extends "base_loja.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}

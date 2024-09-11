@@ -1,0 +1,218 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
+{% elif session['privilegio'] == 4 %}
+    {% extends "base_inspecao_final.html" %}
+{% elif session['privilegio'] == 11 %}
+    {% extends "base_faturamento.html" %}
+{% elif session['privilegio'] == 12 %}
+    {% extends "base_faturamento_lancamento.html" %}
+{% elif session['privilegio'] == 99 %}
+    {% extends "base_pesquisar.html" %}
+{% elif session['privilegio'] == 13 %}
+    {% extends "base_faturamento_pesquisar_xml.html" %}
+{% elif session['privilegio'] == 21 %}
+    {% extends "base_compras.html" %}
+{% elif session['privilegio'] == 31 %}
+    {% extends "base_vendas2.html" %}
+{% elif session['privilegio'] == 41 %}
+    {% extends "base_loja.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<form method="POST" action="{{ url_for('movimentacao_estoque_loja') }}">
+
+<div class="py-5">
+    <div class="container">
+        <div class="row">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                        <div class="alert alert-warning" role="alert">{{ message }}</div>
+                            {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+
+</form>
+
+<div class="container custom-container">
+    <h1 class="text-center">Movimentação de Itens - Loja</h1>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Código ARS</th>
+                <th>Descrição ARS</th>
+                <th>Lote</th>
+                <th>Quantidade</th>
+                <th>Vencimento</th>
+                <th>Entrada</th>
+                <th>Saída</th>
+                <th>Apagar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr class="{% if item.vencimento < hoje %}table-danger{% elif item.vencimento < quinze_dias %}table-warning{% elif item.vencimento < cinco_dias %}table-orange{% endif %}">
+                <td>{{ item.cod_ars }}</td>
+                <td>{{ item.desc_ars }}</td>
+                <td>{{ item.lote }}</td>
+                <td>{{ item.quantidade }}</td>
+                <td>
+                    {% if item.vencimento %}
+                        {{ item.vencimento.strftime('%d/%m/%Y') }}
+                    {% else %}
+                        Não disponível
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="btn btn-entrada" onclick="showModal('{{ item.cod_ars }}', '{{ item.lote }}', 'entrada')">
+                        <i class="fas fa-plus-circle"></i> Entrada
+                    </button>
+                </td>
+                <td>
+                    <button class="btn btn-saida" onclick="showModal('{{ item.cod_ars }}', '{{ item.lote }}', 'saida')">
+                        <i class="fas fa-minus-circle"></i> Saída
+                    </button>
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('deletar_estoque_loja') }}">
+                        <input type="hidden" name="cod_ars" value="{{ item.cod_ars }}">
+                        <input type="hidden" name="lote" value="{{ item.lote }}">
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ item.cod_ars }}', '{{ item.lote }}')">
+                            <i class="fas fa-trash-alt"></i> Apagar
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal para movimentação -->
+<div class="modal fade" id="modalMovimentacao" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Movimentação de Estoque</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('movimentacao_estoque_loja') }}">
+                <input type="hidden" name="cod_ars" id="modalCodArs">
+                <input type="hidden" name="lote" id="modalLote">
+                <input type="hidden" name="tipo_movimentacao" id="modalTipoMovimentacao">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="modalQuantidade">Quantidade</label>
+                        <input type="number" class="form-control" id="modalQuantidade" name="quantidade" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para confirmação de exclusão -->
+<div class="modal fade" id="modalConfirmDelete" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalTitle">Confirmação de Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Digite a senha para confirmar a exclusão do item:</p>
+                <div class="form-group">
+                    <label for="deletePassword">Senha:</label>
+                    <input type="password" class="form-control" id="deletePassword" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Confirmar Exclusão</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function showModal(cod_ars, lote, tipo) {
+        // Atualiza os valores dos campos ocultos
+        document.getElementById('modalCodArs').value = cod_ars;
+        document.getElementById('modalLote').value = lote;  // Certifique-se de ter um campo oculto para 'lote'
+        document.getElementById('modalTipoMovimentacao').value = tipo;
+
+        // Atualiza o título do modal
+        const modalTitle = document.getElementById('modalTitle');
+        modalTitle.innerText = tipo === 'entrada' ? 'Adicionar Quantidade' : 'Remover Quantidade';
+
+        // Exibe o modal
+        var modal = new bootstrap.Modal(document.getElementById('modalMovimentacao'));
+        modal.show();
+    }
+
+    function confirmDelete(cod_ars, lote) {
+        // Armazena os valores do item a ser excluído
+        document.getElementById('confirmDeleteBtn').setAttribute('data-cod-ars', cod_ars);
+        document.getElementById('confirmDeleteBtn').setAttribute('data-lote', lote);
+
+        // Exibe o modal de confirmação
+        var modal = new bootstrap.Modal(document.getElementById('modalConfirmDelete'));
+        modal.show();
+    }
+
+    // Função para confirmar a exclusão após verificar a senha
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        const password = document.getElementById('deletePassword').value;
+
+        if (password === '102030') {
+            // Senha correta, cria e envia o formulário de exclusão
+            const cod_ars = this.getAttribute('data-cod-ars');
+            const lote = this.getAttribute('data-lote');
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ url_for('deletar_estoque_loja') }}";
+
+            const inputCodArs = document.createElement('input');
+            inputCodArs.type = 'hidden';
+            inputCodArs.name = 'cod_ars';
+            inputCodArs.value = cod_ars;
+
+            const inputLote = document.createElement('input');
+            inputLote.type = 'hidden';
+            inputLote.name = 'lote';
+            inputLote.value = lote;
+
+            form.appendChild(inputCodArs);
+            form.appendChild(inputLote);
+
+            document.body.appendChild(form);
+            form.submit();
+        } else {
+            alert('Senha incorreta. Tente novamente.');
+        }
+    });
+</script>
+
+
+{% endblock %}
