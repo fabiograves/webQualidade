@@ -80,19 +80,22 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4 bordered">
-                    <div class="form-group"><label>Imagem 1:</label><input type="text" class="form-control" id="relatorio_texto_imagem1" name="relatorio_texto_imagem1"></div>
+                    <div class="form-group"><label>Imagem 1:</label><input type="text" class="form-control" id="relatorio_texto_imagem1" name="relatorio_texto_imagem1" maxlength="80"></div>
                     <div class="form-group"><label>Imagem 1:</label><input type="file" id="imagem1" name="imagem1" onchange="mostrarImagem(this, 'miniatura1')"></div>
                     <img id="miniatura1" src="" alt="Miniatura da imagem 1" style="width: 200px; height: auto; display: none;">
+                    <div class="form-group"><label></label><input type="text" class="form-control" id="relatorio_texto_imagem11" name="relatorio_texto_imagem11" maxlength="80"></div>
                 </div>
                 <div class="col-md-4 bordered">
-                    <div class="form-group"><label>Imagem 2:</label><input type="text" class="form-control" id="relatorio_texto_imagem2" name="relatorio_texto_imagem2"></div>
+                    <div class="form-group"><label>Imagem 2:</label><input type="text" class="form-control" id="relatorio_texto_imagem2" name="relatorio_texto_imagem2" maxlength="80"></div>
                     <div class="form-group"><label>Imagem 2:</label><input type="file" id="imagem2" name="imagem2" onchange="mostrarImagem(this, 'miniatura2')"></div>
                     <img id="miniatura2" src="" alt="Miniatura da imagem 2" style="width: 200px; height: auto; display: none;">
+                    <div class="form-group"><label></label><input type="text" class="form-control" id="relatorio_texto_imagem22" name="relatorio_texto_imagem22" maxlength="80"></div>
                 </div>
                 <div class="col-md-4 bordered">
-                    <div class="form-group"><label>Imagem 3:</label><input type="text" class="form-control" id="relatorio_texto_imagem3" name="relatorio_texto_imagem3"></div>
+                    <div class="form-group"><label>Imagem 3:</label><input type="text" class="form-control" id="relatorio_texto_imagem3" name="relatorio_texto_imagem3" maxlength="80"></div>
                     <div class="form-group"><label>Imagem 3:</label><input type="file" id="imagem3" name="imagem3" onchange="mostrarImagem(this, 'miniatura3')"></div>
                     <img id="miniatura3" src="" alt="Miniatura da imagem 3" style="width: 200px; height: auto; display: none;">
+                    <div class="form-group"><label></label><input type="text" class="form-control" id="relatorio_texto_imagem33" name="relatorio_texto_imagem33" maxlength="80"></div>
                 </div>
             </div>
         </div>
@@ -102,19 +105,22 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4 bordered">
-                    <div class="form-group"><label>Imagem 4:</label><input type="text" class="form-control" id="relatorio_texto_imagem4" name="relatorio_texto_imagem4"></div>
+                    <div class="form-group"><label>Imagem 4:</label><input type="text" class="form-control" id="relatorio_texto_imagem4" name="relatorio_texto_imagem4" maxlength="80"></div>
                     <div class="form-group"><label>Imagem 4:</label><input type="file" id="imagem4" name="imagem4" onchange="mostrarImagem(this, 'miniatura4')"></div>
                     <img id="miniatura4" src="" alt="Miniatura da imagem 4" style="width: 200px; height: auto; display: none;">
+                    <div class="form-group"><label></label><input type="text" class="form-control" id="relatorio_texto_imagem44" name="relatorio_texto_imagem44" maxlength="80"></div>
                 </div>
                 <div class="col-md-4 bordered">
-                    <div class="form-group"><label>Imagem 5:</label><input type="text" class="form-control" id="relatorio_texto_imagem5" name="relatorio_texto_imagem5"></div>
+                    <div class="form-group"><label>Imagem 5:</label><input type="text" class="form-control" id="relatorio_texto_imagem5" name="relatorio_texto_imagem5" maxlength="80"></div>
                     <div class="form-group"><label>Imagem 5:</label><input type="file" id="imagem5" name="imagem5" onchange="mostrarImagem(this, 'miniatura5')"></div>
                     <img id="miniatura5" src="" alt="Miniatura da imagem 5" style="width: 200px; height: auto; display: none;">
+                    <div class="form-group"><label></label><input type="text" class="form-control" id="relatorio_texto_imagem55" name="relatorio_texto_imagem55" maxlength="80"></div>
                 </div>
                 <div class="col-md-4 bordered">
-                    <div class="form-group"><label>Imagem 6:</label><input type="text" class="form-control" id="relatorio_texto_imagem6" name="relatorio_texto_imagem6"></div>
+                    <div class="form-group"><label>Imagem 6:</label><input type="text" class="form-control" id="relatorio_texto_imagem6" name="relatorio_texto_imagem6" maxlength="80"></div>
                     <div class="form-group"><label>Imagem 6:</label><input type="file" id="imagem6" name="imagem6" onchange="mostrarImagem(this, 'miniatura6')"></div>
                     <img id="miniatura6" src="" alt="Miniatura da imagem 6" style="width: 200px; height: auto; display: none;">
+                    <div class="form-group"><label></label><input type="text" class="form-control" id="relatorio_texto_imagem66" name="relatorio_texto_imagem66" maxlength="80"></div>
                 </div>
             </div>
         </div>
@@ -135,31 +141,31 @@
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(1)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table1" name="bt_table1" placeholder='Ø-1/2"-A325'>
+                    <input type="text" class="form-control" id="bt_table1" name="bt_table1" placeholder='Ø-1/2"-A325' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(2)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table2" name="bt_table2" placeholder='Ø-5/8"-A325'>
+                    <input type="text" class="form-control" id="bt_table2" name="bt_table2" placeholder='Ø-5/8"-A325' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(3)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table3" name="bt_table3" placeholder='Ø-3/4"-A325'>
+                    <input type="text" class="form-control" id="bt_table3" name="bt_table3" placeholder='Ø-3/4"-A325' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(4)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table4" name="bt_table4" placeholder='Ø-7/8"-A325'>
+                    <input type="text" class="form-control" id="bt_table4" name="bt_table4" placeholder='Ø-7/8"-A325' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(5)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table5" name="bt_table5" placeholder='Ø-1"-A325'>
+                    <input type="text" class="form-control" id="bt_table5" name="bt_table5" placeholder='Ø-1"-A325' maxlength="35">
                 </div>
             </div>
         </div>
@@ -168,31 +174,31 @@
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(13)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table13" name="bt_table13" placeholder='Ø-1/2"-A490'>
+                    <input type="text" class="form-control" id="bt_table13" name="bt_table13" placeholder='Ø-1/2"-A490' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(14)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table14" name="bt_table14" placeholder='Ø-5/8"-A490'>
+                    <input type="text" class="form-control" id="bt_table14" name="bt_table14" placeholder='Ø-5/8"-A490' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(15)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table15" name="bt_table15" placeholder='Ø-3/4"-A490'>
+                    <input type="text" class="form-control" id="bt_table15" name="bt_table15" placeholder='Ø-3/4"-A490' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(16)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table16" name="bt_table16" placeholder='Ø-7/8"-A490'>
+                    <input type="text" class="form-control" id="bt_table16" name="bt_table16" placeholder='Ø-7/8"-A490' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(17)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table17" name="bt_table17" placeholder='Ø-1"-A490'>
+                    <input type="text" class="form-control" id="bt_table17" name="bt_table17" placeholder='Ø-1"-A490' maxlength="35">
                 </div>
             </div>
         </div>
@@ -201,31 +207,31 @@
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(6)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table6" name="bt_table6" placeholder='M10 - 8.8'>
+                    <input type="text" class="form-control" id="bt_table6" name="bt_table6" placeholder='M10 - 8.8' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(7)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table7" name="bt_table7" placeholder='M12 - 8.8'>
+                    <input type="text" class="form-control" id="bt_table7" name="bt_table7" placeholder='M12 - 8.8' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(8)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table8" name="bt_table8" placeholder='M16 - 8.8'>
+                    <input type="text" class="form-control" id="bt_table8" name="bt_table8" placeholder='M16 - 8.8' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(9)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table9" name="bt_table9" placeholder='M20 - 8.8'>
+                    <input type="text" class="form-control" id="bt_table9" name="bt_table9" placeholder='M20 - 8.8' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(10)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table10" name="bt_table10" placeholder='M24 - 8.8'>
+                    <input type="text" class="form-control" id="bt_table10" name="bt_table10" placeholder='M24 - 8.8' maxlength="35">
                 </div>
             </div>
         </div>
@@ -234,13 +240,13 @@
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(11)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table11" name="bt_table11" placeholder='M16 - 12,9'>
+                    <input type="text" class="form-control" id="bt_table11" name="bt_table11" placeholder='M16 - 12,9' maxlength="35">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-center">
                 <button type="button" class="btn btn-primary mr-2" onclick="addTable(12)">+</button>
                 <div class="form-group mb-0">
-                    <input type="text" class="form-control" id="bt_table12" name="bt_table12" placeholder='M20 - 12,9'>
+                    <input type="text" class="form-control" id="bt_table12" name="bt_table12" placeholder='M20 - 12,9' maxlength="35">
                 </div>
             </div>
         </div>

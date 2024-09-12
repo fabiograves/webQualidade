@@ -202,8 +202,8 @@ def relatorio_teste():
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
     buffer = io.BytesIO()
-    p = canvas.Canvas(buffer, pagesize=letter)
-    width, height = letter
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
 
     def add_header(p):
         logo_path = "static/images/LogoCertificado.png"
@@ -219,7 +219,7 @@ def generate_pdf():
 
     def draw_images(p):
         styles = getSampleStyleSheet()
-        centered_style = styles['Normal']
+        centered_style = ParagraphStyle('SmallFont', parent=styles['Normal'], fontSize=8)
         centered_style.alignment = 1  # Center alignment
 
         image_texts = [
@@ -229,6 +229,14 @@ def generate_pdf():
             request.form.get('relatorio_texto_imagem4', ''),
             request.form.get('relatorio_texto_imagem5', ''),
             request.form.get('relatorio_texto_imagem6', '')
+        ]
+        image_texts_bot = [
+            request.form.get('relatorio_texto_imagem11', ''),
+            request.form.get('relatorio_texto_imagem22', ''),
+            request.form.get('relatorio_texto_imagem33', ''),
+            request.form.get('relatorio_texto_imagem44', ''),
+            request.form.get('relatorio_texto_imagem55', ''),
+            request.form.get('relatorio_texto_imagem66', '')
         ]
         image_files = [
             request.files.get('imagem1'),
@@ -246,12 +254,14 @@ def generate_pdf():
                 index = i + j
                 if index < len(image_texts):
                     text = image_texts[index]
+                    text_bot = image_texts_bot[index]
                     image_file = image_files[index]
                     if image_file:
                         image_buffer = BytesIO(image_file.read())
                         img = Image(image_buffer, width=2 * inch, height=1.5 * inch)
                         paragraph = Paragraph(text, centered_style)
-                        cell_content = [paragraph, Spacer(1, 10), img]
+                        paragraph1 = Paragraph(text_bot, centered_style)
+                        cell_content = [paragraph, Spacer(1, 10), img, Spacer(1, 10), paragraph1]
                         row.append(cell_content)
                     else:
                         row.append([Paragraph("", centered_style), Spacer(1, 12), Paragraph("", centered_style)])
@@ -269,12 +279,27 @@ def generate_pdf():
         table.wrapOn(p, width, height)
         table.drawOn(p, 30, height - 500)
 
-        # Add observation below images
+        # Adicione a observação abaixo das imagens com quebra de linha automática
+        styles = getSampleStyleSheet()
+        small_font_style = ParagraphStyle('SmallFont', parent=styles['Normal'], fontSize=12)  # Fonte menor
+
         obs_final = request.form.get('relatorio_obs_final', '')
         obs_y_position = height - 520
 
-        p.drawString(30, obs_y_position, "Observação:")
-        p.drawString(100, obs_y_position, obs_final)
+        # Tamanho da largura da página com margem
+        available_width = width - 60  # Deixando 30 de margem em ambos os lados
+
+        # Cria o parágrafo com fonte menor para quebrar automaticamente
+        obs_paragraph = Paragraph(f"Observação: {obs_final}", small_font_style)
+
+        # Calcula a largura e altura que o parágrafo irá ocupar
+        text_width, text_height = obs_paragraph.wrap(available_width, height)
+
+        # Atualiza a posição y para garantir que o texto será desenhado para baixo
+        obs_y_position -= text_height
+
+        # Desenha o parágrafo na nova posição ajustada
+        obs_paragraph.drawOn(p, 30, obs_y_position)
 
     # Draw the form fields data
     cliente = request.form.get('relatorio_cliente', '')
@@ -523,22 +548,46 @@ def generate_pdf():
     add_header(p)
     # Draw tables in the PDF
     y_position = height - 150
+
+    # Definir o estilo customizado para o parágrafo do cabeçalho e das células da tabela
+    styles = getSampleStyleSheet()
+    small_font_style = ParagraphStyle('SmallFont', parent=styles['Normal'], fontSize=6,
+                                      alignment=1)  # Fonte pequena e centralizada
+    table_font_style = ParagraphStyle('TableFont', parent=styles['Normal'], fontSize=6,
+                                      alignment=1)  # Fonte pequena para o corpo
+
     for table_header, rows in tables_data:
-        data = [[f"Ø {table_header}", "1", "2", "3"]]
-        data.extend(rows)
+        # Criar o parágrafo com o header, suportando quebra de linha e tamanho de fonte reduzido
+        header_paragraph = Paragraph(f"Ø {table_header}", small_font_style)
+
+        # Ajustar o texto das células também usando Paragraph para garantir quebra de linha
+        formatted_rows = []
+        for row in rows:
+            # Formatar colunas 1, 2 e 3 para ficarem em negrito
+            formatted_row = [Paragraph(cell, table_font_style) if isinstance(cell, str) else cell for cell in row]
+            formatted_row[1] = Paragraph(f"<b>{row[1]}</b>", table_font_style)  # Negrito na coluna 1
+            formatted_row[2] = Paragraph(f"<b>{row[2]}</b>", table_font_style)  # Negrito na coluna 2
+            formatted_row[3] = Paragraph(f"<b>{row[3]}</b>", table_font_style)  # Negrito na coluna 3
+            formatted_rows.append(formatted_row)
+
+        data = [[header_paragraph, "1", "2", "3"]]  # Usando o parágrafo no lugar do texto simples para o cabeçalho
+        data.extend(formatted_rows)
 
         row_heights = [0.25 * inch] * len(data)
 
         t = Table(data, colWidths=[2.0 * inch, 1 * inch, 1 * inch, 1 * inch], rowHeights=row_heights)
+
+        # Ajustar o estilo da tabela
         style = TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 6),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Negrito para o cabeçalho
+            ('FONTSIZE', (0, 0), (-1, 0), 6),  # Fonte menor para o cabeçalho
             ('BOTTOMPADDING', (0, 0), (-1, 0), 2),
             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (1, 1), (3, -1), 'Helvetica-Bold')  # Negrito para colunas 1, 2 e 3
         ])
         t.setStyle(style)
 
