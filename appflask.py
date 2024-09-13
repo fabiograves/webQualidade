@@ -1053,8 +1053,8 @@ def pesquisar_avaliacao_diaria():
         # Agrupa os dados por trimestre e calcula o valor final para cada mês
         for mes, dados in resumo_trimestral.items():
             trimestre = (mes - 1) // 3 + 1
-            dados['valor_final'] = ((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega']) / max(
-                dados['qtd_dias_com_valor'], 2)) * 5
+            dados['valor_final'] = (((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega'])/2) / max(
+                dados['qtd_dias_com_valor'], 1)) * 10
             resumo_por_trimestre[trimestre].append((mes, dados))
 
         notas_finais_trimestres = {}
@@ -4263,7 +4263,7 @@ def resumo_trimestral():
             for id_fornecedor, trimestres in resumo_trimestral.items():
                 for trimestre, dados in trimestres.items():
                     if dados['qtd_dias_com_valor'] > 0:
-                        dados['valor_final'] = (((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega']) / dados['qtd_dias_com_valor']) * 5)
+                        dados['valor_final'] = ((((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega'])/2) / dados['qtd_dias_com_valor']) * 10)
                     else:
                         dados['valor_final'] = 0
 
