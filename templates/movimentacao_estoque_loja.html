@@ -73,9 +73,15 @@
                 <td>{{ item.quantidade }}</td>
                 <td>
                     {% if item.vencimento %}
-                        {{ item.vencimento.strftime('%d/%m/%Y') }}
+                        <button class="btn btn-vencimento"
+                                onclick="showVencimentoModal('{{ item.cod_ars }}', '{{ item.lote }}', '{{ item.vencimento }}')">
+                            {{ item.vencimento.strftime('%d/%m/%Y') }}
+                        </button>
                     {% else %}
-                        Não disponível
+                        <button class="btn btn-vencimento"
+                                onclick="showVencimentoModal('{{ item.cod_ars }}', '{{ item.lote }}', '')">
+                            Não disponível
+                        </button>
                     {% endif %}
                 </td>
                 <td>
@@ -93,7 +99,7 @@
                         <input type="hidden" name="cod_ars" value="{{ item.cod_ars }}">
                         <input type="hidden" name="lote" value="{{ item.lote }}">
                         <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ item.cod_ars }}', '{{ item.lote }}')">
-                            <i class="fas fa-trash-alt"></i> Apagar
+                            <i class="fas fa-trash-alt"></i>Apagar
                         </button>
                     </form>
                 </td>
@@ -146,9 +152,39 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Confirmar Exclusão</button>
+                <button type="button" class="btn btn-entrada" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Excluir</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para modificar vencimento -->
+<div class="modal fade" id="modalVencimento" tabindex="-1" aria-labelledby="VencimentoModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="VencimentoModal">Modificar Data de Vencimento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('modificar_data_loja') }}">
+                <input type="hidden" name="cod_ars" id="modalCodArsVencimento">
+                <input type="hidden" name="lote" id="modalLoteVencimento">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="modalVencimentoData">Nova Data de Vencimento</label>
+                        <input type="date" class="form-control" id="modalVencimentoData" name="vencimento" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vencimentoPassword">Senha</label>
+                        <input type="password" class="form-control" id="vencimentoPassword" name="password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -177,6 +213,15 @@
 
         // Exibe o modal de confirmação
         var modal = new bootstrap.Modal(document.getElementById('modalConfirmDelete'));
+        modal.show();
+    }
+
+    function showVencimentoModal(cod_ars, lote, vencimento) {
+        document.getElementById('modalCodArsVencimento').value = cod_ars;
+        document.getElementById('modalLoteVencimento').value = lote;
+        document.getElementById('modalVencimentoData').value = vencimento;
+
+        var modal = new bootstrap.Modal(document.getElementById('modalVencimento'));
         modal.show();
     }
 
@@ -211,6 +256,7 @@
         } else {
             alert('Senha incorreta. Tente novamente.');
         }
+
     });
 </script>
 

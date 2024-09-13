@@ -168,6 +168,30 @@
     background-color: #c82333;
 }
 
+/* Estilização do botão modificar vencimento */
+.btn-vencimento {
+    background-color: #ffffff;
+    color: black;
+    border: none;
+    padding: 5px 5px; /* Aumentar padding para botões maiores */
+    font-size: 16px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    width: 100px; /* Definir largura fixa para os botões */
+    justify-content: center; /* Centralizar o conteúdo */
+    transition: background-color 0.3s ease;
+}
+
+.btn-vencimento i {
+    margin-right: 5px;
+}
+
+/* Hover no botão de Saída */
+.btn-vencimento:hover {
+    background-color: #cacaca;
+}
+
 .custom-container {
     max-width: 80%; /* Define 80% da largura da tela, você pode ajustar este valor */
     margin: 0 auto; /* Centraliza o conteúdo horizontalmente */

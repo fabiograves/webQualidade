@@ -6204,5 +6204,42 @@ def deletar_estoque_loja():
     return redirect(url_for('movimentacao_estoque_loja'))
 
 
+@app.route('/modificar_data_loja', methods=['POST'])
+@requires_privilege(9, 41)
+def modificar_data_loja():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    vencimento = request.form['vencimento']
+    cod_ars = request.form['cod_ars']
+    lote = request.form['lote']
+    password = request.form['password']
+
+    # Verificar a senha
+    if password != '102030':
+        flash('Senha incorreta. Tente novamente.')
+        return redirect(url_for('movimentacao_estoque_loja'))
+
+    connection = conectar_db()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE dbo.cadastro_estoque_loja SET vencimento = ? WHERE cod_ars = ? AND lote = ?",
+                (vencimento, cod_ars, lote)
+            )
+            connection.commit()
+            flash(f'Vencimento modificado para {vencimento} para o item {cod_ars}.')
+
+    except Exception as e:
+        flash(f"Erro ao modificar vencimento: {e}")
+
+    finally:
+        connection.close()
+
+    return redirect(url_for('movimentacao_estoque_loja'))
+
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)
