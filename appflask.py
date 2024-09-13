@@ -6240,6 +6240,5 @@ def modificar_data_loja():
     return redirect(url_for('movimentacao_estoque_loja'))
 
 
-
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)

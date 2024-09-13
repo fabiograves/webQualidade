@@ -187,7 +187,7 @@
     margin-right: 5px;
 }
 
-/* Hover no botão de Saída */
+/* Hover no botão de vencimento */
 .btn-vencimento:hover {
     background-color: #cacaca;
 }
@@ -196,3 +196,43 @@
     max-width: 80%; /* Define 80% da largura da tela, você pode ajustar este valor */
     margin: 0 auto; /* Centraliza o conteúdo horizontalmente */
 }
+
+.legenda-cores {
+    display: flex;
+    justify-content: center;
+}
+
+.dot {
+    height: 15px;
+    width: 15px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1px solid black; /* Contorno preto */
+}
+
+.dot-red {
+    background-color: #fa9ea3;
+}
+
+.dot-orange {
+    background-color: #fdecb9;
+}
+
+.dot-gray {
+    background-color: #d5d7da;
+}
+
+.dot-white {
+    background-color: #ffffff;
+}
+
+.list-inline-item {
+    margin-left: 60px;
+}
+
+.list-inline {
+    display: flex;
+    padding-left: 0;
+    list-style: none;
+}
+
