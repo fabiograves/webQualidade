@@ -6154,7 +6154,6 @@ def movimentacao_estoque_loja():
 
         except Exception as e:
             # Registrar o erro no console e notificar o usuário
-            print(f"Erro ao registrar a movimentação: {e}")
             flash(f"Erro ao registrar a movimentação: {e}")
         finally:
             connection.close()
@@ -6196,7 +6195,6 @@ def deletar_estoque_loja():
             flash(f'Item código ARS: {cod_ars} deletado com sucesso.')
 
     except Exception as e:
-        print(f"Erro ao deletar o item: {e}")
         flash(f"Erro ao deletar o item: {e}")
     finally:
         connection.close()
