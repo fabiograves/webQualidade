@@ -29,14 +29,11 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-<form method="POST" action="{{ url_for('movimentacao_vendas2') }}">
-
-<div class="py-5">
+<!-- Formulário de Pesquisa e Filtro -->
+<form method="GET" action="{{ url_for('movimentacao_vendas2') }}" class="mb-3">
     <div class="container">
         <div class="row d-flex align-items-center">
-            <div class="col-md-2">
-            </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="form-group">
                     <label for="numero_contrato">Selecione o Cliente:</label>
                     <select name="numero_contrato" id="numero_contrato" class="form-control">
@@ -48,24 +45,30 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-2 d-flex align-items-stretch">
-                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            <div class="col-md-4">
+                <label for="search">Pesquisar:</label>
+                <input type="text" name="search" id="search" class="form-control" placeholder="Pesquisar código ou descrição..." value="{{ search_term }}">
+            </div>
+            <div class="col-md-4">
+                <label for="filter">Filtro:</label>
+                <select name="filter" id="filter" class="form-control">
+                    <option value="" {% if filter_option == '' %}selected{% endif %}>Todos</option>
+                    <option value="low_quantity" {% if filter_option == 'low_quantity' %}selected{% endif %}>Baixa Quantidade</option>
+                    <option value="out_of_stock" {% if filter_option == 'out_of_stock' %}selected{% endif %}>Sem Estoque</option>
+                </select>
             </div>
         </div>
-        <div class="row">
-                    {% with messages = get_flashed_messages() %}
-                        {% if messages %}
-                            <div class="flash-messages">
-                                {% for message in messages %}
-                                <div class="alert alert-warning" role="alert">{{ message }}</div>
-                                    {% endfor %}
-                            </div>
-                        {% endif %}
-                    {% endwith %}
-                </div>
+        <div class="row mt-3">
+            <div class="col-md-8">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Pesquisar</button>
+            </div>
+            <div class="col-md-2">
+                <a href="{{ url_for('movimentacao_vendas2', numero_contrato=contrato_selecionado) }}" class="btn btn-secondary w-100">Limpar</a>
+            </div>
+        </div>
     </div>
-</div>
-
 </form>
 
 <div class="container custom-container">

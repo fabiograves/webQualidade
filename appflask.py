@@ -4213,7 +4213,8 @@ def resumo_trimestral():
     fornecedores = []
     dados_organizados = defaultdict(lambda: defaultdict(dict))
     resumo_trimestral = defaultdict(lambda: defaultdict(lambda: {'soma_nao_conformidade': 0, 'soma_atraso_entrega': 0, 'qtd_dias_com_valor': 0}))
-    notas_finais_trimestres = defaultdict(lambda: defaultdict(float))
+    notas_finais_trimestres = defaultdict(lambda: defaultdict(dict))
+    notas_mensais = defaultdict(lambda: defaultdict(float))
 
     fornecedor_selecionado = request.form.get('fornecedor_selecionado', None)
     status_validade = request.form.get('status_validade', None)
@@ -4259,15 +4260,59 @@ def resumo_trimestral():
                     resumo_trimestral[id_fornecedor][trimestre]['soma_atraso_entrega'] += soma_atraso_entrega
                     resumo_trimestral[id_fornecedor][trimestre]['qtd_dias_com_valor'] += qtd_dias_com_valor
 
-            # Calcular as notas finais trimestrais para cada fornecedor
-            for id_fornecedor, trimestres in resumo_trimestral.items():
-                for trimestre, dados in trimestres.items():
-                    if dados['qtd_dias_com_valor'] > 0:
-                        dados['valor_final'] = ((((dados['soma_nao_conformidade'] + dados['soma_atraso_entrega'])/2) / dados['qtd_dias_com_valor']) * 10)
-                    else:
-                        dados['valor_final'] = 0
+            # Calcula a nota mensal para cada mês
+            for id_fornecedor, meses in dados_organizados.items():
+                for mes, dias in meses.items():
+                    soma_nao_conformidade = sum(dia.get('nao_conformidade', 0) for dia in dias.values())
+                    soma_atraso_entrega = sum(dia.get('atraso_entrega', 0) for dia in dias.values())
+                    qtd_dias_com_valor = sum(1 for dia in dias.values())
 
-                    notas_finais_trimestres[id_fornecedor][trimestre] = dados['valor_final']
+                    if qtd_dias_com_valor > 0:
+                        valor_final_mes = (((
+                                                        soma_nao_conformidade + soma_atraso_entrega) / 2) / qtd_dias_com_valor) * 10
+                    else:
+                        valor_final_mes = 0
+
+                    notas_mensais[id_fornecedor][mes] = valor_final_mes
+
+            # Calcular as notas finais trimestrais e médias mensais para cada fornecedor
+            for id_fornecedor in fornecedores:
+                id_fornecedor = id_fornecedor[0]  # Acessa o ID do fornecedor
+                for trimestre in range(1, 5):
+                    meses_do_trimestre = [mes for mes in range((trimestre - 1) * 3 + 1, trimestre * 3 + 1)]
+
+                    # Calcula os dados acumulados do trimestre
+                    dados_trimestre = {
+                        'soma_nao_conformidade': 0,
+                        'soma_atraso_entrega': 0,
+                        'qtd_dias_com_valor': 0
+                    }
+                    for mes in meses_do_trimestre:
+                        mes_data = dados_organizados[id_fornecedor].get(mes, {})
+                        dados_trimestre['soma_nao_conformidade'] += sum(
+                            dia.get('nao_conformidade', 0) for dia in mes_data.values())
+                        dados_trimestre['soma_atraso_entrega'] += sum(
+                            dia.get('atraso_entrega', 0) for dia in mes_data.values())
+                        dados_trimestre['qtd_dias_com_valor'] += sum(1 for dia in mes_data.values())
+
+                    # Calcula a nota final do trimestre
+                    if dados_trimestre['qtd_dias_com_valor'] > 0:
+                        valor_final_trimestre = (((dados_trimestre['soma_nao_conformidade'] + dados_trimestre[
+                            'soma_atraso_entrega']) / 2) / dados_trimestre['qtd_dias_com_valor']) * 10
+                    else:
+                        valor_final_trimestre = 0
+
+                    notas_finais_trimestres[id_fornecedor][trimestre]['valor_final'] = valor_final_trimestre
+
+                    # Calcula a média mensal do trimestre
+                    valores_mensais = [notas_mensais[id_fornecedor].get(mes, 0) for mes in meses_do_trimestre]
+                    valores_mensais_validos = [v for v in valores_mensais if v > 0]
+                    if valores_mensais_validos:
+                        media_mensal_trimestre = sum(valores_mensais_validos) / len(valores_mensais_validos)
+                    else:
+                        media_mensal_trimestre = 0
+
+                    notas_finais_trimestres[id_fornecedor][trimestre]['media_mensal'] = media_mensal_trimestre
 
             # Filtro de status de validade
             if status_validade:
@@ -5948,7 +5993,11 @@ def movimentacao_vendas2():
     connection = conectar_db()
     items = []
     contratos = []
-    numero_contrato = request.form.get('numero_contrato') or request.args.get('numero_contrato')
+    numero_contrato = request.args.get('numero_contrato') or request.form.get('numero_contrato')
+
+    # Obter os parâmetros de pesquisa e filtro
+    search_term = request.args.get('search', '').strip()
+    filter_option = request.args.get('filter', '').strip()
 
     try:
         with connection.cursor() as cursor:
@@ -5963,10 +6012,29 @@ def movimentacao_vendas2():
 
             # Buscar os itens filtrados pelo contrato selecionado
             if numero_contrato:
-                cursor.execute(
-                    "SELECT contrato_interno, cod_cliente, cod_ars, desc_ars, preco_venda_ars, quantidade, quantidade_minima FROM dbo.cadastro_estoque_vendas2 WHERE numero_contrato = ?",
-                    (numero_contrato,)
-                )
+                # Construir a query base
+                query = """
+                    SELECT contrato_interno, cod_cliente, cod_ars, desc_ars, preco_venda_ars, quantidade, quantidade_minima
+                    FROM dbo.cadastro_estoque_vendas2
+                    WHERE numero_contrato = ?
+                """
+                params = [numero_contrato]
+
+                # Adicionar condição de pesquisa em todos os campos textuais
+                if search_term:
+                    textual_fields = ['contrato_interno', 'cod_cliente', 'cod_ars', 'desc_ars']
+                    search_conditions = " OR ".join([f"{field} LIKE ?" for field in textual_fields])
+                    query += f" AND ({search_conditions})"
+                    params.extend([f"%{search_term}%"] * len(textual_fields))
+
+                # Adicionar condição de filtro
+                if filter_option == 'low_quantity':
+                    query += " AND quantidade < quantidade_minima"
+                elif filter_option == 'out_of_stock':
+                    query += " AND quantidade = 0"
+
+                # Executar a query
+                cursor.execute(query, params)
                 items = cursor.fetchall()
 
     except Exception as e:
@@ -5976,7 +6044,12 @@ def movimentacao_vendas2():
         connection.close()
 
     # Renderizar a página com o contrato selecionado e os itens filtrados
-    return render_template('movimentacao_vendas2.html', items=items, contratos=contratos, contrato_selecionado=numero_contrato)
+    return render_template('movimentacao_vendas2.html',
+                           items=items,
+                           contratos=contratos,
+                           contrato_selecionado=numero_contrato,
+                           search_term=search_term,
+                           filter_option=filter_option)
 
 
 @app.route('/relatorio_cod_vendas2', methods=['GET', 'POST'])
@@ -6160,18 +6233,72 @@ def movimentacao_estoque_loja():
 
         return redirect(url_for('movimentacao_estoque_loja'))
 
-    # Se for um GET, renderiza a página de movimentação de estoque
-    connection = conectar_db()
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT cod_ars, desc_ars, lote, quantidade, vencimento FROM dbo.cadastro_estoque_loja ORDER BY vencimento ASC")
-        items = cursor.fetchall()
+    else:
 
-    hoje = datetime.date.today()
-    quinze_dias = hoje + timedelta(days=15)
-    cinco_dias = hoje + timedelta(days=5)
+        # **Handle GET requests with search and filter parameters**
+        search_term = request.args.get('search', '')
+        filter_option = request.args.get('filter', '')
 
-    return render_template('movimentacao_estoque_loja.html', items=items, hoje=hoje, quinze_dias=quinze_dias,
-                           cinco_dias=cinco_dias)
+        # Connect to the database
+        connection = conectar_db()
+        with connection.cursor() as cursor:
+            # **Build the SQL query dynamically**
+            sql_query = """
+                    SELECT cod_ars, desc_ars, lote, quantidade, vencimento
+                    FROM dbo.cadastro_estoque_loja
+                """
+            conditions = []
+            params = []
+
+            # **Add search conditions**
+            if search_term:
+                conditions.append("(cod_ars LIKE ? OR desc_ars LIKE ? OR lote LIKE ?)")
+                search_like = f"%{search_term}%"
+                params.extend([search_like, search_like, search_like])
+
+            # **Add filter conditions**
+            if filter_option:
+                today = datetime.datetime.now()
+                if filter_option == 'expired':
+                    conditions.append("vencimento < ?")
+                    params.append(today)
+                elif filter_option == 'less_than_5_days':
+                    future_date = today + timedelta(days=5)
+                    conditions.append("vencimento BETWEEN ? AND ?")
+                    params.extend([today, future_date])
+                elif filter_option == 'less_than_15_days':
+                    future_date = today + timedelta(days=15)
+                    conditions.append("vencimento BETWEEN ? AND ?")
+                    params.extend([today, future_date])
+                elif filter_option == 'low_quantity':
+                    # Define a threshold for low quantity
+                    low_quantity_threshold = 10
+                    conditions.append("quantidade < ?")
+                    params.append(low_quantity_threshold)
+
+            # **Combine conditions if any**
+            if conditions:
+                sql_query += " WHERE " + " AND ".join(conditions)
+
+            sql_query += " ORDER BY vencimento ASC"
+
+            # **Execute the query with parameters**
+            cursor.execute(sql_query, params)
+            items = cursor.fetchall()
+
+        hoje = datetime.datetime.today().date()
+        quinze_dias = hoje + timedelta(days=15)
+        cinco_dias = hoje + timedelta(days=5)
+
+        return render_template(
+            'movimentacao_estoque_loja.html',
+            items=items,
+            hoje=hoje,
+            quinze_dias=quinze_dias,
+            cinco_dias=cinco_dias,
+            search_term=search_term,
+            filter_option=filter_option
+        )
 
 
 @app.route('/deletar_estoque_loja', methods=['POST'])

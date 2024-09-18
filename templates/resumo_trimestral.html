@@ -88,10 +88,9 @@
                     <th>Tipo</th>
                     <th>Data de Validade</th>
                     <th>PDF</th>
-                    <th>1º Trimestre</th>
-                    <th>2º Trimestre</th>
-                    <th>3º Trimestre</th>
-                    <th>4º Trimestre</th>
+                    {% for trimestre in range(1,5) %}
+                        <th>{{ trimestre }}ºTri/M</th>
+                    {% endfor %}
                     <th>Ações</th>
                 </tr>
             </thead>
@@ -112,7 +111,7 @@
                             </div>
                         </td>
                         {% for trimestre in range(1, 5) %}
-                        <td>{{ '{:.2f}'.format(notas_finais_trimestres[fornecedor['id']][trimestre]) }}</td>
+                        <td>{{ '{:.2f}'.format(notas_finais_trimestres[fornecedor['id']][trimestre].get('valor_final', 0)) }} / {{ '{:.2f}'.format(notas_finais_trimestres[fornecedor['id']][trimestre].get('media_mensal', 0)) }}</td>
                         {% endfor %}
                         <td>
                             <input type="hidden" name="salvar_fornecedor_id" value="{{ fornecedor['id'] }}">
