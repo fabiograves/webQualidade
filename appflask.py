@@ -4314,6 +4314,24 @@ def resumo_trimestral():
 
                     notas_finais_trimestres[id_fornecedor][trimestre]['media_mensal'] = media_mensal_trimestre
 
+            # Cálculo das médias trimestrais para todos os fornecedores com valores diferentes de 0
+            medias_por_trimestre = defaultdict(float)
+            quantidade_por_trimestre = defaultdict(int)
+
+            for trimestre in range(1, 5):
+                soma_trimestre = 0
+                qtd_fornecedores_com_valor = 0
+
+                for id_fornecedor, notas_trimestre in notas_finais_trimestres.items():
+                    valor_final_trimestre = notas_trimestre[trimestre].get('valor_final', 0)
+                    if valor_final_trimestre > 0:
+                        soma_trimestre += valor_final_trimestre
+                        qtd_fornecedores_com_valor += 1
+
+                if qtd_fornecedores_com_valor > 0:
+                    medias_por_trimestre[trimestre] = soma_trimestre / qtd_fornecedores_com_valor
+                quantidade_por_trimestre[trimestre] = qtd_fornecedores_com_valor
+
             # Filtro de status de validade
             if status_validade:
                 fornecedores_filtrados = []
@@ -4343,7 +4361,9 @@ def resumo_trimestral():
                            resumo_trimestral=resumo_trimestral,
                            notas_finais_trimestres=notas_finais_trimestres,
                            fornecedor_selecionado=fornecedor_selecionado,
-                           status_validade=status_validade)
+                           status_validade=status_validade,
+                           medias_por_trimestre=medias_por_trimestre,
+                           quantidade_por_trimestre=quantidade_por_trimestre)
 
 
 @app.route('/salvar_fornecedores', methods=['POST'])
@@ -6149,7 +6169,7 @@ def export_relatorio_excel():
 
 
 @app.route('/cadastro_estoque_loja', methods=['GET', 'POST'])
-@requires_privilege(9, 41)  # Substitua de acordo com seus privilégios
+@requires_privilege(9, 41)
 def cadastro_estoque_loja():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -6235,14 +6255,14 @@ def movimentacao_estoque_loja():
 
     else:
 
-        # **Handle GET requests with search and filter parameters**
+        # lida com os parametros do filtro
         search_term = request.args.get('search', '')
         filter_option = request.args.get('filter', '')
 
-        # Connect to the database
+        # Conecta co mo Bd
         connection = conectar_db()
         with connection.cursor() as cursor:
-            # **Build the SQL query dynamically**
+            # Constroi o sql
             sql_query = """
                     SELECT cod_ars, desc_ars, lote, quantidade, vencimento
                     FROM dbo.cadastro_estoque_loja
@@ -6250,13 +6270,13 @@ def movimentacao_estoque_loja():
             conditions = []
             params = []
 
-            # **Add search conditions**
+            # Add condicoes
             if search_term:
                 conditions.append("(cod_ars LIKE ? OR desc_ars LIKE ? OR lote LIKE ?)")
                 search_like = f"%{search_term}%"
                 params.extend([search_like, search_like, search_like])
 
-            # **Add filter conditions**
+            # Add filtros
             if filter_option:
                 today = datetime.datetime.now()
                 if filter_option == 'expired':
@@ -6271,18 +6291,18 @@ def movimentacao_estoque_loja():
                     conditions.append("vencimento BETWEEN ? AND ?")
                     params.extend([today, future_date])
                 elif filter_option == 'low_quantity':
-                    # Define a threshold for low quantity
+                    # Define limite para low_quantity
                     low_quantity_threshold = 10
                     conditions.append("quantidade < ?")
                     params.append(low_quantity_threshold)
 
-            # **Combine conditions if any**
+            # Combina as condicoes
             if conditions:
                 sql_query += " WHERE " + " AND ".join(conditions)
 
             sql_query += " ORDER BY vencimento ASC"
 
-            # **Execute the query with parameters**
+            # Executa a query
             cursor.execute(sql_query, params)
             items = cursor.fetchall()
 
