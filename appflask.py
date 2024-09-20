@@ -39,9 +39,8 @@ from PyPDF2 import PdfReader, PdfWriter
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
-
-#add novo
 from datetime import timedelta
+import traceback
 
 
 app = Flask(__name__)
@@ -651,6 +650,7 @@ def cadastro_equipamento():
         intervalo = request.form.get('cad_intervalo')
         ultima_calibracao = request.form.get('cad_ultima_calibracao')
         status = request.form.get('cad_status')
+        test = request.form.get('cad_test')
 
         # Verifica se a ultima_calibracao está no formato de string (enviado pelo formulário)
         if isinstance(ultima_calibracao, str):
@@ -665,6 +665,80 @@ def cadastro_equipamento():
 
         # Processando o certificado
         certificado_data = certificado.read() if certificado else None
+
+        # Verificar se um certificado foi enviado
+        if certificado_data and status == "APROVADO":
+            # Processar o PDF para adicionar o carimbo
+            try:
+                # Ler o PDF enviado
+                original_pdf = PdfReader(BytesIO(certificado_data))
+                writer = PdfWriter()
+
+                # Criar o carimbo usando reportlab
+                packet = BytesIO()
+                can = canvas.Canvas(packet, pagesize=letter)
+
+                # Definir as propriedades do carimbo
+                from reportlab.lib.units import mm
+                from reportlab.lib.colors import green, white, black
+
+                # Definir posição e tamanho do carimbo
+                x = 320  # posição X
+                y = 250  # posição Y
+                width = 150
+                height = 90
+
+                # Definir a transparência para o fundo (marca d'água)
+                can.setFillColor(green,0.3)
+                can.roundRect(x, y, width, height, radius=10, stroke=0,
+                              fill=1)  # Preencher o retângulo com o fundo verde translúcido
+
+                # Escrever o texto do carimbo (sem transparência)
+                can.setFillColor(black)  # Texto em branco para contraste
+                can.setFont("Helvetica-Bold", 14)
+                can.drawCentredString(x + width / 2, y + height - 20, "APROVADO")
+
+                # Adicionar o nome do usuário, data/hora e critério de aceitação
+                can.setFont("Helvetica", 10)
+                username = session['username']
+                data_hora = datetime.datetime.now().strftime('%d/%m/%Y %H:%M')
+                criterio_aceitacao = request.form.get('cad_criterio')
+
+                can.drawCentredString(x + width / 2, y + height - 35, f"Aprovado por: {username}")
+                can.drawCentredString(x + width / 2, y + height - 50, f"Em: {data_hora}")
+                can.drawCentredString(x + width / 2, y + height - 65, f"Critério: {criterio_aceitacao}")
+                can.drawCentredString(x + width / 2, y + height - 80, f"{test}")
+
+                # Finalizar o canvas
+                can.save()
+
+                # Voltar ao início do buffer
+                packet.seek(0)
+                stamp_pdf = PdfReader(packet)
+
+                # Obter a primeira página do PDF original
+                page = original_pdf.pages[0]
+
+                # Sobrepor o carimbo na primeira página
+                page.merge_page(stamp_pdf.pages[0])
+
+                # Adicionar a página modificada ao writer
+                writer.add_page(page)
+
+                # Adicionar as demais páginas (se houver)
+                for i in range(1, len(original_pdf.pages)):
+                    writer.add_page(original_pdf.pages[i])
+
+                # Salvar o PDF modificado em um buffer de bytes
+                output_buffer = BytesIO()
+                writer.write(output_buffer)
+                certificado_data = output_buffer.getvalue()
+
+            except Exception as e:
+                print(f"Erro ao carimbar o PDF: {e}")
+                flash('Ocorreu um erro ao processar o certificado.', 'error')
+                return render_template('cadastro_equipamento.html', numeros_instrumentos=numeros_instrumentos,
+                                       equipamentos=equipamentos), 500
 
         try:
             with connection.cursor() as cursor:
