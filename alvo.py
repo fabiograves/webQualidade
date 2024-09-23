@@ -1,16 +1,21 @@
-import barcode
-from barcode.writer import ImageWriter
+import asyncio
+import time
 
-# Defina o número do código de barras
-codigo = "S0001"
+import pyautogui
+from concurrent.futures import ThreadPoolExecutor
 
-# Escolha o tipo de código de barras (neste exemplo, Code128)
-barcode_class = barcode.get_barcode_class('code128')
+# Função para realizar os cliques
+def click_task():
+    for _ in range(100):
+        pyautogui.click(clicks=100)
 
-# Crie o código de barras
-codigo_barras = barcode_class(codigo, writer=ImageWriter())
+# Função assíncrona para rodar múltiplas tarefas de clique
+async def run_click_tasks():
+    with ThreadPoolExecutor() as executor:
+        # Executa 5 tarefas simultâneas
+        tasks = [asyncio.get_event_loop().run_in_executor(executor, click_task) for _ in range(10)]
+        await asyncio.gather(*tasks)
 
-# Salve a imagem do código de barras
-filename = codigo_barras.save("codigo_barras_S0001")
-
-print(f"Código de barras salvo como {filename}.png")
+# Executa o loop de eventos asyncio
+time.sleep(4)
+asyncio.run(run_click_tasks())

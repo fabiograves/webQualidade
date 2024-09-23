@@ -86,8 +86,12 @@
                                         Qualidade
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ url_for('get_quantidade_inspecao') }}">Quantidade Inspeção</a></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('pesquisar_avaliacao_diaria') }}">IQF Mensal</a></li>
                                         <li><a class="dropdown-item" href="{{ url_for('rncf') }}">Não Conformidade</a></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('get_quantidade_inspecao') }}">Quantidade Inspeção</a></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('resumo_trimestral') }}">Resumo Trimestral</a></li>
+
+
                                     </ul>
                                 </li>
                             </ul>

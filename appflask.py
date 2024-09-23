@@ -4278,7 +4278,7 @@ def pesquisar_recebimento_concluido():
 
 
 @app.route('/resumo_trimestral.html', methods=['GET', 'POST'])
-@requires_privilege(9)
+@requires_privilege(9, 21)
 def resumo_trimestral():
     if not is_logged_in():
         return redirect(url_for('login'))
