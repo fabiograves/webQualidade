@@ -234,11 +234,25 @@
             } %}
 
 <div id="printableArea">
-    <div class="legenda">
-        <div class="item-legenda"><span class="circulo verde"></span> Aprovado sem restrições</div>
-        <div class="item-legenda"><span class="circulo azul"></span> Aprovado com alerta</div>
-        <div class="item-legenda"><span class="circulo amarelo"></span> Aprovado condicional</div>
-        <div class="item-legenda"><span class="circulo vermelho"></span> Reprovado</div>
+    <div class="container mb-5">
+        <table class="table text-center" style="border-collapse: collapse; table-layout: fixed; width: 100%;">
+            <thead>
+                <tr>
+                    <th style="background-color: #28a745; color: black;">Pontuação 100 à 70</th>
+                    <th style="background-color: #0d5ad0; color: black;">Pontuação 69 à 55</th>
+                    <th style="background-color: #ffc107; color: black;">Pontuação 54 à 40</th>
+                    <th style="background-color: #dc3545; color: black;">Pontuação abaixo de 39</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="background-color: #28a745; color: black;">Fornecedor aprovado sem restrições.</td>
+                    <td style="background-color: #0d5ad0; color: black;">Fornecedor aprovado, porém é advertido ou alertado quanto à sua performance.</td>
+                    <td style="background-color: #ffc107; color: black;">Fornecedor aprovado condicional. Deve apresentar plano de ação em 15 dias após notificação.</td>
+                    <td style="background-color: #dc3545; color: black;">Fornecedor reprovado. Deve ser cortado da base de fornecimento.</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
     {% if pesquisa_realizada %}
         <div class="container">
