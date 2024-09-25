@@ -5293,7 +5293,9 @@ def cadastro_notas_fiscais():
         cad_cod_xml = request.form['cad_cod_xml']
         cad_certificado = request.form['cad_certificado']
         cad_observacao = request.form['cad_observacao']
-        cad_lancamento = request.form.get('cad_lancamento', '').strip() or 'Não'
+        cad_lancamento = request.form.get('cad_lancamento', '').strip()
+        if not cad_lancamento:
+            cad_lancamento = 'Não'
 
         # Verifica se o código XML já existe
         cursor.execute("SELECT id FROM dbo.cadastro_notas_fiscais WHERE cad_cod_xml = ?", (cad_cod_xml,))
@@ -5314,19 +5316,21 @@ def cadastro_notas_fiscais():
                     UPDATE dbo.cadastro_notas_fiscais
                     SET cad_data_emissao_nf = ?, cad_numero_nota = ?, cad_data_entrada_ars = ?, cad_pedido = ?, 
                         cad_fornecedor = ?, cad_volume = ?, cad_peso = ?, cad_natureza = ?, 
-                        cad_certificado = ?, cad_observacao = ?, cad_arquivo_xml = ?
+                        cad_certificado = ?, cad_observacao = ?, cad_arquivo_xml = ?, cad_lancamento = ?
                     WHERE cad_cod_xml = ?
                 """, (cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
-                      cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, arquivo_xml_bytes, cad_cod_xml))
+                      cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, arquivo_xml_bytes,
+                      cad_lancamento, cad_cod_xml))
             else:
                 cursor.execute("""
                     UPDATE dbo.cadastro_notas_fiscais
                     SET cad_data_emissao_nf = ?, cad_numero_nota = ?, cad_data_entrada_ars = ?, cad_pedido = ?, 
                         cad_fornecedor = ?, cad_volume = ?, cad_peso = ?, cad_natureza = ?, 
-                        cad_certificado = ?, cad_observacao = ?
+                        cad_certificado = ?, cad_observacao = ?, cad_lancamento = ?
                     WHERE cad_cod_xml = ?
                 """, (cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
-                      cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, cad_cod_xml))
+                      cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, cad_lancamento, cad_cod_xml))
+
             flash('Nota Fiscal atualizada com sucesso!')
         else:
             # Caso contrário, insira um novo registro
@@ -6293,34 +6297,34 @@ def movimentacao_estoque_loja():
         return redirect(url_for('login'))
 
     if request.method == 'POST':
-        # Captura os dados enviados pelo formulário
-        cod_ars = request.form['cod_ars']
-        lote = request.form['lote']
+        id = request.form['id']  # Captura o ID do item
         quantidade = int(request.form['quantidade'])
         tipo_movimentacao = request.form['tipo_movimentacao']
+
+        # Verifique se os valores estão corretos
+        print(f"ID recebido: {id}, Quantidade: {quantidade}, Tipo de Movimentação: {tipo_movimentacao}")
 
         # Conectar ao banco de dados
         connection = conectar_db()
 
         try:
             with connection.cursor() as cursor:
-                # Atualiza a quantidade no estoque_loja de acordo com a movimentação
+                # Atualiza a quantidade no estoque com base no ID do item
                 if tipo_movimentacao == 'entrada':
                     cursor.execute(
-                        "UPDATE dbo.cadastro_estoque_loja SET quantidade = quantidade + ? WHERE cod_ars = ? AND lote = ?",
-                        (quantidade, cod_ars, lote)
+                        "UPDATE dbo.cadastro_estoque_loja SET quantidade = quantidade + ? WHERE id = ?",
+                        (quantidade, id)
                     )
                 elif tipo_movimentacao == 'saida':
                     cursor.execute(
-                        "UPDATE dbo.cadastro_estoque_loja SET quantidade = quantidade - ? WHERE cod_ars = ? AND lote = ?",
-                        (quantidade, cod_ars, lote)
+                        "UPDATE dbo.cadastro_estoque_loja SET quantidade = quantidade - ? WHERE id = ?",
+                        (quantidade, id)
                     )
 
                 connection.commit()
-                flash(f'Movimentação de {tipo_movimentacao} realizada com sucesso. Quantidade: {quantidade}, Código ARS: {cod_ars}')
+                flash(f'Movimentação de {tipo_movimentacao} realizada com sucesso. Quantidade: {quantidade}, ID: {id}')
 
         except Exception as e:
-            # Registrar o erro no console e notificar o usuário
             flash(f"Erro ao registrar a movimentação: {e}")
         finally:
             connection.close()
@@ -6338,7 +6342,7 @@ def movimentacao_estoque_loja():
         with connection.cursor() as cursor:
             # Constroi o sql
             sql_query = """
-                    SELECT cod_ars, desc_ars, lote, quantidade, vencimento
+                    SELECT id, cod_ars, desc_ars, lote, quantidade, vencimento
                     FROM dbo.cadastro_estoque_loja
                 """
             conditions = []
@@ -6401,19 +6405,18 @@ def deletar_estoque_loja():
     if not is_logged_in():
         return redirect(url_for('login'))
 
-    cod_ars = request.form['cod_ars']
-    lote = request.form['lote']
+    id = request.form['id']  # Capturar o ID do item
 
     # Conectar ao banco de dados
     connection = conectar_db()
 
     try:
         with connection.cursor() as cursor:
-            # Deletar o item do estoque_loja
-            cursor.execute("DELETE FROM dbo.cadastro_estoque_loja WHERE cod_ars = ? AND lote = ?", (cod_ars, lote))
+            # Deletar o item específico usando o ID
+            cursor.execute("DELETE FROM dbo.cadastro_estoque_loja WHERE id = ?", (id,))
 
             connection.commit()
-            flash(f'Item código ARS: {cod_ars} deletado com sucesso.')
+            flash(f'Item ID: {id} deletado com sucesso.')
 
     except Exception as e:
         flash(f"Erro ao deletar o item: {e}")

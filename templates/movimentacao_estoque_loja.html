@@ -128,20 +128,19 @@
                     {% endif %}
                 </td>
                 <td>
-                    <button class="btn btn-entrada" onclick="showModal('{{ item.cod_ars }}', '{{ item.lote }}', 'entrada')">
+                    <button class="btn btn-entrada" onclick="showModal('{{ item.id }}', 'entrada')">
                         <i class="fas fa-plus-circle"></i> Entrada
                     </button>
                 </td>
                 <td>
-                    <button class="btn btn-saida" onclick="showModal('{{ item.cod_ars }}', '{{ item.lote }}', 'saida')">
+                    <button class="btn btn-saida" onclick="showModal('{{ item.id }}', 'saida')">
                         <i class="fas fa-minus-circle"></i> Saída
                     </button>
                 </td>
                 <td>
                     <form method="POST" action="{{ url_for('deletar_estoque_loja') }}">
-                        <input type="hidden" name="cod_ars" value="{{ item.cod_ars }}">
-                        <input type="hidden" name="lote" value="{{ item.lote }}">
-                        <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ item.cod_ars }}', '{{ item.lote }}')">
+                        <input type="hidden" name="id" id="modalDeleteId"> <!-- Corrigir o campo oculto para armazenar o id -->
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ item.id }}')">
                             <i class="fas fa-trash-alt"></i>Apagar
                         </button>
                     </form>
@@ -161,8 +160,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('movimentacao_estoque_loja') }}">
-                <input type="hidden" name="cod_ars" id="modalCodArs">
-                <input type="hidden" name="lote" id="modalLote">
+                <input type="hidden" name="id" id="modalId"> <!-- Campo oculto para armazenar o id -->
                 <input type="hidden" name="tipo_movimentacao" id="modalTipoMovimentacao">
                 <div class="modal-body">
                     <div class="form-group">
@@ -185,6 +183,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteModalTitle">Confirmação de Exclusão</h5>
+                <input type="hidden" name="id" id="modalIdel">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -234,30 +233,34 @@
 
 
 <script>
-    function showModal(cod_ars, lote, tipo) {
-        // Atualiza os valores dos campos ocultos
-        document.getElementById('modalCodArs').value = cod_ars;
-        document.getElementById('modalLote').value = lote;  // Certifique-se de ter um campo oculto para 'lote'
+    function showModal(id, tipo) {
+        // Verifique se o ID e o tipo de movimentação estão sendo capturados corretamente
+        console.log("ID:", id, "Tipo de movimentação:", tipo);
+
+        // Atualiza os campos ocultos com o ID e o tipo de movimentação
+        document.getElementById('modalId').value = id;
         document.getElementById('modalTipoMovimentacao').value = tipo;
 
-        // Atualiza o título do modal
+        // Atualiza o título do modal de acordo com o tipo de movimentação
         const modalTitle = document.getElementById('modalTitle');
         modalTitle.innerText = tipo === 'entrada' ? 'Adicionar Quantidade' : 'Remover Quantidade';
 
-        // Exibe o modal
+        // Exibe o modal de movimentação
         var modal = new bootstrap.Modal(document.getElementById('modalMovimentacao'));
         modal.show();
     }
 
-    function confirmDelete(cod_ars, lote) {
-        // Armazena os valores do item a ser excluído
-        document.getElementById('confirmDeleteBtn').setAttribute('data-cod-ars', cod_ars);
-        document.getElementById('confirmDeleteBtn').setAttribute('data-lote', lote);
+
+    function confirmDelete(id) {
+        // Atualiza o campo oculto com o ID do item a ser excluído
+        document.getElementById('modalDeleteId').value = id;
 
         // Exibe o modal de confirmação
         var modal = new bootstrap.Modal(document.getElementById('modalConfirmDelete'));
         modal.show();
     }
+
+
 
     function showVencimentoModal(cod_ars, lote, vencimento) {
         document.getElementById('modalCodArsVencimento').value = cod_ars;
@@ -273,34 +276,25 @@
         const password = document.getElementById('deletePassword').value;
 
         if (password === '102030') {
-            // Senha correta, cria e envia o formulário de exclusão
-            const cod_ars = this.getAttribute('data-cod-ars');
-            const lote = this.getAttribute('data-lote');
-
+            // Senha correta, envia o formulário de exclusão
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = "{{ url_for('deletar_estoque_loja') }}";
 
-            const inputCodArs = document.createElement('input');
-            inputCodArs.type = 'hidden';
-            inputCodArs.name = 'cod_ars';
-            inputCodArs.value = cod_ars;
+            const inputId = document.createElement('input');
+            inputId.type = 'hidden';
+            inputId.name = 'id';
+            inputId.value = document.getElementById('modalDeleteId').value;
 
-            const inputLote = document.createElement('input');
-            inputLote.type = 'hidden';
-            inputLote.name = 'lote';
-            inputLote.value = lote;
-
-            form.appendChild(inputCodArs);
-            form.appendChild(inputLote);
+            form.appendChild(inputId);
 
             document.body.appendChild(form);
             form.submit();
         } else {
             alert('Senha incorreta. Tente novamente.');
         }
-
     });
+
 </script>
 
 

@@ -78,7 +78,7 @@
                 <h2 class="text-center">Notas Fiscais Cadastradas</h2>
                 <div class="table-responsive">
                     {% for nota in notas_fiscais %}
-                    <div class="card mb-2" style="border: 3px solid {% if nota.cad_lancamento|lower == 'ok' %}#28a745{% else %}#000{% endif %};">
+                    <div class="card mb-2" style="border: 3px solid {% if nota.cad_lancamento|lower == 'ok' %}#28a745{% elif nota.cad_lancamento|lower == 'devoluçao' %}#800080{% else %}#000{% endif %};">
                         <div class="card-body">
                             <!-- Primeira Linha -->
                             <div class="row">
