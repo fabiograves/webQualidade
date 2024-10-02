@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Visualizar Gráfico de Avaliação do Fornecedor</h2>
+
+    <!-- Formulário para selecionar fornecedor, período e ano -->
+    <form method="POST" action="{{ url_for('visualizar_grafico') }}">
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="fornecedor">Fornecedor</label>
+                <select class="form-control" id="fornecedor" name="fornecedor">
+                    {% for fornecedor in fornecedores %}
+                        <option value="{{ fornecedor.id }}" {% if fornecedor.id == fornecedor_selecionado %}selected{% endif %}>{{ fornecedor.nome_fornecedor }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-1">
+                <label for="mes_inicial">Mês Inicial</label>
+                <select class="form-control" id="mes_inicial" name="mes_inicial">
+                    {% for mes in range(1, 13) %}
+                        <option value="{{ mes }}" {% if mes == mes_inicial_selecionado %}selected{% endif %}>{{ mes }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-1">
+                <label for="mes_final">Mês Final</label>
+                <select class="form-control" id="mes_final" name="mes_final">
+                    {% for mes in range(1, 13) %}
+                        <option value="{{ mes }}" {% if mes == mes_final_selecionado %}selected{% endif %}>{{ mes }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-3">
+                <label for="ano">Ano</label>
+                <select class="form-control" id="ano" name="ano">
+                    {% for ano in range(2020, 2031) %}
+                        <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-3">
+                <button type="submit" class="btn btn-secondary mt-4 w-100">Filtrar</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Div para o gráfico -->
+    <div class="mt-5">
+        <canvas id="graficoAvaliacao"></canvas>
+    </div>
+
+    <!-- Legenda -->
+    <div class="mt-4">
+        <ul class="legenda">
+            <li><span class="faixa-verde"></span> Aprovado</li>
+            <li><span class="faixa-azul"></span> Aprovado (advertido)</li>
+            <li><span class="faixa-amarela"></span> Aprovado Condicional</li>
+            <li><span class="faixa-vermelha"></span> Reprovado</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Adicione os estilos CSS para as legendas -->
+<style>
+    .legenda {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        justify-content: space-around;
+    }
+
+    .legenda li {
+        display: flex;
+        align-items: center;
+    }
+
+    .faixa-verde, .faixa-azul, .faixa-amarela, .faixa-vermelha {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+    }
+
+    .faixa-verde { background-color: rgba(0, 255, 0, 0.3); border: 2px solid rgba(0, 255, 0, 0.5); }
+    .faixa-azul { background-color: rgba(0, 0, 255, 0.3); border: 2px solid rgba(0, 0, 255, 0.5); }
+    .faixa-amarela { background-color: rgba(255, 255, 0, 0.3); border: 2px solid rgba(255, 255, 0, 0.5); }
+    .faixa-vermelha { background-color: rgba(255, 0, 0, 0.3); border: 2px solid rgba(255, 0, 0, 0.5); }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+
+<script>
+    var ctx = document.getElementById('graficoAvaliacao').getContext('2d');
+
+    // Calcular os valores máximos para ajustar o gráfico
+    var naoConformidadeValues = [{% for dados in dados_grafico.values() %}{{ dados['nao_conformidade'] }},{% endfor %}];
+    var atrasoEntregaValues = [{% for dados in dados_grafico.values() %}{{ dados['atraso_entrega'] }},{% endfor %}];
+
+    // Encontrar o valor máximo entre "Não Conformidade" e "Atraso Entrega"
+    var maxNC = Math.max(...naoConformidadeValues);
+    var maxAE = Math.max(...atrasoEntregaValues);
+    var maxValue = Math.max(maxNC, maxAE);
+
+    var mediaTrimestre = {{ media_trimestre }};  // Valor da média trimestral
+
+    var grafico = new Chart(ctx, {
+        type: 'bar',  // Gráfico de barras
+        data: {
+            labels: [{% for mes in dados_grafico.keys() %}'{{ mes }}',{% endfor %}],
+            datasets: [
+                {
+                    label: 'Não Conformidade',
+                    data: naoConformidadeValues,
+                    backgroundColor: 'rgb(255,99,132)',  // Cor para as barras de Não Conformidade
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Atraso Entrega',
+                    data: atrasoEntregaValues,
+                    backgroundColor: 'rgb(54,162,235)',  // Cor para as barras de Atraso de Entrega
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            title: {
+                display: true,
+                text: 'Média Mensal de Avaliação do Fornecedor por Trimestre'
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Mês'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Valor'
+                    },
+                    min: 0,
+                    max: maxValue + 2 // Adicionar um pouco mais ao valor máximo
+                }
+            },
+            plugins: {
+                annotation: {
+                    annotations: {
+                        faixaVerde: {
+                            type: 'box',
+                            yMin: 7,
+                            yMax: 10,
+                            backgroundColor: 'rgba(0, 255, 0, 0.1)',  // Verde claro
+                            borderColor: 'rgba(0, 255, 0, 0.5)',
+                            borderWidth: 2,
+                            z: -1  // Desenha atrás das barras
+                        },
+                        faixaAzul: {
+                            type: 'box',
+                            yMin: 5.5,
+                            yMax: 6.9,
+                            backgroundColor: 'rgba(0, 0, 255, 0.1)',  // Azul claro
+                            borderColor: 'rgba(0, 0, 255, 0.5)',
+                            borderWidth: 2,
+                            z: -1  // Desenha atrás das barras
+                        },
+                        faixaAmarela: {
+                            type: 'box',
+                            yMin: 4.0,
+                            yMax: 5.4,
+                            backgroundColor: 'rgba(255, 255, 0, 0.1)',  // Amarelo claro
+                            borderColor: 'rgba(255, 255, 0, 0.5)',
+                            borderWidth: 2,
+                            z: -1  // Desenha atrás das barras
+                        },
+                        faixaVermelha: {
+                            type: 'box',
+                            yMin: 0,
+                            yMax: 3.9,
+                            backgroundColor: 'rgba(255, 0, 0, 0.1)',  // Vermelho claro
+                            borderColor: 'rgba(255, 0, 0, 0.5)',
+                            borderWidth: 2,
+                            z: -1  // Desenha atrás das barras
+                        },
+                        linhaMedia: {
+                            type: 'line',
+                            yMin: mediaTrimestre,
+                            yMax: mediaTrimestre,
+                            borderColor: 'rgba(0, 128, 0, 1)',  // Cor verde para destacar a média
+                            borderWidth: 3,  // Aumentar a espessura da linha da média
+                            borderDash: [10, 5],  // Linha tracejada
+                            label: {
+                                content: `Média: ${mediaTrimestre.toFixed(2)}`,
+                                enabled: true,
+                                position: 'start',
+                                backgroundColor: 'rgba(0, 128, 0, 0.7)',
+                                color: 'white',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            z: 0  // Desenha na mesma camada das barras
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    grafico.update();  // Atualiza o gráfico com as novas configurações
+</script>
+{% endblock %}

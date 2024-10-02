@@ -65,6 +65,9 @@
                         <div class="form-group col-md-3">
                             <button type="button" onclick="printPDF('printableArea')" class="btn btn-secondary w-100">Gerar PDF</button>
                         </div>
+                        <div class="form-group col-md-3">
+                            <a href="{{ url_for('visualizar_grafico') }}" class="btn btn-primary w-100">Visualizar Gráfico</a>
+                        </div>
                     </div>
                     <div class = "form-row">
                         <div class ="form-group col-md-12">
@@ -352,6 +355,7 @@
 </div>
 
 <script>
+
     var logoPath = "{{ url_for('static', filename='images/LogoCertificado.png') }}"; // Isso precisa ser uma URL acessível no lado do cliente
 
     function printPDF(divId) {

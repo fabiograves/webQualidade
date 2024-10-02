@@ -55,23 +55,47 @@
     <!-- **Search and Filter Form** -->
     <form method="GET" action="{{ url_for('movimentacao_estoque_loja') }}" class="mb-3">
         <div class="row">
-            <div class="col-md-6 mb-2">
-                <input type="text" name="search" class="form-control" placeholder="Pesquisar..." value="{{ search_term }}">
-            </div>
             <div class="col-md-3 mb-2">
-                <select name="filter" class="form-control">
-                    <option value="" {% if filter_option == '' %}selected{% endif %}>Todos</option>
-                    <option value="expired" {% if filter_option == 'expired' %}selected{% endif %}>Vencidos</option>
-                    <option value="less_than_5_days" {% if filter_option == 'less_than_5_days' %}selected{% endif %}>Vencendo em menos de 5 dias</option>
-                    <option value="less_than_15_days" {% if filter_option == 'less_than_15_days' %}selected{% endif %}>Vencendo em menos de 15 dias</option>
-                    <option value="low_quantity" {% if filter_option == 'low_quantity' %}selected{% endif %}>Baixa Quantidade (menos de 10)</option>
-                </select>
+                <div class="form-group">
+                    <label for="search">Pesquisar</label>
+                    <input type="text" name="search" id="search" class="form-control" placeholder="Pesquisar..." value="{{ search_term }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="data_inicio">Data início:</label>
+                    <input type="date" class="form-control" id="data_inicio" name="data_inicio" placeholder="dd/mm/aaaa" value="{{ data_inicio }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="data_fim">Data fim:</label>
+                    <input type="date" class="form-control" id="data_fim" name="data_fim" placeholder="dd/mm/aaaa" value="{{ data_fim }}">
+                </div>
             </div>
             <div class="col-md-2 mb-2">
-                <button type="submit" class="btn btn-primary w-100">Pesquisar</button>
+                <div class="form-group">
+                    <label for="filter">Filtro</label>
+                    <select name="filter" id="filter" class="form-control">
+                        <option value="" {% if filter_option == '' %}selected{% endif %}>Todos</option>
+                        <option value="expired" {% if filter_option == 'expired' %}selected{% endif %}>Vencidos</option>
+                        <option value="less_than_5_days" {% if filter_option == 'less_than_5_days' %}selected{% endif %}>Vencendo em menos de 5 dias</option>
+                        <option value="less_than_15_days" {% if filter_option == 'less_than_15_days' %}selected{% endif %}>Vencendo em menos de 15 dias</option>
+                        <option value="low_quantity" {% if filter_option == 'low_quantity' %}selected{% endif %}>Baixa Quantidade (menos de 10)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2 mb-2">
+                <div class="form-group">
+                    <label for="button"></label>
+                    <button type="submit" id="button" class="btn btn-primary w-100">Pesquisar</button>
+                </div>
             </div>
             <div class="col-md-1 mb-2">
-                <a href="{{ url_for('movimentacao_estoque_loja') }}" class="btn btn-secondary w-100">Limpar</a>
+                <div class="form-group">
+                    <label for="limpar"></label>
+                    <a href="{{ url_for('movimentacao_estoque_loja') }}" id="limpar" class="btn btn-secondary w-100">Limpar</a>
+                </div>
             </div>
         </div>
     </form>

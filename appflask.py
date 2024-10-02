@@ -41,6 +41,7 @@ from reportlab.graphics import renderPDF
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
 from datetime import timedelta
 import traceback
+import xlsxwriter
 
 
 app = Flask(__name__)
@@ -174,6 +175,7 @@ def inject_aviso():
                 dias_apos_vencimento = abs(dias_para_vencimento)
                 aviso = f"{numero_instrumento} - {equipamento} - Venceu em {data_vencimento_formatada} - Vencido há {dias_apos_vencimento} dias"
                 mensagens_aviso.append(aviso)
+
 
     except Exception as e:
         print(f"Erro ao buscar mensagens de aviso: {e}")
@@ -1156,7 +1158,6 @@ def pesquisar_avaliacao_diaria():
                            notas_finais_trimestres=notas_finais_trimestres,
                            pesquisa_realizada=pesquisa_realizada,
                            fornecedor_escolhido=fornecedor_escolhido)
-
 
 
 @app.route('/lista_norma')
@@ -5573,7 +5574,7 @@ def pesquisar_notas_fiscais():
     cad_numero_nota = request.args.get('cad_numero_nota', '')
     cad_data_entrada_ars = request.args.get('cad_data_entrada_ars', '')
     cad_pedido = request.args.get('cad_pedido', '')
-    cad_fornecedor = request.args.get('cad_fornecedor', '').upper()
+    cad_fornecedor = request.args.get('cad_fornecedor', '')
     cad_lancamento = request.args.get('cad_lancamento', '')
 
     page = request.args.get('page', 1, type=int)
@@ -5712,7 +5713,7 @@ def pesquisar_notas_fiscais_download():
     cad_numero_nota = request.args.get('cad_numero_nota', '')
     cad_data_entrada_ars = request.args.get('cad_data_entrada_ars', '')
     cad_pedido = request.args.get('cad_pedido', '')
-    cad_fornecedor = request.args.get('cad_fornecedor', '').upper()
+    cad_fornecedor = request.args.get('cad_fornecedor', '')
     cad_lancamento = request.args.get('cad_lancamento', '')
 
     page = request.args.get('page', 1, type=int)
@@ -5872,7 +5873,7 @@ def pesquisar_notas_fiscais_produtos():
     cad_numero_nota = request.args.get('cad_numero_nota', '')
     cad_data_entrada_ars = request.args.get('cad_data_entrada_ars', '')
     cad_pedido = request.args.get('cad_pedido', '')
-    cad_fornecedor = request.args.get('cad_fornecedor', '').upper()
+    cad_fornecedor = request.args.get('cad_fornecedor', '')
     cad_lancamento = request.args.get('cad_lancamento', '')
 
     page = request.args.get('page', 1, type=int)
@@ -6332,19 +6333,20 @@ def movimentacao_estoque_loja():
         return redirect(url_for('movimentacao_estoque_loja'))
 
     else:
-
-        # lida com os parametros do filtro
+        # Lida com os parâmetros do filtro
         search_term = request.args.get('search', '')
         filter_option = request.args.get('filter', '')
+        data_inicio = request.args.get('data_inicio', '')
+        data_fim = request.args.get('data_fim', '')
 
-        # Conecta co mo Bd
+        # Conecta com o Bd
         connection = conectar_db()
         with connection.cursor() as cursor:
             # Constroi o sql
             sql_query = """
-                    SELECT id, cod_ars, desc_ars, lote, quantidade, vencimento
-                    FROM dbo.cadastro_estoque_loja
-                """
+                SELECT id, cod_ars, desc_ars, lote, quantidade, vencimento
+                FROM dbo.cadastro_estoque_loja
+            """
             conditions = []
             params = []
 
@@ -6374,7 +6376,19 @@ def movimentacao_estoque_loja():
                     conditions.append("quantidade < ?")
                     params.append(low_quantity_threshold)
 
-            # Combina as condicoes
+            # Filtra por data de vencimento entre data_inicio e data_fim
+            if data_inicio and data_fim:
+                conditions.append("vencimento BETWEEN ? AND ?")
+                params.append(data_inicio)
+                params.append(data_fim)
+            elif data_inicio:
+                conditions.append("vencimento >= ?")
+                params.append(data_inicio)
+            elif data_fim:
+                conditions.append("vencimento <= ?")
+                params.append(data_fim)
+
+            # Combina as condições
             if conditions:
                 sql_query += " WHERE " + " AND ".join(conditions)
 
@@ -6395,7 +6409,9 @@ def movimentacao_estoque_loja():
             quinze_dias=quinze_dias,
             cinco_dias=cinco_dias,
             search_term=search_term,
-            filter_option=filter_option
+            filter_option=filter_option,
+            data_inicio=data_inicio,
+            data_fim=data_fim
         )
 
 
@@ -6462,5 +6478,116 @@ def modificar_data_loja():
     return redirect(url_for('movimentacao_estoque_loja'))
 
 
+@app.route('/visualizar_grafico', methods=['GET', 'POST'])
+def visualizar_grafico():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    fornecedores = []
+    dados_grafico = {}
+    fornecedor_selecionado = None
+    mes_inicial_selecionado = None
+    mes_final_selecionado = None
+    ano_selecionado = None
+    media_trimestre = 0
+
+    try:
+        with connection.cursor() as cursor:
+            # Busca os fornecedores para o filtro
+            sql_fornecedores = "SELECT id, nome_fornecedor FROM dbo.cadastro_fornecedor ORDER BY nome_fornecedor ASC"
+            cursor.execute(sql_fornecedores)
+            fornecedores = cursor.fetchall()
+
+            if request.method == 'POST':
+                fornecedor_selecionado = request.form['fornecedor']
+                mes_inicial_selecionado = int(request.form['mes_inicial'])
+                mes_final_selecionado = int(request.form['mes_final'])
+                ano_selecionado = int(request.form['ano'])
+
+                # Busca os dados agregados por mês e ano
+                cursor.execute("""
+                SELECT 
+                    MONTH(data) AS mes, 
+                    SUM(nao_conformidade) AS soma_nao_conformidade, 
+                    SUM(atraso_entrega) AS soma_atraso_entrega,
+                    COUNT(data) AS qtd_dias_com_valor
+                FROM dbo.avaliacao_diaria
+                WHERE id_fornecedor = ? AND YEAR(data) = ? AND MONTH(data) BETWEEN ? AND ?
+                GROUP BY MONTH(data)
+                ORDER BY mes
+                """, (fornecedor_selecionado, ano_selecionado, mes_inicial_selecionado, mes_final_selecionado))
+
+                resultado = fetch_dict(cursor)
+
+                # Organizar os dados mensais para o gráfico
+                soma_nao_conformidade_total = 0
+                soma_atraso_entrega_total = 0
+                total_dias_com_valor = 0
+
+                while resultado:
+                    mes = resultado['mes']
+                    soma_nao_conformidade = resultado['soma_nao_conformidade']
+                    soma_atraso_entrega = resultado['soma_atraso_entrega']
+                    qtd_dias_com_valor = resultado['qtd_dias_com_valor']
+
+                    # Mapeamento dos meses em inglês para português
+                    meses_portugues = {
+                        'January': 'Janeiro',
+                        'February': 'Fevereiro',
+                        'March': 'Março',
+                        'April': 'Abril',
+                        'May': 'Maio',
+                        'June': 'Junho',
+                        'July': 'Julho',
+                        'August': 'Agosto',
+                        'September': 'Setembro',
+                        'October': 'Outubro',
+                        'November': 'Novembro',
+                        'December': 'Dezembro'
+                    }
+
+                    # Obter o nome do mês em inglês
+                    nome_mes_ingles = datetime.date(1900, mes, 1).strftime('%B')
+
+                    # Fazer o mapeamento para português
+                    nome_mes = meses_portugues.get(nome_mes_ingles,
+                                                   nome_mes_ingles)  # Se não encontrar, mantém o inglês
+
+                    dados_grafico[nome_mes] = {
+                        'nao_conformidade': round(soma_nao_conformidade / qtd_dias_com_valor, 2),
+                        'atraso_entrega': round(soma_atraso_entrega / qtd_dias_com_valor, 2)
+                    }
+
+                    # Atualizar as somas gerais
+                    soma_nao_conformidade_total += soma_nao_conformidade
+                    soma_atraso_entrega_total += soma_atraso_entrega
+                    total_dias_com_valor += qtd_dias_com_valor
+
+                    resultado = fetch_dict(cursor)
+
+                # Calcular a média geral para o período selecionado
+                if total_dias_com_valor > 0:
+                    media_trimestre = ((soma_nao_conformidade_total + soma_atraso_entrega_total) / 2) / total_dias_com_valor
+                else:
+                    media_trimestre = 0
+
+    except Exception as e:
+        print(f"Erro: {e}")
+        flash(f"Erro ao processar os dados: {e}")
+    finally:
+        connection.close()
+
+    return render_template('visualizar_grafico.html',
+                           fornecedores=fornecedores,
+                           dados_grafico=dados_grafico,
+                           fornecedor_selecionado=fornecedor_selecionado,
+                           mes_inicial_selecionado=mes_inicial_selecionado,
+                           mes_final_selecionado=mes_final_selecionado,
+                           ano_selecionado=ano_selecionado,
+                           media_trimestre=round(media_trimestre, 2),
+                           tamanho_dados_grafico=len(dados_grafico))
+
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8080)
+    app.run(debug=True, host='0.0.0.0', port=8088)
