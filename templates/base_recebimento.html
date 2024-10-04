@@ -123,6 +123,15 @@
                                 <li id="abrirCalculadora"><a class="dropdown-item" href="#">Abrir Calculadora</a></li>
                             </ul>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Faturamento
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais') }}">Pesquisar Nota Fiscal</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais_produtos') }}">Pesquisar Nota Fiscal - Lista</a></li>
+                            </ul>
+                        </li>
                     </ul>
                 </div>
             </div>

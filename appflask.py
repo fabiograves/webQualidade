@@ -5126,6 +5126,7 @@ def gerar_grafico_quantidade_reprovas_por_ano(df):
 
 
 def gerar_grafico_reprovas_por_picker(df):
+    # Remover valores não identificados (vazios ou espaços em branco)
     df = df.dropna(subset=['picker'])
     df = df[df['picker'].str.strip() != '']
 
@@ -5142,6 +5143,7 @@ def gerar_grafico_reprovas_por_picker(df):
 
 
 def gerar_grafico_reprovas_por_separador(df):
+    # Remover valores não identificados (vazios ou espaços em branco)
     df = df.dropna(subset=['separador'])
     df = df[df['separador'].str.strip() != '']
 
@@ -5157,6 +5159,10 @@ def gerar_grafico_reprovas_por_separador(df):
 
 
 def gerar_grafico_ranking_reprova(df):
+    # Remover valores não identificados (vazios ou espaços em branco)
+    df = df.dropna(subset=['desc_reprova'])
+    df = df[df['desc_reprova'].str.strip() != '']
+
     ranking_reprova = df['desc_reprova'].value_counts()
 
     fig, ax = plt.subplots()
@@ -5244,6 +5250,9 @@ def dados_grafico():
                 'label': 'Quantidade de Reprovas por Ano'
             })
         elif tipo == 'picker':
+            # Remover valores vazios ou espaços em branco no campo 'picker'
+            df = df.dropna(subset=['picker'])  # Remove valores None
+            df = df[df['picker'].str.strip() != '']  # Remove valores em branco
             dados = df.groupby('picker').size()
             return jsonify({
                 'labels': dados.index.tolist(),
@@ -5251,6 +5260,9 @@ def dados_grafico():
                 'label': 'Quantidade de Reprovas por Picker'
             })
         elif tipo == 'separador':
+            # Remover valores vazios ou espaços em branco no campo 'separador'
+            df = df.dropna(subset=['separador'])  # Remove valores None
+            df = df[df['separador'].str.strip() != '']  # Remove valores em branco
             dados = df.groupby('separador').size()
             return jsonify({
                 'labels': dados.index.tolist(),
@@ -5259,6 +5271,9 @@ def dados_grafico():
             })
 
         elif tipo == 'ranking':
+            # Remover valores vazios ou espaços em branco no campo 'desc_reprova'
+            df = df.dropna(subset=['desc_reprova'])  # Remove valores None
+            df = df[df['desc_reprova'].str.strip() != '']  # Remove valores em branco
             dados = df['desc_reprova'].value_counts()
             return jsonify({
                 'labels': dados.index.tolist(),
