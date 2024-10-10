@@ -96,11 +96,19 @@
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Tratamento
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('lista_tratamentos_cadastrados') }}">Enviar Tratamento</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('cadastro_tratamento_superficial') }}">Cadastro Tratamento</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Cadastros
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('avaliacao_diaria') }}">Avaliação Diária</a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('cadastro_recebimento_concluido') }}">Recebimento Concluido</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('cadastro_itens_ars') }}">Cadastro Itens</a></li>
                             </ul>
                         </li>
                         <li class="nav-item dropdown">

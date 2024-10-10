@@ -1,0 +1,215 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
+{% elif session['privilegio'] == 4 %}
+    {% extends "base_inspecao_final.html" %}
+{% elif session['privilegio'] == 11 %}
+    {% extends "base_faturamento.html" %}
+{% elif session['privilegio'] == 12 %}
+    {% extends "base_faturamento_lancamento.html" %}
+{% elif session['privilegio'] == 99 %}
+    {% extends "base_pesquisar.html" %}
+{% elif session['privilegio'] == 13 %}
+    {% extends "base_faturamento_pesquisar_xml.html" %}
+{% elif session['privilegio'] == 21 %}
+    {% extends "base_compras.html" %}
+{% elif session['privilegio'] == 31 %}
+    {% extends "base_vendas2.html" %}
+{% elif session['privilegio'] == 41 %}
+    {% extends "base_loja.html" %}
+{% elif session['privilegio'] == 51 %}
+    {% extends "base_tratamentos.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<!-- jQuery primeiro -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<!-- Depois, o Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<style>
+    .btn-group-toggle {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-items: center;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+
+    .btn-group-toggle .btn {
+        margin: 0 5px 10px 0;
+        width: 120px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 0;
+        border-radius: 0 !important;
+    }
+
+    .btn-group-toggle .btn.active {
+        background-color: #28a745 !important;
+        color: white;
+    }
+</style>
+
+<form method="POST" action="{{ url_for('cadastro_tratamento_superficial') }}">
+    <div class="py-1">
+        <div class="container">
+            <h1 class="text-center">Cadastro Tratamento Superficial</h1>
+            <div class="row">
+                <div class="col-md-2">
+                    <label>Pedido Cliente</label>
+                    <input type="text" class="form-control" id="pedido_cliente" name="pedido_cliente" required>
+                </div>
+                <div class="col-md-2">
+                    <label>Código Produto</label>
+                    <input type="text" class="form-control" id="cod_produto" name="cod_produto" required onblur="buscarDescricaoProduto()">
+                </div>
+                <div class="col-md-8">
+                    <label>Descrição Produto</label>
+                    <input type="text" class="form-control" id="desc_produto" name="desc_produto" readonly>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label>Rastreamento</label>
+                    <input type="text" class="form-control" id="rastreamento" name="rastreamento">
+                </div>
+                <div class="col-md-3">
+                    <label>Peso (kg)</label>
+                    <input type="number" step="0.001" class="form-control" id="peso" name="peso">
+                </div>
+                <div class="col-md-3">
+                    <label>Volume</label>
+                    <input type="number" class="form-control" id="volume" name="volume">
+                </div>
+                <div class="col-md-3">
+                    <label>Quantidade</label>
+                    <input type="number" class="form-control" id="quantidade" name="quantidade">
+                </div>
+            </div>
+
+            <!-- Tipo de Tratamento -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <!-- Definir os títulos dos botões diretamente no Jinja -->
+                        {% set descricoes = {
+                            1: "Zn Branco", 2: "Zn Preto", 3: "Zn Amarelo", 4: "Decapagem", 5: "Fosfato Mn",
+                            6: "Cad Brico", 7: "Zn Triv Azul", 8: "Zn Triv Branco",
+                            9: "Zn Triv Amarelo", 10: "Organometalico (GEOMET)",
+                            11: "Galvanizado a Fogo", 12: "Oxidado",
+                            13: "Xylan", 14: "Niquel", 15: "Cobre",
+                            16: "Corte", 17: "Zn Triv. Amarelo BR 120H VM 144H (C/ Selante)"
+                        } %}
+                        <!-- Renderizar os botões com os textos ao carregar -->
+                        {% for i in range(1, 18) %}
+                            <label class="btn btn-secondary" id="label_tratamento_{{ i }}">
+                                <input type="radio" name="tipo_tratamento" id="tratamento{{ i }}" value="tratamento{{ i }}" onclick="mostrarDescricao('{{ i }}')"> {{ descricoes[i] }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Descrição do Tratamento -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <p id="descricao_tratamento">Selecione um tratamento para ver a descrição.</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Tratamento</button>
+            </div>
+
+            <div class="row">
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <div class="flash-messages">
+                            {% for message in messages %}
+                                <div class="alert alert-warning" role="alert">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    function buscarDescricaoProduto() {
+        var codProduto = document.getElementById('cod_produto').value;
+        fetch(`/buscar_descricao_produto?cod_produto=${codProduto}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.descricao) {
+                    document.getElementById('desc_produto').value = data.descricao;
+                } else {
+                    document.getElementById('desc_produto').value = data.message || 'Produto não cadastrado';
+                }
+            })
+            .catch(error => console.error('Erro ao buscar descrição do produto:', error));
+    }
+
+    document.querySelector('form').addEventListener('submit', function (e) {
+        var confirmation = confirm("Tem certeza que deseja cadastrar este tratamento?");
+        if (!confirmation) {
+            e.preventDefault();
+        }
+    });
+
+    // Função para gerenciar a seleção do botão de tipo de tratamento
+    document.querySelectorAll('.btn-group-toggle .btn').forEach(function (button) {
+        button.addEventListener('click', function () {
+
+        });
+    });
+
+    // Função para exibir a descrição do tratamento selecionado
+    function mostrarDescricao(tratamentoId) {
+        // Lista de descrições para cada tratamento
+        const descricoes = {
+            "1": { "titulo": "Zn Branco", "descricao": "Zincado Branco: ." },
+            "2": { "titulo": "Zn Preto", "descricao": "Zincado Preto: Descrição detalhada do ." },
+            "3": { "titulo": "Zn Amarelo", "descricao": "Zincado Amarelo: Descrição detalhada do ." },
+            "4": { "titulo": "Decapagem", "descricao": "Decapagem: Descrição detalhada do ." },
+            "5": { "titulo": "Fosfato Mn", "descricao": "Fosfato Mn: Descrição detalhada do ." },
+            "6": { "titulo": "Cad Brico", "descricao": "Tratamento 6: Descrição detalhada do ." },
+            "7": { "titulo": "Zn Triv Azul", "descricao": "Tratamento 7: Descrição detalhada do ." },
+            "8": { "titulo": "Tratamento Detalhado", "descricao": "Tratamento 8: Descrição detalhada do ." },
+            "9": { "titulo": "Tratamento Especializado", "descricao": "Tratamento 9: Descrição detalhada do ." },
+            "10": { "titulo": "Tratamento Intensivo", "descricao": "Tratamento 10: Descrição detalhada do ." }
+        };
+
+        // Verifica se a descrição para o tratamentoId existe
+        if (descricoes[tratamentoId]) {
+            // Atualiza o texto da descrição do tratamento
+            document.getElementById("descricao_tratamento").innerText = descricoes[tratamentoId].descricao;
+        } else {
+            // Se o tratamento não for encontrado, exibe uma mensagem padrão
+            document.getElementById("descricao_tratamento").innerText = "Descrição não disponível para este tratamento.";
+        }
+    }
+
+
+</script>
+
+
+{% endblock %}

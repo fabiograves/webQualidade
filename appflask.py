@@ -6620,5 +6620,153 @@ def visualizar_grafico():
                            tamanho_dados_grafico=len(dados_grafico))
 
 
+@app.route('/cadastro_tratamento_superficial', methods=['GET', 'POST'])
+@requires_privilege(9, 51)
+def cadastro_tratamento_superficial():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        # Captura os dados do formulário
+        pedido_cliente = request.form['pedido_cliente']
+        cod_produto = request.form['cod_produto']
+        desc_produto = request.form.get('desc_produto', '')
+        rastreamento = request.form.get('rastreamento', '')
+        peso = request.form.get('peso', 0)
+        volume = request.form.get('volume', 0)
+        tipo_tratamento = request.form['tipo_tratamento']
+        responsavel = session['username']  # Obter o nome de usuário da sessão
+        data_atual = datetime.datetime.today().strftime('%Y-%m-%d')  # Data atual
+        quantidade = request.form.get('quantidade', 0)
+        estado = "Cadastrado"
+
+        try:
+            # Verifica se o código do produto existe no banco de dados
+            conn = conectar_db()
+            cursor = conn.cursor()
+
+            cursor.execute("SELECT descricao_item FROM [dbo].[cadastro_itens] WHERE cod_item = ?", (cod_produto,))
+            result = cursor.fetchone()
+
+            if result:
+                desc_produto = result[0]
+            else:
+                flash('Produto não cadastrado, código do produto inexistente.', 'danger')
+                return render_template('cadastro_tratamento_superficial.html', desc_produto='', cod_produto=cod_produto)
+
+            # Inserir os dados no banco de dados
+            cursor.execute("""
+                INSERT INTO [dbo].[cadastro_tratamento_superficial] 
+                (pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data, estado, quantidade)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_atual, estado, quantidade))
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+            flash('Tratamento cadastrado com sucesso!', 'success')
+            return redirect(url_for('cadastro_tratamento_superficial'))
+
+        except Exception as e:
+            flash(f'Erro ao cadastrar tratamento: {str(e)}', 'danger')
+
+    return render_template('cadastro_tratamento_superficial.html')
+
+
+@app.route('/buscar_descricao_produto')
+def buscar_descricao_produto():
+    cod_produto = request.args.get('cod_produto')
+
+    if not cod_produto:
+        return jsonify({'error': 'Código do produto não fornecido'}), 400
+
+    try:
+        # Conectar ao banco de dados
+        conn = conectar_db()
+        cursor = conn.cursor()
+
+        # Executar consulta para buscar a descrição do produto
+        cursor.execute("SELECT descricao_item FROM [dbo].[cadastro_itens] WHERE cod_item = ?", (cod_produto,))
+        result = cursor.fetchone()
+
+        # Fechar a conexão
+        cursor.close()
+        conn.close()
+
+        if result:
+            return jsonify({'descricao': result[0]})
+        else:
+            return jsonify({'descricao': None, 'message': 'Produto não cadastrado'}), 404
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/lista_tratamentos_cadastrados', methods=['GET', 'POST'])
+@requires_privilege(9, 51)
+def lista_tratamentos_cadastrados():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    try:
+        conn = conectar_db()
+        cursor = conn.cursor()
+
+        # Selecionar todos os tratamentos com estado "Cadastrado" ordenados pelos mais antigos
+        cursor.execute("""
+            SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data, estado, quantidade
+            FROM [dbo].[cadastro_tratamento_superficial]
+            WHERE estado = 'Cadastrado'
+            ORDER BY data ASC
+        """)
+        tratamentos = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return render_template('lista_tratamentos_cadastrados.html', tratamentos=tratamentos)
+
+    except Exception as e:
+        flash(f'Erro ao buscar tratamentos: {str(e)}', 'danger')
+        return redirect(url_for('cadastro_tratamento_superficial'))
+
+
+@app.route('/alterar_estado_tratamento', methods=['POST'])
+@requires_privilege(9, 41)
+def alterar_estado_tratamento():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    id_tratamento = request.form.get('id_tratamento')
+    senha = request.form.get('senha')
+
+    if senha != '654321':
+        flash('Senha incorreta.', 'danger')
+        return redirect(url_for('lista_tratamentos_cadastrados'))
+
+    try:
+        conn = conectar_db()
+        cursor = conn.cursor()
+
+        # Atualizar o estado do tratamento para "Enviado"
+        cursor.execute("""
+            UPDATE [dbo].[cadastro_tratamento_superficial]
+            SET estado = 'Enviado'
+            WHERE id = ?
+        """, (id_tratamento,))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        flash('Estado do tratamento atualizado para "Enviado".', 'success')
+        return redirect(url_for('lista_tratamentos_cadastrados'))
+
+    except Exception as e:
+        flash(f'Erro ao atualizar o estado: {str(e)}', 'danger')
+        return redirect(url_for('lista_tratamentos_cadastrados'))
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8088)

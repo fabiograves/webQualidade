@@ -1,0 +1,126 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
+{% elif session['privilegio'] == 4 %}
+    {% extends "base_inspecao_final.html" %}
+{% elif session['privilegio'] == 11 %}
+    {% extends "base_faturamento.html" %}
+{% elif session['privilegio'] == 12 %}
+    {% extends "base_faturamento_lancamento.html" %}
+{% elif session['privilegio'] == 99 %}
+    {% extends "base_pesquisar.html" %}
+{% elif session['privilegio'] == 13 %}
+    {% extends "base_faturamento_pesquisar_xml.html" %}
+{% elif session['privilegio'] == 21 %}
+    {% extends "base_compras.html" %}
+{% elif session['privilegio'] == 31 %}
+    {% extends "base_vendas2.html" %}
+{% elif session['privilegio'] == 41 %}
+    {% extends "base_loja.html" %}
+{% elif session['privilegio'] == 51 %}
+    {% extends "base_tratamentos.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+
+<style>
+    .container-fluid {
+        max-width: 100%;
+        margin-left: 00px;
+        margin-right: 00px;
+    }
+</style>
+
+<div class="container-fluid">
+    <h1 class="text-center">Tratamentos Cadastrados</h1>
+
+    <!-- Exibir mensagens flash -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Tornar a tabela responsiva -->
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Pedido Cliente</th>
+                    <th>Código Produto</th>
+                    <th>Descrição Produto</th>
+                    <th>Rastreamento</th>
+                    <th>Peso</th>
+                    <th>Volume</th>
+                    <th>Tipo Tratamento</th>
+                    <th>Responsável</th>
+                    <th>Data</th>
+                    <th>Quantidade</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tratamento in tratamentos %}
+                    <tr>
+                        <td>{{ tratamento.pedido_cliente }}</td>
+                        <td>{{ tratamento.cod_produto }}</td>
+                        <td>{{ tratamento.desc_produto }}</td>
+                        <td>{{ tratamento.rastreamento }}</td>
+                        <td>{{ tratamento.peso }}</td>
+                        <td>{{ tratamento.volume }}</td>
+                        <td>{{ tratamento.tipo_tratamento }}</td>
+                        <td>{{ tratamento.responsavel }}</td>
+                        <td>{{ tratamento.data.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ tratamento.quantidade }}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="abrirModalSenha({{ tratamento.id }})">Marcar como Enviado</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal para confirmação de senha -->
+<div class="modal fade" id="modalSenha" tabindex="-1" aria-labelledby="modalSenhaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('alterar_estado_tratamento') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalSenhaLabel">Confirmação de Senha</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Digite a senha para confirmar a mudança de estado:</p>
+                    <input type="hidden" name="id_tratamento" id="id_tratamento">
+                    <div class="mb-3">
+                        <label for="senha" class="form-label">Senha:</label>
+                        <input type="password" class="form-control" id="senha" name="senha" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function abrirModalSenha(id) {
+        document.getElementById('id_tratamento').value = id;
+        var modal = new bootstrap.Modal(document.getElementById('modalSenha'));
+        modal.show();
+    }
+</script>
+
+{% endblock %}
