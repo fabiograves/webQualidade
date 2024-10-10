@@ -6597,7 +6597,7 @@ def visualizar_grafico():
 
                     resultado = fetch_dict(cursor)
 
-                # Calcular a média geral para o período selecionado
+                # Calcular a média geral p o período selecionado
                 if total_dias_com_valor > 0:
                     media_trimestre = ((soma_nao_conformidade_total + soma_atraso_entrega_total) / 2) / total_dias_com_valor
                 else:
