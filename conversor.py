@@ -48,4 +48,4 @@ def transcrever_audio_wav_por_pedacos(nome_arquivo):
     return caminho_txt
 
 # Exemplo de uso
-transcrever_audio_wav_por_pedacos("nome_arquivo232.wav")
+#transcrever_audio_wav_por_pedacos("nome_arquivo232.wav")
