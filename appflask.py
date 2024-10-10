@@ -3274,14 +3274,30 @@ def cadastro_norma():
 
             connection = conectar_db()
             cursor = connection.cursor()
-            cursor.execute("""INSERT INTO dbo.imagem_norma (norma, imagem, extensao, descricao) VALUES (?, ?, ?, ?)""",
-                           (numero_norma, imagem_data, extensao, descricao_norma))
+
+            # Verifica se a norma já existe no banco de dados
+            cursor.execute("SELECT COUNT(1) FROM dbo.imagem_norma WHERE norma = ?", (numero_norma,))
+            norma_existe = cursor.fetchone()[0]
+
+            if norma_existe:
+                # Se já existir, faz o update
+                cursor.execute("""UPDATE dbo.imagem_norma 
+                                  SET imagem = ?, extensao = ?, descricao = ? 
+                                  WHERE norma = ?""",
+                               (imagem_data, extensao, descricao_norma, numero_norma))
+                flash('Norma atualizada com sucesso!')
+            else:
+                # Se não existir, faz a inserção
+                cursor.execute("""INSERT INTO dbo.imagem_norma (norma, imagem, extensao, descricao) 
+                                  VALUES (?, ?, ?, ?)""",
+                               (numero_norma, imagem_data, extensao, descricao_norma))
+                flash('Norma cadastrada com sucesso!')
+
             connection.commit()
             connection.close()
 
-            flash('Norma cadastrada com sucesso!')
             username = session['username']
-            print(f"Ação realizada por: {username}, Cadastro Norma:{numero_norma}")
+            print(f"Ação realizada por: {username}, Cadastro/Atualização Norma: {numero_norma}")
             return redirect(url_for('cadastro_norma'))
         else:
             flash('Erro no cadastro da norma. Verifique o arquivo de imagem.')
@@ -6567,7 +6583,7 @@ def visualizar_grafico():
 
                     # Fazer o mapeamento para português
                     nome_mes = meses_portugues.get(nome_mes_ingles,
-                                                   nome_mes_ingles)  # Se não encontrar, mantém o inglês
+                                                   nome_mes_ingles)
 
                     dados_grafico[nome_mes] = {
                         'nao_conformidade': round(soma_nao_conformidade / qtd_dias_com_valor, 2),
