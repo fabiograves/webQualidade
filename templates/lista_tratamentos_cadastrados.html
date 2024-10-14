@@ -22,6 +22,8 @@
     {% extends "base_loja.html" %}
 {% elif session['privilegio'] == 51 %}
     {% extends "base_tratamentos.html" %}
+{% elif session['privilegio'] == 59 %}
+    {% extends "base_zincagem_inspecao.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -37,7 +39,17 @@
 </style>
 
 <div class="container-fluid">
-    <h1 class="text-center">Tratamentos Cadastrados</h1>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="mx-auto">Tratamentos Cadastrados</h1>
+            <form method="POST" id="action_form" action="{{ url_for('alterar_estado_tratamento') }}">
+                <button type="button" id="btn_enviar_selecionados" class="btn btn-primary">Marcar Selecionados como Enviado</button>
+                <button type="button" id="btn_exportar_excel" class="btn btn-success">Exportar para Excel</button>
+                <input type="hidden" name="ids_selecionados" id="ids_selecionados">
+                <input type="hidden" name="nf_saida" id="nf_saida_hidden">
+            </form>
+        </div>
+    </div>
 
     <!-- Exibir mensagens flash -->
     {% with messages = get_flashed_messages(with_categories=True) %}
@@ -53,35 +65,33 @@
         <table class="table table-bordered">
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="select_all"></th> <!-- Checkbox para selecionar todos -->
                     <th>Pedido Cliente</th>
                     <th>Código Produto</th>
                     <th>Descrição Produto</th>
+                    <th>Quantidade</th>
                     <th>Rastreamento</th>
                     <th>Peso</th>
                     <th>Volume</th>
                     <th>Tipo Tratamento</th>
                     <th>Responsável</th>
                     <th>Data</th>
-                    <th>Quantidade</th>
-                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for tratamento in tratamentos %}
                     <tr>
+                        <td><input type="checkbox" class="checkbox_tratamento" value="{{ tratamento.id }}"></td>
                         <td>{{ tratamento.pedido_cliente }}</td>
                         <td>{{ tratamento.cod_produto }}</td>
                         <td>{{ tratamento.desc_produto }}</td>
+                        <td>{{ tratamento.quantidade }}</td>
                         <td>{{ tratamento.rastreamento }}</td>
                         <td>{{ tratamento.peso }}</td>
                         <td>{{ tratamento.volume }}</td>
                         <td>{{ tratamento.tipo_tratamento }}</td>
                         <td>{{ tratamento.responsavel }}</td>
-                        <td>{{ tratamento.data.strftime('%d/%m/%Y') }}</td>
-                        <td>{{ tratamento.quantidade }}</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm" onclick="abrirModalSenha({{ tratamento.id }})">Marcar como Enviado</button>
-                        </td>
+                        <td>{{ tratamento.data_cadastro.strftime('%d/%m/%Y') }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -93,34 +103,75 @@
 <div class="modal fade" id="modalSenha" tabindex="-1" aria-labelledby="modalSenhaLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ url_for('alterar_estado_tratamento') }}">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalSenhaLabel">Confirmação de Senha</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalSenhaLabel">Confirmação de Nota Fiscal de Saída</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Digite a Nota Fiscal de Saída para os tratamentos selecionados:</p>
+                <div class="mb-3">
+                    <label for="nf_saida" class="form-label">Nota Fiscal Saída:</label>
+                    <input type="text" class="form-control" id="nf_saida" required>
                 </div>
-                <div class="modal-body">
-                    <p>Digite a senha para confirmar a mudança de estado:</p>
-                    <input type="hidden" name="id_tratamento" id="id_tratamento">
-                    <div class="mb-3">
-                        <label for="senha" class="form-label">Senha:</label>
-                        <input type="password" class="form-control" id="senha" name="senha" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Confirmar</button>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmarEnvio">Confirmar</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    function abrirModalSenha(id) {
-        document.getElementById('id_tratamento').value = id;
-        var modal = new bootstrap.Modal(document.getElementById('modalSenha'));
-        modal.show();
-    }
+    document.getElementById('btn_enviar_selecionados').addEventListener('click', function() {
+        var checkboxes = document.querySelectorAll('.checkbox_tratamento:checked');
+        var idsSelecionados = [];
+        checkboxes.forEach(function(checkbox) {
+            idsSelecionados.push(checkbox.value);
+        });
+
+        if (idsSelecionados.length > 0) {
+            document.getElementById('ids_selecionados').value = idsSelecionados.join(',');
+            var modal = new bootstrap.Modal(document.getElementById('modalSenha'));
+            modal.show();  // Abrir o modal para digitar a nf_saida
+        } else {
+            alert('Nenhum tratamento foi selecionado.');
+        }
+    });
+
+    document.getElementById('select_all').addEventListener('click', function() {
+        var checkboxes = document.querySelectorAll('.checkbox_tratamento');
+        checkboxes.forEach(function(checkbox) {
+            checkbox.checked = this.checked;
+        }.bind(this));
+    });
+
+    document.getElementById('confirmarEnvio').addEventListener('click', function() {
+        var nf_saida = document.getElementById('nf_saida').value;
+        if (nf_saida) {
+            document.getElementById('nf_saida_hidden').value = nf_saida;  // Passar nf_saida como hidden field
+            document.getElementById('action_form').submit();  // Submeter o formulário com IDs e nf_saida
+        } else {
+            alert('Por favor, insira a Nota Fiscal de Saída.');
+        }
+    });
+
+    document.getElementById('btn_exportar_excel').addEventListener('click', function() {
+        var checkboxes = document.querySelectorAll('.checkbox_tratamento:checked');
+        var idsSelecionados = [];
+        checkboxes.forEach(function(checkbox) {
+            idsSelecionados.push(checkbox.value);
+        });
+
+        if (idsSelecionados.length > 0) {
+            document.getElementById('ids_selecionados').value = idsSelecionados.join(',');
+            document.getElementById('action_form').action = "{{ url_for('export_tratamentos_cadastrados_excel') }}";
+            document.getElementById('action_form').submit();
+        } else {
+            alert('Nenhum tratamento foi selecionado para exportação.');
+        }
+    });
+
 </script>
 
 {% endblock %}

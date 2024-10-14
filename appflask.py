@@ -43,6 +43,8 @@ from datetime import timedelta
 import traceback
 import xlsxwriter
 
+import math
+
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -1010,7 +1012,7 @@ def cadastro_fornecedor():
 
 
 @app.route('/avaliacao_diaria.html', methods=['GET', 'POST'])
-@requires_privilege(3, 1, 9)
+@requires_privilege(3, 1, 9, 59)
 def avaliacao_diaria():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -3312,7 +3314,7 @@ def allowed_file(filename):
 
 
 @app.route('/registro_inspecao', methods=['GET', 'POST'])
-@requires_privilege(1, 9)
+@requires_privilege(1, 9, 59)
 def registro_inspecao():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4192,7 +4194,7 @@ def extract_rex_data(lines, full_text):
 
 
 @app.route('/cadastro_recebimento_concluido', methods=['GET', 'POST'])
-@requires_privilege(2, 9)
+@requires_privilege(2, 9, 59)
 def cadastro_recebimento_concluido():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -4670,7 +4672,7 @@ app.jinja_env.globals.update(max=max, min=min)
 
 
 @app.route('/cadastro_itens_ars', methods=['GET', 'POST'])
-@requires_privilege(4, 9)
+@requires_privilege(4, 9, 51, 59)
 def cadastro_itens_ars():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -6621,7 +6623,7 @@ def visualizar_grafico():
 
 
 @app.route('/cadastro_tratamento_superficial', methods=['GET', 'POST'])
-@requires_privilege(9, 51)
+@requires_privilege(9, 51, 59, 3)
 def cadastro_tratamento_superficial():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -6629,16 +6631,46 @@ def cadastro_tratamento_superficial():
     if request.method == 'POST':
         # Captura os dados do formulário
         pedido_cliente = request.form['pedido_cliente']
+        pedido_linha = request.form['pedido_linha']
         cod_produto = request.form['cod_produto']
         desc_produto = request.form.get('desc_produto', '')
         rastreamento = request.form.get('rastreamento', '')
         peso = request.form.get('peso', 0)
         volume = request.form.get('volume', 0)
         tipo_tratamento = request.form['tipo_tratamento']
-        responsavel = session['username']  # Obter o nome de usuário da sessão
-        data_atual = datetime.datetime.today().strftime('%Y-%m-%d')  # Data atual
+        responsavel = session['username']
+        data_atual = datetime.datetime.today().strftime('%Y-%m-%d')
         quantidade = request.form.get('quantidade', 0)
         estado = "Cadastrado"
+        previsao = 0
+        tratamento_map = {
+            'tratamento1': ('Zn Branco', 3),
+            'tratamento2': ('Zn Preto', 3),
+            'tratamento3': ('Zn Amarelo', 3),
+            'tratamento4': ('Decapagem', 3),
+            'tratamento5': ('Fosfato Mn', 5),
+            'tratamento6': ('Cad Brico', 5),
+            'tratamento7': ('Zn Triv Azul', 3),
+            'tratamento8': ('Zn Triv Branco', 3),
+            'tratamento9': ('Zn Triv Amarelo', 3),
+            'tratamento10': ('Organometalico GEOMET', 5),
+            'tratamento11': ('Galvanizado a Fogo', 5),
+            'tratamento12': ('Oxidado', 5),
+            'tratamento13': ('Xylan', 5),
+            'tratamento14': ('Niquel', 5),
+            'tratamento15': ('Cobre', 5),
+            'tratamento16': ('Corte', 5),
+            'tratamento17': ('Zn Triv Amarelo BR 120H VM 144H(C/ Selante', 3),
+            'tratamento18': ('Temperado e Revenido', 3),
+            'tratamento19': ('Preto Oleado', 3),
+            'tratamento20': ('Fosfatizado', 3),
+        }
+
+        if tipo_tratamento in tratamento_map:
+            tipo_tratamento, previsao = tratamento_map[tipo_tratamento]
+        else:
+            tipo_tratamento = 'ERRO'
+            previsao = 99
 
         try:
             # Verifica se o código do produto existe no banco de dados
@@ -6657,9 +6689,10 @@ def cadastro_tratamento_superficial():
             # Inserir os dados no banco de dados
             cursor.execute("""
                 INSERT INTO [dbo].[cadastro_tratamento_superficial] 
-                (pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data, estado, quantidade)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_atual, estado, quantidade))
+                (pedido_cliente, pedido_linha, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_cadastro, estado, quantidade, previsao)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (pedido_cliente, pedido_linha, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel,
+                  data_atual, estado, quantidade, previsao))
 
             conn.commit()
             cursor.close()
@@ -6704,7 +6737,7 @@ def buscar_descricao_produto():
 
 
 @app.route('/lista_tratamentos_cadastrados', methods=['GET', 'POST'])
-@requires_privilege(9, 51)
+@requires_privilege(9, 51, 59, 3)
 def lista_tratamentos_cadastrados():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -6715,10 +6748,10 @@ def lista_tratamentos_cadastrados():
 
         # Selecionar todos os tratamentos com estado "Cadastrado" ordenados pelos mais antigos
         cursor.execute("""
-            SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data, estado, quantidade
+            SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_cadastro, estado, quantidade
             FROM [dbo].[cadastro_tratamento_superficial]
             WHERE estado = 'Cadastrado'
-            ORDER BY data ASC
+            ORDER BY data_cadastro ASC
         """)
         tratamentos = cursor.fetchall()
 
@@ -6729,43 +6762,247 @@ def lista_tratamentos_cadastrados():
 
     except Exception as e:
         flash(f'Erro ao buscar tratamentos: {str(e)}', 'danger')
-        return redirect(url_for('cadastro_tratamento_superficial'))
+        return redirect(url_for('lista_tratamentos_cadastrados'))
 
 
 @app.route('/alterar_estado_tratamento', methods=['POST'])
-@requires_privilege(9, 41)
+@requires_privilege(9, 51, 59, 3)
 def alterar_estado_tratamento():
     if not is_logged_in():
         return redirect(url_for('login'))
 
-    id_tratamento = request.form.get('id_tratamento')
-    senha = request.form.get('senha')
+    # Obter os IDs dos tratamentos selecionados e a nota fiscal de saída
+    ids_selecionados = request.form.get('ids_selecionados')
+    nf_saida = request.form.get('nf_saida')
+    data_envio = datetime.datetime.today().strftime('%Y-%m-%d')
 
-    if senha != '654321':
-        flash('Senha incorreta.', 'danger')
+    if not ids_selecionados or not nf_saida:
+        flash('Nenhum tratamento foi selecionado ou a Nota Fiscal de Saída não foi inserida.', 'danger')
         return redirect(url_for('lista_tratamentos_cadastrados'))
+
+    ids_list = ids_selecionados.split(',')
 
     try:
         conn = conectar_db()
         cursor = conn.cursor()
 
-        # Atualizar o estado do tratamento para "Enviado"
-        cursor.execute("""
-            UPDATE [dbo].[cadastro_tratamento_superficial]
-            SET estado = 'Enviado'
-            WHERE id = ?
-        """, (id_tratamento,))
+        def adicionar_dias_uteis(data_inicial, dias):
+            dias_adicionados = 0
+            data_final = data_inicial
+
+            while dias_adicionados < dias:
+                data_final += datetime.timedelta(days=1)
+                if data_final.weekday() < 5:  # Dias úteis (segunda a sexta)
+                    dias_adicionados += 1
+
+            # Ajuste para não terminar em fim de semana
+            if data_final.weekday() == 5:  # Sábado
+                data_final += datetime.timedelta(days=2)
+            elif data_final.weekday() == 6:  # Domingo
+                data_final += datetime.timedelta(days=1)
+
+            return data_final
+
+        # Atualizar todos os tratamentos selecionados
+        for id_tratamento in ids_list:
+            # Obter a previsão para cada tratamento
+            cursor.execute("""
+                SELECT previsao 
+                FROM [dbo].[cadastro_tratamento_superficial]
+                WHERE id = ?
+            """, (id_tratamento,))
+            previsao = cursor.fetchone()[0]
+
+            # Calcular a data de previsão
+            data_atual = datetime.datetime.today()
+            data_previsao = adicionar_dias_uteis(data_atual, previsao).strftime('%Y-%m-%d')
+
+            # Atualizar o estado, data de envio, data de previsão e nf_saida
+            cursor.execute("""
+                UPDATE [dbo].[cadastro_tratamento_superficial]
+                SET estado = 'Enviado', data_envio = ?, data_previsao = ?, nf_saida = ?
+                WHERE id = ?
+            """, (data_envio, data_previsao, nf_saida, id_tratamento))
 
         conn.commit()
         cursor.close()
         conn.close()
 
-        flash('Estado do tratamento atualizado para "Enviado".', 'success')
+        flash(f'{len(ids_list)} tratamentos foram atualizados para "Enviado" e previsão de conclusão calculada.', 'success')
         return redirect(url_for('lista_tratamentos_cadastrados'))
 
     except Exception as e:
-        flash(f'Erro ao atualizar o estado: {str(e)}', 'danger')
+        flash(f'Erro ao atualizar os tratamentos: {str(e)}', 'danger')
         return redirect(url_for('lista_tratamentos_cadastrados'))
+
+
+@app.route('/export_tratamentos_cadastrados_excel', methods=['POST'])
+@requires_privilege(9, 51, 59, 3)
+def export_tratamentos_cadastrados_excel():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    ids_selecionados = request.form.get('ids_selecionados')
+    if not ids_selecionados:
+        flash('Nenhum tratamento foi selecionado para exportação.', 'danger')
+        return redirect(url_for('lista_tratamentos_cadastrados'))
+
+    ids_list = ids_selecionados.split(',')
+    data_atual = datetime.datetime.today().strftime('%d-%m-%Y')
+
+    try:
+        conn = conectar_db()
+        query = f"""
+            SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_cadastro, estado, quantidade
+            FROM [dbo].[cadastro_tratamento_superficial]
+            WHERE id IN ({','.join(['?' for _ in ids_list])})
+        """
+        df = pd.read_sql_query(query, conn, params=ids_list)
+        conn.close()
+
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        df.to_excel(writer, index=False, sheet_name=f'Tratamentos Cadastrados')
+        writer.close()
+        output.seek(0)
+
+        return send_file(output, download_name=f"tratamentos_cadastrados_{data_atual}.xlsx", as_attachment=True)
+
+    except Exception as e:
+        flash(f"Erro ao gerar o arquivo Excel: {e}", 'danger')
+        return redirect(url_for('lista_tratamentos_cadastrados'))
+
+
+@app.route('/lista_tratamentos_enviados', methods=['GET', 'POST'])
+@requires_privilege(9, 51, 59, 3)
+def lista_tratamentos_enviados():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    nf_saida_filter = request.args.get('nf_saida_filter')
+
+    try:
+        conn = conectar_db()
+        cursor = conn.cursor()
+
+        query = """
+            SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento,
+                   nf_saida, data_envio, estado, quantidade
+            FROM [dbo].[cadastro_tratamento_superficial]
+            WHERE estado = 'Enviado'
+        """
+
+        if nf_saida_filter:
+            query += " AND nf_saida = ?"
+            cursor.execute(query, (nf_saida_filter,))
+        else:
+            query += " ORDER BY data_envio ASC"
+            cursor.execute(query)
+
+        tratamentos = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return render_template('lista_tratamentos_enviados.html', tratamentos=tratamentos)
+
+    except Exception as e:
+        flash(f'Erro ao buscar tratamentos: {str(e)}', 'danger')
+        return redirect(url_for('lista_tratamentos_enviados'))
+
+
+@app.route('/confirmar_recebimento_tratamento', methods=['POST'])
+@requires_privilege(9, 51, 59)
+def confirmar_recebimento_tratamento():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    ids_selecionados = request.form.get('ids_selecionados')
+    nf_entrada = request.form.get('nf_entrada')
+
+    # Verifique se os dados estão sendo capturados corretamente
+    if not ids_selecionados or not nf_entrada:
+        flash('Nenhum tratamento foi selecionado ou a Nota Fiscal de Entrada não foi inserida.', 'danger')
+        return redirect(url_for('lista_tratamentos_enviados'))
+
+    ids_list = ids_selecionados.split(',')
+
+    try:
+        conn = conectar_db()
+        cursor = conn.cursor()
+
+        for id_tratamento in ids_list:
+            cursor.execute("""
+                UPDATE [dbo].[cadastro_tratamento_superficial]
+                SET estado = 'Recebido', data_recebido = ?, nf_entrada = ?
+                WHERE id = ?
+            """, (datetime.datetime.today().strftime('%Y-%m-%d'), nf_entrada, id_tratamento))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        flash(f'{len(ids_list)} tratamentos foram atualizados para "Recebido".', 'success')
+        return redirect(url_for('lista_tratamentos_enviados'))
+
+    except Exception as e:
+        flash(f'Erro ao atualizar os tratamentos: {str(e)}', 'danger')
+        return redirect(url_for('lista_tratamentos_enviados'))
+
+
+@app.route('/consulta_tratamentos', methods=['GET', 'POST'])
+def consulta_tratamentos():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    try:
+        conn = conectar_db()
+        cursor = conn.cursor()
+
+        search_query = request.args.get('search', '')
+        page = request.args.get('page', 1, type=int)
+        per_page = 20
+
+        sql_query = """
+            SELECT id, pedido_cliente, cod_produto, desc_produto, quantidade, rastreamento,
+                   peso, volume, tipo_tratamento, responsavel, data_cadastro, data_envio,
+                   data_previsao, data_recebido, estado, nf_entrada, nf_saida
+            FROM [dbo].[cadastro_tratamento_superficial]
+        """
+        params = []
+
+        if search_query:
+            sql_query += " WHERE pedido_cliente LIKE ? OR cod_produto LIKE ? OR desc_produto LIKE ? OR rastreamento LIKE ? OR nf_entrada LIKE ? OR nf_saida LIKE ?"
+            search_param = f"%{search_query}%"
+            params.extend([search_param, search_param, search_param, search_param, search_param, search_param])
+
+        count_query = f"SELECT COUNT(*) FROM ({sql_query}) AS total"
+        cursor.execute(count_query, params)
+        total_records = cursor.fetchone()[0]
+
+        total_pages = math.ceil(total_records / per_page)
+        offset = (page - 1) * per_page
+
+        sql_query += " ORDER BY id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY"
+        params.extend([offset, per_page])
+
+        cursor.execute(sql_query, params)
+        tratamentos = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return render_template(
+            'consulta_tratamentos.html',
+            tratamentos=tratamentos,
+            page=page,
+            total_pages=total_pages,
+            search_query=search_query
+        )
+
+    except Exception as e:
+        flash(f'Erro ao buscar tratamentos: {str(e)}', 'danger')
+        return redirect(url_for('consulta_tratamentos'))
 
 
 if __name__ == '__main__':

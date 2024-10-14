@@ -22,6 +22,8 @@
     {% extends "base_loja.html" %}
 {% elif session['privilegio'] == 51 %}
     {% extends "base_tratamentos.html" %}
+{% elif session['privilegio'] == 59 %}
+    {% extends "base_zincagem_inspecao.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -67,7 +69,7 @@
                     </div>
                     <div class ="form-row">
                         {% if session['privilegio'] == 9 or session['privilegio'] == 8 or session['privilegio'] == 1
-                        or session['privilegio'] == 3 %}
+                        or session['privilegio'] == 3 or session['privilegio'] == 59 %}
                             <button type="submit" class="btn btn-secondary w-100">Cadastrar Avaliação</button>
                         {% else %}
                             <!-- Botão desabilitado se o privilégio for 0 -->

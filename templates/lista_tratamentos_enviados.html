@@ -1,0 +1,213 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
+{% elif session['privilegio'] == 4 %}
+    {% extends "base_inspecao_final.html" %}
+{% elif session['privilegio'] == 11 %}
+    {% extends "base_faturamento.html" %}
+{% elif session['privilegio'] == 12 %}
+    {% extends "base_faturamento_lancamento.html" %}
+{% elif session['privilegio'] == 99 %}
+    {% extends "base_pesquisar.html" %}
+{% elif session['privilegio'] == 13 %}
+    {% extends "base_faturamento_pesquisar_xml.html" %}
+{% elif session['privilegio'] == 21 %}
+    {% extends "base_compras.html" %}
+{% elif session['privilegio'] == 31 %}
+    {% extends "base_vendas2.html" %}
+{% elif session['privilegio'] == 41 %}
+    {% extends "base_loja.html" %}
+{% elif session['privilegio'] == 51 %}
+    {% extends "base_tratamentos.html" %}
+{% elif session['privilegio'] == 59 %}
+    {% extends "base_zincagem_inspecao.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+
+<style>
+    .container-fluid {
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-8 d-flex justify-content-center">
+                    <h1 class="mx-auto">Tratamentos Enviados</h1>
+                </div>
+                <div class="col-md-4">
+                    <form method="POST" id="action_form" action="{{ url_for('confirmar_recebimento_tratamento') }}">
+                        <button type="button" id="btn_confirmar_recebimento" class="btn btn-primary w-100">Confirmar Recebimento Selecionados</button>
+                        <input type="hidden" name="ids_selecionados" id="ids_selecionados">
+                        <input type="hidden" name="nf_entrada" id="nf_entrada_hidden">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <form method="GET" action="{{ url_for('lista_tratamentos_enviados') }}" class="row g-2">
+                <div class="col-md-8">
+                    <input type="text" class="form-control" id="nf_saida_filter" name="nf_saida_filter" placeholder="Digite a Nota Fiscal de Saída">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Exibir mensagens flash -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Responsive table -->
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="select_all"></th>
+                    <th>Pedido Cliente</th>
+                    <th>Código Produto</th>
+                    <th>Descrição Produto</th>
+                    <th>Quantidade</th>
+                    <th>Rastreamento</th>
+                    <th>Peso</th>
+                    <th>Volume</th>
+                    <th>Tipo Tratamento</th>
+                    <th>Nota Fiscal Saída</th>
+                    <th>Data Envio</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tratamento in tratamentos %}
+                    <tr>
+                        <td><input type="checkbox" class="checkbox_tratamento" value="{{ tratamento.id }}"></td>
+                        <td>{{ tratamento.pedido_cliente }}</td>
+                        <td>{{ tratamento.cod_produto }}</td>
+                        <td>{{ tratamento.desc_produto }}</td>
+                        <td>{{ tratamento.quantidade }}</td>
+                        <td>{{ tratamento.rastreamento }}</td>
+                        <td>{{ tratamento.peso }}</td>
+                        <td>{{ tratamento.volume }}</td>
+                        <td>{{ tratamento.tipo_tratamento }}</td>
+                        <td>{{ tratamento.nf_saida }}</td>
+                        <td>{{ tratamento.data_envio.strftime('%d/%m/%Y') if tratamento.data_envio else '' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal para confirmação da Nota Fiscal de Entrada -->
+<div class="modal fade" id="modalSenha" tabindex="-1" aria-labelledby="modalSenhaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('confirmar_recebimento_tratamento') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalSenhaLabel">Confirmação de Recebimento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Digite a nota de entrada para confirmar o recebimento:</p>
+                    <input type="hidden" name="id_tratamento" id="id_tratamento">
+                    <div class="form-group">
+                        <label for="nf_entrada">Nota Fiscal Entrada:</label>
+                        <input type="text" class="form-control" id="nf_entrada" name="nf_entrada" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para confirmação da Nota Fiscal de Entrada -->
+<div class="modal fade" id="modalRecebimento" tabindex="-1" aria-labelledby="modalRecebimentoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('confirmar_recebimento_tratamento') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalRecebimentoLabel">Confirmação de Recebimento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Digite a nota de entrada para confirmar o recebimento:</p>
+                    <input type="hidden" name="ids_selecionados" id="ids_selecionados_modal"> <!-- Passar ids_selecionados aqui -->
+                    <div class="form-group">
+                        <label for="nf_entrada">Nota Fiscal Entrada:</label>
+                        <input type="text" class="form-control" id="nf_entrada" name="nf_entrada" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('btn_confirmar_recebimento').addEventListener('click', function() {
+        var checkboxes = document.querySelectorAll('.checkbox_tratamento:checked');
+        var idsSelecionados = [];
+        checkboxes.forEach(function(checkbox) {
+            idsSelecionados.push(checkbox.value);
+        });
+
+        if (idsSelecionados.length > 0) {
+            document.getElementById('ids_selecionados').value = idsSelecionados.join(',');
+            document.getElementById('ids_selecionados_modal').value = idsSelecionados.join(','); // Passar para o modal também
+
+            var modal = new bootstrap.Modal(document.getElementById('modalRecebimento'), {
+                keyboard: false
+            });
+            modal.show();  // Abrir o modal para inserir a nf_entrada
+        } else {
+            alert('Nenhum tratamento foi selecionado.');
+        }
+    });
+
+    document.getElementById('select_all').addEventListener('click', function() {
+        var checkboxes = document.querySelectorAll('.checkbox_tratamento');
+        checkboxes.forEach(function(checkbox) {
+            checkbox.checked = this.checked;
+        }.bind(this));
+    });
+
+    document.getElementById('confirmarEnvio').addEventListener('click', function() {
+        var nf_entrada = document.getElementById('nf_entrada').value;
+        if (nf_entrada) {
+            document.getElementById('nf_entrada_hidden').value = nf_entrada;  // Passar nf_entrada como hidden field
+            document.getElementById('action_form').submit();  // Submeter o formulário com os IDs selecionados e nf_entrada
+        } else {
+            alert('Por favor, insira a Nota Fiscal de Entrada.');
+        }
+    });
+</script>
+
+{% endblock %}
+

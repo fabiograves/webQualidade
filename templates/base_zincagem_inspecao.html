@@ -110,6 +110,12 @@
                                 Cadastros
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('registro_inspecao') }}">Registro Inspeção</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('cadastro_recebimento_concluido') }}">Recebimento Concluido</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="{{ url_for('avaliacao_diaria') }}">Avaliação Diária</a></li>
                                 <li><a class="dropdown-item" href="{{ url_for('cadastro_itens_ars') }}">Cadastro Itens</a></li>
                             </ul>
                         </li>
@@ -118,6 +124,18 @@
                                 Pesquisa
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('pesquisar_registro_inspecao') }}">Registro Inspeção</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('plano_controle_inspecao') }}">Plano de Controle</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('pesquisar_recebimento_concluido') }}">Recebimento Concluido</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="{{ url_for('lista_norma') }}">Lista de Normas</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('pesquisar_avaliacao_diaria') }}">IQF</a></li>
+                                <li id="abrirCalculadora"><a class="dropdown-item" href="#">Abrir Calculadora</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais') }}">Pesquisar Nota Fiscal</a></li>
                                 <li><a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais_produtos') }}">Pesquisar Nota Fiscal - Lista</a></li>
                             </ul>

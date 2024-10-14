@@ -66,6 +66,14 @@
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                         </div>
                         <div class="offcanvas-body">
+                            <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Tratamento
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('consulta_tratamentos') }}">Consultar Tratamentos</a></li>
+                            </ul>
+                        </li>
                             <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
                                 <li class="nav-item">
                                     <a class="nav-link active" aria-current="page" href="{{ url_for('home') }}">Home</a>
@@ -80,7 +88,6 @@
                                         <li><a class="dropdown-item" href="{{ url_for('pesquisar_notas_fiscais_produtos') }}">Pesquisar Nota Fiscal - Lista</a></li>
                                     </ul>
                                 </li>
-
                             </ul>
                         </div>
                     </div>

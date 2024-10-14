@@ -22,6 +22,8 @@
     {% extends "base_loja.html" %}
 {% elif session['privilegio'] == 51 %}
     {% extends "base_tratamentos.html" %}
+{% elif session['privilegio'] == 59 %}
+    {% extends "base_zincagem_inspecao.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -64,94 +66,109 @@
         background-color: #28a745 !important;
         color: white;
     }
+
+    .container-fluid {
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
 </style>
 
-<form method="POST" action="{{ url_for('cadastro_tratamento_superficial') }}">
-    <div class="py-1">
-        <div class="container">
-            <h1 class="text-center">Cadastro Tratamento Superficial</h1>
-            <div class="row">
-                <div class="col-md-2">
-                    <label>Pedido Cliente</label>
-                    <input type="text" class="form-control" id="pedido_cliente" name="pedido_cliente" required>
-                </div>
-                <div class="col-md-2">
-                    <label>Código Produto</label>
-                    <input type="text" class="form-control" id="cod_produto" name="cod_produto" required onblur="buscarDescricaoProduto()">
-                </div>
-                <div class="col-md-8">
-                    <label>Descrição Produto</label>
-                    <input type="text" class="form-control" id="desc_produto" name="desc_produto" readonly>
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <label>Rastreamento</label>
-                    <input type="text" class="form-control" id="rastreamento" name="rastreamento">
-                </div>
-                <div class="col-md-3">
-                    <label>Peso (kg)</label>
-                    <input type="number" step="0.001" class="form-control" id="peso" name="peso">
-                </div>
-                <div class="col-md-3">
-                    <label>Volume</label>
-                    <input type="number" class="form-control" id="volume" name="volume">
-                </div>
-                <div class="col-md-3">
-                    <label>Quantidade</label>
-                    <input type="number" class="form-control" id="quantidade" name="quantidade">
-                </div>
-            </div>
-
-            <!-- Tipo de Tratamento -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                        <!-- Definir os títulos dos botões diretamente no Jinja -->
-                        {% set descricoes = {
-                            1: "Zn Branco", 2: "Zn Preto", 3: "Zn Amarelo", 4: "Decapagem", 5: "Fosfato Mn",
-                            6: "Cad Brico", 7: "Zn Triv Azul", 8: "Zn Triv Branco",
-                            9: "Zn Triv Amarelo", 10: "Organometalico (GEOMET)",
-                            11: "Galvanizado a Fogo", 12: "Oxidado",
-                            13: "Xylan", 14: "Niquel", 15: "Cobre",
-                            16: "Corte", 17: "Zn Triv. Amarelo BR 120H VM 144H (C/ Selante)"
-                        } %}
-                        <!-- Renderizar os botões com os textos ao carregar -->
-                        {% for i in range(1, 18) %}
-                            <label class="btn btn-secondary" id="label_tratamento_{{ i }}">
-                                <input type="radio" name="tipo_tratamento" id="tratamento{{ i }}" value="tratamento{{ i }}" onclick="mostrarDescricao('{{ i }}')"> {{ descricoes[i] }}
-                            </label>
-                        {% endfor %}
+<div class="container-fluid">
+    <form method="POST" action="{{ url_for('cadastro_tratamento_superficial') }}">
+        <div class="py-1">
+            <div class="container-fluid">
+                <h1 class="text-center">Cadastro Tratamento Superficial</h1>
+                <div class="row">
+                    <div class="col-md-2">
+                        <label>Pedido Cliente</label>
+                        <input type="text" class="form-control" id="pedido_cliente" name="pedido_cliente" required>
+                    </div>
+                    <div class="col-md-1">
+                        <label>Linha</label>
+                        <input type="text" class="form-control" id="pedido_linha" name="pedido_linha" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Código Produto</label>
+                        <input type="text" class="form-control" id="cod_produto" name="cod_produto" required onblur="buscarDescricaoProduto()">
+                    </div>
+                    <div class="col-md-7">
+                        <label>Descrição Produto</label>
+                        <input type="text" class="form-control" id="desc_produto" name="desc_produto" readonly>
                     </div>
                 </div>
-            </div>
 
-            <!-- Descrição do Tratamento -->
-            <div class="row mt-4">
-                <div class="col-md-12">
-                    <p id="descricao_tratamento">Selecione um tratamento para ver a descrição.</p>
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label>Rastreamento</label>
+                        <input type="text" class="form-control" id="rastreamento" name="rastreamento">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Peso (kg)</label>
+                        <input type="number" step="0.001" class="form-control" id="peso" name="peso" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Volume</label>
+                        <input type="number" class="form-control" id="volume" name="volume" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Quantidade</label>
+                        <input type="number" class="form-control" id="quantidade" name="quantidade" required>
+                    </div>
                 </div>
-            </div>
 
-            <div class="row">
-                <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Tratamento</button>
-            </div>
-
-            <div class="row">
-                {% with messages = get_flashed_messages() %}
-                    {% if messages %}
-                        <div class="flash-messages">
-                            {% for message in messages %}
-                                <div class="alert alert-warning" role="alert">{{ message }}</div>
+                <!-- Tipo de Tratamento -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <!-- Definir os títulos dos botões diretamente no Jinja -->
+                            {% set descricoes = {
+                                1: "Zn Branco", 2: "Zn Preto", 3: "Zn Amarelo", 4: "Decapagem", 5: "Fosfato Mn",
+                                6: "Cad Brico", 7: "Zn Triv Azul", 8: "Zn Triv Branco",
+                                9: "Zn Triv Amarelo", 10: "Organometalico (GEOMET)",
+                                11: "Galvanizado a Fogo", 12: "Oxidado",
+                                13: "Xylan", 14: "Niquel", 15: "Cobre",
+                                16: "Corte", 17: "Zn Triv. Amarelo BR 120H VM 144H (C/ Selante)",
+                                18: "Temperado e Revenido", 19: "Preto Oleado",
+                                20: "Fosfatizado"
+                            } %}
+                            <!-- Renderizar os botões com os textos ao carregar -->
+                            {% for i in range(1, 21) %}
+                                <label class="btn btn-secondary" id="label_tratamento_{{ i }}">
+                                    <input type="radio" name="tipo_tratamento" id="tratamento{{ i }}" value="tratamento{{ i }}" onclick="mostrarDescricao('{{ i }}')"> {{ descricoes[i] }}
+                                </label>
                             {% endfor %}
                         </div>
-                    {% endif %}
-                {% endwith %}
+                    </div>
+                </div>
+
+                <!-- Descrição do Tratamento -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <p id="descricao_tratamento">Selecione um tratamento para ver a descrição.</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Tratamento</button>
+                </div>
+
+                <div class="row">
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            <div class="flash-messages">
+                                {% for message in messages %}
+                                    <div class="alert alert-warning" role="alert">{{ message }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
             </div>
         </div>
-    </div>
-</form>
+    </form>
+</div>
 
 <script>
     function buscarDescricaoProduto() {
@@ -191,11 +208,21 @@
             "3": { "titulo": "Zn Amarelo", "descricao": "Zincado Amarelo: Descrição detalhada do ." },
             "4": { "titulo": "Decapagem", "descricao": "Decapagem: Descrição detalhada do ." },
             "5": { "titulo": "Fosfato Mn", "descricao": "Fosfato Mn: Descrição detalhada do ." },
-            "6": { "titulo": "Cad Brico", "descricao": "Tratamento 6: Descrição detalhada do ." },
-            "7": { "titulo": "Zn Triv Azul", "descricao": "Tratamento 7: Descrição detalhada do ." },
-            "8": { "titulo": "Tratamento Detalhado", "descricao": "Tratamento 8: Descrição detalhada do ." },
-            "9": { "titulo": "Tratamento Especializado", "descricao": "Tratamento 9: Descrição detalhada do ." },
-            "10": { "titulo": "Tratamento Intensivo", "descricao": "Tratamento 10: Descrição detalhada do ." }
+            "6": { "titulo": "Cad Brico", "descricao": "Cad Brico: Descrição detalhada do ." },
+            "7": { "titulo": "Zn Triv Azul", "descricao": "Zn Triv Azul: Descrição detalhada do ." },
+            "8": { "titulo": "Zn Triv Branco", "descricao": "Zn Triv Branco: Descrição detalhada do ." },
+            "9": { "titulo": "Zn Triv Amarelo", "descricao": "Zn Triv Amarelo: Descrição detalhada do ." },
+            "10": { "titulo": "Organometalico (GEOMET)", "descricao": "Organometalico (GEOMET): Descrição detalhada do ." },
+            "11": { "titulo": "Galvanizado a Fogo", "descricao": "Galvanizado a Fogo: Descrição detalhada do ." },
+            "12": { "titulo": "Oxidado", "descricao": "Oxidado: Descrição detalhada do ." },
+            "13": { "titulo": "Xylan", "descricao": "Xylan: Descrição detalhada do ." },
+            "14": { "titulo": "Niquel", "descricao": "Niquel: Descrição detalhada do ." },
+            "15": { "titulo": "Cobre", "descricao": "Cobre: Descrição detalhada do ." },
+            "16": { "titulo": "Corte", "descricao": "Corte: Descrição detalhada do ." },
+            "17": { "titulo": "Zn Triv Amarelo BR 120H VM 144H (C/ Selante)", "descricao": "Zn Triv Amarelo BR 120H VM 144H (C/ Selante: Descrição detalhada do ." },
+            "18": { "titulo": "Temperado e Revenido", "descricao": "Temperado e Revenido: Descrição detalhada do ." },
+            "19": { "titulo": "Preto Oleado", "descricao": "Preto Oleado: Descrição detalhada do ." },
+            "20": { "titulo": "Fosfatizado", "descricao": "Fosfatizado: Descrição detalhada do ." }
         };
 
         // Verifica se a descrição para o tratamentoId existe

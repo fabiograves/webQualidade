@@ -1,0 +1,160 @@
+{% if session['privilegio'] == 1 or session['privilegio'] == 8 %}
+    {% extends "base_recebimento.html" %}
+{% elif session['privilegio'] == 2 %}
+    {% extends "base_recebimento_concluido.html" %}
+{% elif session['privilegio'] == 3 %}
+    {% extends "base_zincagem.html" %}
+{% elif session['privilegio'] == 4 %}
+    {% extends "base_inspecao_final.html" %}
+{% elif session['privilegio'] == 11 %}
+    {% extends "base_faturamento.html" %}
+{% elif session['privilegio'] == 12 %}
+    {% extends "base_faturamento_lancamento.html" %}
+{% elif session['privilegio'] == 99 %}
+    {% extends "base_pesquisar.html" %}
+{% elif session['privilegio'] == 13 %}
+    {% extends "base_faturamento_pesquisar_xml.html" %}
+{% elif session['privilegio'] == 21 %}
+    {% extends "base_compras.html" %}
+{% elif session['privilegio'] == 31 %}
+    {% extends "base_vendas2.html" %}
+{% elif session['privilegio'] == 41 %}
+    {% extends "base_loja.html" %}
+{% elif session['privilegio'] == 51 %}
+    {% extends "base_tratamentos.html" %}
+{% elif session['privilegio'] == 59 %}
+    {% extends "base_zincagem_inspecao.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block content %}
+
+<style>
+    .border-red {
+        border: 2px solid #ff4d4d; /* Lighter red for better aesthetics */
+    }
+    .border-blue {
+        border: 2px solid #4d88ff; /* Lighter blue for better aesthetics */
+    }
+    .border-green {
+        border: 2px solid #5cd65c; /* Lighter green for better aesthetics */
+    }
+    .card {
+        margin-bottom: 20px; /* More spacing between cards */
+        border-radius: 8px; /* Rounded corners for a modern look */
+    }
+    .card-body {
+        padding: 20px; /* Add padding for content inside the card */
+    }
+    .card-body .row {
+        margin-bottom: 10px; /* Space between rows inside the card */
+    }
+    .card-body .row:last-child {
+        margin-bottom: 0; /* Remove margin from the last row */
+    }
+
+</style>
+
+<div class="container">
+    <h1 class="text-center mb-4">Consulta de Tratamentos</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <form method="GET" action="{{ url_for('consulta_tratamentos') }}" class="form-inline w-100">
+                <input type="text" name="search" class="form-control mr-2 flex-grow-1" placeholder="Buscar por Pedido, Código, Descrição, Rastreamento, Nota Saída ou Nota Entrada" value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </form>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        {% for tratamento in tratamentos %}
+            {% set estado = tratamento.estado %}
+            {% if estado == 'Cadastrado' %}
+                {% set border_class = 'border-red' %}
+            {% elif estado == 'Enviado' %}
+                {% set border_class = 'border-blue' %}
+            {% elif estado == 'Recebido' %}
+                {% set border_class = 'border-green' %}
+            {% else %}
+                {% set border_class = '' %}
+            {% endif %}
+            <div class="col-md-12">
+                <div class="card {{ border_class }}">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3"><strong>ID:</strong> {{ tratamento.id }}</div>
+                            <div class="col-md-3"><strong>Pedido Cliente:</strong> {{ tratamento.pedido_cliente }}</div>
+                            <div class="col-md-3"><strong>Código Produto:</strong> {{ tratamento.cod_produto }}</div>
+                            <div class="col-md-3"><strong>Quantidade:</strong> {{ tratamento.quantidade }}</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6"><strong>Descrição Produto:</strong> {{ tratamento.desc_produto }}</div>
+                            <div class="col-md-3"><strong>Tipo Tratamento:</strong> {{ tratamento.tipo_tratamento }}</div>
+                            <div class="col-md-3"><strong>Responsável:</strong> {{ tratamento.responsavel }}</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3"><strong>Rastreamento:</strong> {{ tratamento.rastreamento }}</div>
+                            <div class="col-md-3"><strong>Peso:</strong> {{ tratamento.peso }}</div>
+                            <div class="col-md-3"><strong>Volume:</strong> {{ tratamento.volume }}</div>
+                            <div class="col-md-3"><strong>Estado:</strong> {{ tratamento.estado }}</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3"><strong>Data Cadastro:</strong> {{ tratamento.data_cadastro.strftime('%d/%m/%Y') if tratamento.data_cadastro else '' }}</div>
+                            <div class="col-md-3"><strong>Data Envio:</strong> {{ tratamento.data_envio.strftime('%d/%m/%Y') if tratamento.data_envio else '' }}</div>
+                            <div class="col-md-3"><strong>Data Recebido:</strong> {{ tratamento.data_recebido.strftime('%d/%m/%Y') if tratamento.data_recebido else '' }}</div>
+                            <div class="col-md-3"><strong>Data Previsão:</strong> {{ tratamento.data_previsao.strftime('%d/%m/%Y') if tratamento.data_previsao else '' }}</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6"><strong>NF Saída:</strong> {{ tratamento.nf_saida if tratamento.nf_saida else '' }}</div>
+                            <div class="col-md-6"><strong>NF Entrada:</strong> {{ tratamento.nf_entrada if tratamento.nf_entrada else '' }}</div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('consulta_tratamentos', page=page-1, search=search_query) }}" aria-label="Anterior">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">Anterior</span>
+                    </a>
+                </li>
+            {% endif %}
+            {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('consulta_tratamentos', page=p, search=search_query) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+            {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('consulta_tratamentos', page=page+1, search=search_query) }}" aria-label="Próximo">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">Próximo</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
+{% endblock %}
