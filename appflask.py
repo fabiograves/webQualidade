@@ -40,10 +40,11 @@ from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
 from datetime import timedelta
-import traceback
-import xlsxwriter
-
 import math
+
+from PIL import Image, ImageDraw, ImageFont
+import barcode
+from barcode.writer import ImageWriter
 
 
 app = Flask(__name__)
@@ -6623,7 +6624,7 @@ def visualizar_grafico():
 
 
 @app.route('/cadastro_tratamento_superficial', methods=['GET', 'POST'])
-@requires_privilege(9, 51, 59, 3)
+@requires_privilege(9, 51, 59, 3, 58)
 def cadastro_tratamento_superficial():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -6637,37 +6638,42 @@ def cadastro_tratamento_superficial():
         rastreamento = request.form.get('rastreamento', '')
         peso = request.form.get('peso', 0)
         volume = request.form.get('volume', 0)
-        tipo_tratamento = request.form['tipo_tratamento']
+        tipo_tratamento = request.form.get('tipo_tratamento').strip()  # Remover espaços em branco extras
         responsavel = session['username']
         data_atual = datetime.datetime.today().strftime('%Y-%m-%d')
         quantidade = request.form.get('quantidade', 0)
         estado = "Cadastrado"
         previsao = 0
+
+        # Mapeamento de tratamentos baseado no valor real do tipo de tratamento
         tratamento_map = {
-            'tratamento1': ('Zn Branco', 3),
-            'tratamento2': ('Zn Preto', 3),
-            'tratamento3': ('Zn Amarelo', 3),
-            'tratamento4': ('Decapagem', 3),
-            'tratamento5': ('Fosfato Mn', 5),
-            'tratamento6': ('Cad Brico', 5),
-            'tratamento7': ('Zn Triv Azul', 3),
-            'tratamento8': ('Zn Triv Branco', 3),
-            'tratamento9': ('Zn Triv Amarelo', 3),
-            'tratamento10': ('Organometalico GEOMET', 5),
-            'tratamento11': ('Galvanizado a Fogo', 5),
-            'tratamento12': ('Oxidado', 5),
-            'tratamento13': ('Xylan', 5),
-            'tratamento14': ('Niquel', 5),
-            'tratamento15': ('Cobre', 5),
-            'tratamento16': ('Corte', 5),
-            'tratamento17': ('Zn Triv Amarelo BR 120H VM 144H(C/ Selante', 3),
-            'tratamento18': ('Temperado e Revenido', 3),
-            'tratamento19': ('Preto Oleado', 3),
-            'tratamento20': ('Fosfatizado', 3),
+            'Zn Branco': 3,
+            'Zn Preto': 3,
+            'Bicromatizado': 3,
+            'Decapagem': 3,
+            'Fosfato Mn': 5,
+            'Cad Bicro': 5,
+            'Zn Triv Azul': 3,
+            'Zn Triv Branco': 3,
+            'Zn Triv Amarelo': 3,
+            'Organometalico (GEOMET)': 5,
+            'Galvanizado a Fogo': 5,
+            'Oxidado': 5,
+            'Xylan': 5,
+            'Niquel': 5,
+            'Cobre': 5,
+            'Corte': 5,
+            'ZTAM BR 120H VM 144H (C/ Selante)': 3,
+            'Temperado e Revenido': 3,
+            'Preto Oleado': 3,
+            'Fosfatizado': 3
         }
 
+        print("Tipo: ", tipo_tratamento)  # Verifique o valor capturado aqui
+
+        # Verificar se o tipo de tratamento existe no mapeamento
         if tipo_tratamento in tratamento_map:
-            tipo_tratamento, previsao = tratamento_map[tipo_tratamento]
+            previsao = tratamento_map[tipo_tratamento]
         else:
             tipo_tratamento = 'ERRO'
             previsao = 99
@@ -6691,8 +6697,10 @@ def cadastro_tratamento_superficial():
                 INSERT INTO [dbo].[cadastro_tratamento_superficial] 
                 (pedido_cliente, pedido_linha, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_cadastro, estado, quantidade, previsao)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (pedido_cliente, pedido_linha, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel,
-                  data_atual, estado, quantidade, previsao))
+            """, (
+                pedido_cliente, pedido_linha, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento,
+                responsavel, data_atual, estado, quantidade, previsao
+            ))
 
             conn.commit()
             cursor.close()
@@ -6879,12 +6887,15 @@ def lista_tratamentos_enviados():
     if not is_logged_in():
         return redirect(url_for('login'))
 
+    # Obter os filtros da URL
     nf_saida_filter = request.args.get('nf_saida_filter')
+    pedido_cliente_filter = request.args.get('pedido_cliente_filter')
 
     try:
         conn = conectar_db()
         cursor = conn.cursor()
 
+        # Iniciar a query base
         query = """
             SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento,
                    nf_saida, data_envio, estado, quantidade
@@ -6892,18 +6903,31 @@ def lista_tratamentos_enviados():
             WHERE estado = 'Enviado'
         """
 
+        # Lista de parâmetros para os filtros
+        params = []
+
+        # Adicionar condição para nf_saida se o filtro estiver presente
         if nf_saida_filter:
             query += " AND nf_saida = ?"
-            cursor.execute(query, (nf_saida_filter,))
-        else:
-            query += " ORDER BY data_envio ASC"
-            cursor.execute(query)
+            params.append(nf_saida_filter)
+
+        # Adicionar condição para pedido_cliente se o filtro estiver presente
+        if pedido_cliente_filter:
+            query += " AND pedido_cliente = ?"
+            params.append(pedido_cliente_filter)
+
+        # Adicionar ordenação padrão
+        query += " ORDER BY data_envio ASC"
+
+        # Executar a query com os parâmetros
+        cursor.execute(query, params)
 
         tratamentos = cursor.fetchall()
 
         cursor.close()
         conn.close()
 
+        # Renderizar a página com os tratamentos filtrados
         return render_template('lista_tratamentos_enviados.html', tratamentos=tratamentos)
 
     except Exception as e:
@@ -6964,7 +6988,7 @@ def consulta_tratamentos():
         per_page = 20
 
         sql_query = """
-            SELECT id, pedido_cliente, cod_produto, desc_produto, quantidade, rastreamento,
+            SELECT id, pedido_cliente, pedido_linha, cod_produto, desc_produto, quantidade, rastreamento,
                    peso, volume, tipo_tratamento, responsavel, data_cadastro, data_envio,
                    data_previsao, data_recebido, estado, nf_entrada, nf_saida
             FROM [dbo].[cadastro_tratamento_superficial]
@@ -7003,6 +7027,48 @@ def consulta_tratamentos():
     except Exception as e:
         flash(f'Erro ao buscar tratamentos: {str(e)}', 'danger')
         return redirect(url_for('consulta_tratamentos'))
+
+
+@app.route('/alterar_senha', methods=['GET', 'POST'])
+def alterar_senha():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        senha_atual = request.form['senha_atual']
+        senha_nova = request.form['senha_nova']
+        confirmacao_senha_nova = request.form['confirmacao_senha_nova']
+
+        # Verificar se a nova senha e a confirmação correspondem
+        if senha_nova != confirmacao_senha_nova:
+            flash('A nova senha e a confirmação não correspondem.')
+            return redirect(url_for('alterar_senha'))
+
+        # Verificar se a senha atual está correta
+        username = session['username']
+        try:
+            connection = conectar_db()
+            cursor = connection.cursor()
+            cursor.execute('SELECT * FROM dbo.usuarios WHERE nome_usuario = ? AND senha_usuario = ?',
+                           (username, senha_atual))
+            user = cursor.fetchone()
+
+            if user:
+                # Atualizar a senha no banco de dados
+                cursor.execute('UPDATE dbo.usuarios SET senha_usuario = ? WHERE nome_usuario = ?',
+                               (senha_nova, username))
+                connection.commit()
+
+                flash('Senha alterada com sucesso.')
+                return redirect(url_for('home'))
+            else:
+                flash('A senha atual está incorreta.')
+                return redirect(url_for('alterar_senha'))
+        finally:
+            if 'connection' in locals():
+                connection.close()
+
+    return render_template('alterar_senha.html')
 
 
 if __name__ == '__main__':

@@ -48,7 +48,13 @@
                     <a id="mensagemAviso" class="mensagem-aviso"></a>
                     <div class="ms-auto d-flex align-items-center">
                         <span class="navbar-text text-white">
-                            {{ session['nome_assinatura'] if session['nome_assinatura'] else '' }}
+                            {% if session['nome_assinatura'] != 'Pesquisar' %}
+                                <a href="{{ url_for('alterar_senha') }}" class="text-white">
+                                    {{ session['nome_assinatura'] if session['nome_assinatura'] else '' }}
+                                </a>
+                            {% else %}
+                                {{ session['nome_assinatura'] if session['nome_assinatura'] else '' }}
+                            {% endif %}
                         </span>
                         <a class="nav-link text-white" aria-current="page" href="{{ url_for('logout') }}">Logout</a>
                     </div>
@@ -66,19 +72,19 @@
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                         </div>
                         <div class="offcanvas-body">
-                            <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Tratamento
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('consulta_tratamentos') }}">Consultar Tratamentos</a></li>
-                            </ul>
-                        </li>
                             <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
                                 <li class="nav-item">
                                     <a class="nav-link active" aria-current="page" href="{{ url_for('home') }}">Home</a>
                                 </li>
 
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Tratamento
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{{ url_for('consulta_tratamentos') }}">Consultar Tratamentos</a></li>
+                                    </ul>
+                                </li>
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Faturamento

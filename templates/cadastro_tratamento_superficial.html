@@ -24,6 +24,8 @@
     {% extends "base_tratamentos.html" %}
 {% elif session['privilegio'] == 59 %}
     {% extends "base_zincagem_inspecao.html" %}
+{% elif session['privilegio'] == 58 %}
+    {% extends "base_expedicao_tratamentos.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}
@@ -71,6 +73,42 @@
         max-width: 100%;
         margin-left: 0;
         margin-right: 0;
+    }
+
+    @media print {
+        @page {
+            size: 106mm 60mm;
+            margin: 0;
+        }
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+        }
+        body * {
+            visibility: hidden;
+        }
+        #etiqueta, #etiqueta * {
+            visibility: visible;
+        }
+        #etiqueta {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 106mm !important;
+            height: 60mm !important;
+            margin: 0 !important;
+            padding: 2mm !important;
+            font-size: 18pt !important;
+            line-height: 1 !important;
+            box-sizing: border-box !important;
+        }
+        #etiqueta p {
+            margin: 0 !important;
+            padding: 2mm !important;
+            font-size: 18pt !important;
+        }
     }
 
 </style>
@@ -122,21 +160,22 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                            <!-- Definir os títulos dos botões diretamente no Jinja -->
+                            <!-- Define your descriptions dictionary -->
                             {% set descricoes = {
-                                1: "Zn Branco", 2: "Zn Preto", 3: "Zn Amarelo", 4: "Decapagem", 5: "Fosfato Mn",
-                                6: "Cad Brico", 7: "Zn Triv Azul", 8: "Zn Triv Branco",
+                                1: "Zn Branco", 2: "Zn Preto", 3: "Bicromatizado", 4: "Decapagem", 5: "Fosfato Mn",
+                                6: "Cad Bicro", 7: "Zn Triv Azul", 8: "Zn Triv Branco",
                                 9: "Zn Triv Amarelo", 10: "Organometalico (GEOMET)",
                                 11: "Galvanizado a Fogo", 12: "Oxidado",
                                 13: "Xylan", 14: "Niquel", 15: "Cobre",
-                                16: "Corte", 17: "Zn Triv. Amarelo BR 120H VM 144H (C/ Selante)",
+                                16: "Corte", 17: "ZTAM BR 120H VM 144H (C/ Selante)",
                                 18: "Temperado e Revenido", 19: "Preto Oleado",
                                 20: "Fosfatizado"
                             } %}
+
                             <!-- Renderizar os botões com os textos ao carregar -->
                             {% for i in range(1, 21) %}
                                 <label class="btn btn-secondary" id="label_tratamento_{{ i }}">
-                                    <input type="radio" name="tipo_tratamento" id="tratamento{{ i }}" value="tratamento{{ i }}" onclick="mostrarDescricao('{{ i }}')"> {{ descricoes[i] }}
+                                    <input type="radio" name="tipo_tratamento" id="tratamento{{ i }}" value="{{ descricoes[i] }}" {% if i == 1 %}required{% endif %} onchange="atualizarEtiqueta()"> {{ descricoes[i] }}
                                 </label>
                             {% endfor %}
                         </div>
@@ -144,14 +183,30 @@
                 </div>
 
                 <!-- Descrição do Tratamento -->
+                <!--
                 <div class="row mt-4">
                     <div class="col-md-12">
                         <p id="descricao_tratamento">Selecione um tratamento para ver a descrição.</p>
                     </div>
                 </div>
-
-                <div class="row">
-                    <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Tratamento</button>
+                -->
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <!-- Cartão de visualização com medidas de 106x60mm -->
+                        <div id="etiqueta">
+                            <p><strong>Pedido:</strong> <span id="etiqueta_pedido"></span><!-- - <strong>Linha:</strong> <span id="etiqueta_linha"></span>--></p>
+                            <!--<p>&nbsp;&nbsp;<strong>Cód Produto:</strong> <span id="etiqueta_cod_produto"></span></p>-->
+                            <p><strong></strong> <span id="etiqueta_desc_produto"></span></p>
+                            <p><strong>Qtd:</strong> <span id="etiqueta_quantidade"></span><!-- - <strong>Rastreio:</strong> <span id="etiqueta_rastreamento"></span>--></p>
+                            <!--<p>&nbsp;&nbsp;<strong>Peso:</strong> <span id="etiqueta_peso"></span>kg - <strong>Volume:</strong> <span id="etiqueta_volume"></span></p>-->
+                            <!--<p>&nbsp;&nbsp;<strong>Tratamento:</strong> <span id="etiqueta_tipo_tratamento"></span></p>-->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <!-- Botão de impressão -->
+                        <button type="button" class="btn btn-primary w-100 mb-3" onclick="imprimirEtiqueta()">Imprimir Etiqueta</button>
+                        <button type="submit" class="btn btn-secondary w-100 mb-3">Cadastrar Tratamento</button>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -171,6 +226,82 @@
 </div>
 
 <script>
+    // Tornar obrigatório tipo tratamento
+    document.querySelector('form').addEventListener('submit', function (e) {
+        var tratamentoSelecionado = document.querySelector('input[name="tipo_tratamento"]:checked');
+        if (!tratamentoSelecionado) {
+            alert("Por favor, selecione um tipo de tratamento.");
+            e.preventDefault();  // Evita o envio do formulário se nenhum tratamento for selecionado
+        }
+    });
+
+    // Atualiza o conteúdo da etiqueta com os dados do formulário
+    document.querySelectorAll('input').forEach(function(input) {
+        input.addEventListener('input', atualizarEtiqueta);
+        input.addEventListener('change', atualizarEtiqueta);
+    });
+
+    // Also call atualizarEtiqueta once on page load
+    document.addEventListener('DOMContentLoaded', atualizarEtiqueta);
+
+    function atualizarEtiqueta() {
+        document.getElementById('etiqueta_pedido').innerText = document.getElementById('pedido_cliente').value;
+        //document.getElementById('etiqueta_linha').innerText = document.getElementById('pedido_linha').value;
+        //document.getElementById('etiqueta_cod_produto').innerText = document.getElementById('cod_produto').value;
+        document.getElementById('etiqueta_desc_produto').innerText = document.getElementById('desc_produto').value;
+        document.getElementById('etiqueta_quantidade').innerText = document.getElementById('quantidade').value;
+        //document.getElementById('etiqueta_rastreamento').innerText = document.getElementById('rastreamento').value;
+        //document.getElementById('etiqueta_peso').innerText = document.getElementById('peso').value;
+        //document.getElementById('etiqueta_volume').innerText = document.getElementById('volume').value;
+
+        /*const tratamentoSelecionado = document.querySelector('input[name="tipo_tratamento"]:checked');
+        if (tratamentoSelecionado) {
+            const tratamentoTexto = tratamentoSelecionado.value;
+            document.getElementById('etiqueta_tipo_tratamento').innerText = tratamentoTexto;
+        } else {
+            document.getElementById('etiqueta_tipo_tratamento').innerText = '';
+        }
+        */
+    }
+
+    function imprimirEtiqueta() {
+        var labelContent = document.getElementById('etiqueta').outerHTML;
+        var printWindow = window.open('', '', 'width=800,height=600');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <style>
+                    @media print {
+                        @page { size: portrait; margin: 0; }
+                        html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
+                        #etiqueta {
+                            position: absolute !important;
+                            top: 0 !important;
+                            left: 0 !important;
+                            width: 106mm !important;
+                            height: 60mm !important;
+                            margin: 0 !important;
+                            padding: 2mm !important;
+                            font-size: 18pt !important;
+                            line-height: 1 !important;
+                            box-sizing: border-box !important;
+                        }
+                        #etiqueta p {
+                            margin: 0 !important;
+                            padding: 2mm !important;
+                            font-size: 18pt !important;
+                        }
+                    }
+                </style>
+            </head>
+            <body onload="window.print(); window.close();">
+                ${labelContent}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    }
+
     function buscarDescricaoProduto() {
         var codProduto = document.getElementById('cod_produto').value;
         fetch(`/buscar_descricao_produto?cod_produto=${codProduto}`)
@@ -222,7 +353,8 @@
             "17": { "titulo": "Zn Triv Amarelo BR 120H VM 144H (C/ Selante)", "descricao": "Zn Triv Amarelo BR 120H VM 144H (C/ Selante: Descrição detalhada do ." },
             "18": { "titulo": "Temperado e Revenido", "descricao": "Temperado e Revenido: Descrição detalhada do ." },
             "19": { "titulo": "Preto Oleado", "descricao": "Preto Oleado: Descrição detalhada do ." },
-            "20": { "titulo": "Fosfatizado", "descricao": "Fosfatizado: Descrição detalhada do ." }
+            "20": { "titulo": "Fosfatizado", "descricao": "Fosfatizado: Descrição detalhada do ." },
+            "21": { "titulo": "Bicromatizado", "descricao": "Fosfatizado: Descrição detalhada do ." }
         };
 
         // Verifica se a descrição para o tratamentoId existe
@@ -233,10 +365,9 @@
             // Se o tratamento não for encontrado, exibe uma mensagem padrão
             document.getElementById("descricao_tratamento").innerText = "Descrição não disponível para este tratamento.";
         }
+        atualizarEtiqueta();
     }
 
-
 </script>
-
 
 {% endblock %}

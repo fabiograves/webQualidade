@@ -72,7 +72,13 @@
             <a id="mensagemAviso" class="mensagem-aviso"></a>
             <div class="ms-auto d-flex align-items-center">
                 <span class="navbar-text text-white">
-                    {{ session['nome_assinatura'] if session['nome_assinatura'] else '' }}
+                    {% if session['nome_assinatura'] != 'Pesquisar' %}
+                        <a href="{{ url_for('alterar_senha') }}" class="text-white">
+                            {{ session['nome_assinatura'] if session['nome_assinatura'] else '' }}
+                        </a>
+                    {% else %}
+                        {{ session['nome_assinatura'] if session['nome_assinatura'] else '' }}
+                    {% endif %}
                 </span>
                 <a class="nav-link text-white" aria-current="page" href="{{ url_for('logout') }}">Logout</a>
             </div>
@@ -103,14 +109,6 @@
                                 <li><a class="dropdown-item" href="{{ url_for('lista_tratamentos_enviados') }}">Receber Tratamento</a></li>
                                 <li><a class="dropdown-item" href="{{ url_for('cadastro_tratamento_superficial') }}">Cadastro Tratamento</a></li>
                                 <li><a class="dropdown-item" href="{{ url_for('consulta_tratamentos') }}">Consultar Tratamentos</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Cadastros
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('cadastro_itens_ars') }}">Cadastro Itens</a></li>
                             </ul>
                         </li>
                         <li class="nav-item dropdown">

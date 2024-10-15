@@ -59,8 +59,11 @@
     <div class="row mb-3">
         <div class="col-md-12">
             <form method="GET" action="{{ url_for('lista_tratamentos_enviados') }}" class="row g-2">
-                <div class="col-md-8">
-                    <input type="text" class="form-control" id="nf_saida_filter" name="nf_saida_filter" placeholder="Digite a Nota Fiscal de Saída">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="nf_saida_filter" name="nf_saida_filter" placeholder="Nota Fiscal de Saída">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="pedido_cliente_filter" name="pedido_cliente_filter" placeholder="Pedido do Cliente">
                 </div>
                 <div class="col-md-4">
                     <button type="submit" class="btn btn-primary w-100">Filtrar</button>
@@ -115,32 +118,6 @@
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-</div>
-
-<!-- Modal para confirmação da Nota Fiscal de Entrada -->
-<div class="modal fade" id="modalSenha" tabindex="-1" aria-labelledby="modalSenhaLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" action="{{ url_for('confirmar_recebimento_tratamento') }}">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalSenhaLabel">Confirmação de Recebimento</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Digite a nota de entrada para confirmar o recebimento:</p>
-                    <input type="hidden" name="id_tratamento" id="id_tratamento">
-                    <div class="form-group">
-                        <label for="nf_entrada">Nota Fiscal Entrada:</label>
-                        <input type="text" class="form-control" id="nf_entrada" name="nf_entrada" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Confirmar</button>
-                </div>
-            </form>
-        </div>
     </div>
 </div>
 

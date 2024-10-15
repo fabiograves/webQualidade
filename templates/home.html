@@ -24,6 +24,8 @@
     {% extends "base_tratamentos.html" %}
 {% elif session['privilegio'] == 59 %}
     {% extends "base_zincagem_inspecao.html" %}
+{% elif session['privilegio'] == 58 %}
+    {% extends "base_expedicao_tratamentos.html" %}
 {% else %}
     {% extends "base.html" %}
 {% endif %}

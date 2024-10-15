@@ -33,8 +33,8 @@
 <style>
     .container-fluid {
         max-width: 100%;
-        margin-left: 00px;
-        margin-right: 00px;
+        margin-left: 0;
+        margin-right: 0;
     }
 </style>
 
@@ -123,6 +123,7 @@
 </div>
 
 <script>
+    // Função para marcar como enviado
     document.getElementById('btn_enviar_selecionados').addEventListener('click', function() {
         var checkboxes = document.querySelectorAll('.checkbox_tratamento:checked');
         var idsSelecionados = [];
@@ -132,6 +133,8 @@
 
         if (idsSelecionados.length > 0) {
             document.getElementById('ids_selecionados').value = idsSelecionados.join(',');
+            // Defina a ação do formulário para alterar o estado
+            document.getElementById('action_form').action = "{{ url_for('alterar_estado_tratamento') }}";
             var modal = new bootstrap.Modal(document.getElementById('modalSenha'));
             modal.show();  // Abrir o modal para digitar a nf_saida
         } else {
@@ -139,23 +142,7 @@
         }
     });
 
-    document.getElementById('select_all').addEventListener('click', function() {
-        var checkboxes = document.querySelectorAll('.checkbox_tratamento');
-        checkboxes.forEach(function(checkbox) {
-            checkbox.checked = this.checked;
-        }.bind(this));
-    });
-
-    document.getElementById('confirmarEnvio').addEventListener('click', function() {
-        var nf_saida = document.getElementById('nf_saida').value;
-        if (nf_saida) {
-            document.getElementById('nf_saida_hidden').value = nf_saida;  // Passar nf_saida como hidden field
-            document.getElementById('action_form').submit();  // Submeter o formulário com IDs e nf_saida
-        } else {
-            alert('Por favor, insira a Nota Fiscal de Saída.');
-        }
-    });
-
+    // Função para exportar para Excel
     document.getElementById('btn_exportar_excel').addEventListener('click', function() {
         var checkboxes = document.querySelectorAll('.checkbox_tratamento:checked');
         var idsSelecionados = [];
@@ -165,6 +152,7 @@
 
         if (idsSelecionados.length > 0) {
             document.getElementById('ids_selecionados').value = idsSelecionados.join(',');
+            // Defina a ação do formulário para exportar o Excel
             document.getElementById('action_form').action = "{{ url_for('export_tratamentos_cadastrados_excel') }}";
             document.getElementById('action_form').submit();
         } else {
@@ -172,6 +160,25 @@
         }
     });
 
+    // Confirmação da NF e envio do formulário para marcar como enviado
+    document.getElementById('confirmarEnvio').addEventListener('click', function() {
+        var nf_saida = document.getElementById('nf_saida').value;
+        if (nf_saida) {
+            document.getElementById('nf_saida_hidden').value = nf_saida;  // Passar nf_saida como hidden field
+            // O formulário já estará com a ação correta configurada para "alterar_estado_tratamento"
+            document.getElementById('action_form').submit();  // Submeter o formulário com IDs e nf_saida
+        } else {
+            alert('Por favor, insira a Nota Fiscal de Saída.');
+        }
+    });
+
+    // Checkbox de selecionar todos
+    document.getElementById('select_all').addEventListener('click', function() {
+        var checkboxes = document.querySelectorAll('.checkbox_tratamento');
+        checkboxes.forEach(function(checkbox) {
+            checkbox.checked = this.checked;
+        }.bind(this));
+    });
 </script>
 
 {% endblock %}
