@@ -104,7 +104,7 @@
             height: 60mm !important;
             margin: 0 !important;
             padding: 5mm !important;
-            font-size: 20pt !important;
+            font-size: 18pt !important;
             line-height: 1.5 !important;
             box-sizing: border-box !important;
             page-break-inside: avoid;
@@ -202,7 +202,7 @@
                     <div class="col-md-6">
                         <!-- Cartão de visualização com medidas de 106x60mm -->
                         <div id="etiqueta">
-                            <p><strong>Pedido:</strong> <span id="etiqueta_pedido"></span><!-- - <strong>Linha:</strong> <span id="etiqueta_linha"></span>--></p>
+                            <p><strong>Ped.:</strong> <span id="etiqueta_pedido"></span> - <strong>L:</strong> <span id="etiqueta_linha"></span></p>
                             <!--<p>&nbsp;&nbsp;<strong>Cód Produto:</strong> <span id="etiqueta_cod_produto"></span></p>-->
                             <p><strong></strong> <span id="etiqueta_desc_produto"></span></p>
                             <p><strong>Qtd:</strong> <span id="etiqueta_quantidade"></span><!-- - <strong>Rastreio:</strong> <span id="etiqueta_rastreamento"></span>--></p>
@@ -254,7 +254,7 @@
 
     function atualizarEtiqueta() {
         document.getElementById('etiqueta_pedido').innerText = document.getElementById('pedido_cliente').value;
-        //document.getElementById('etiqueta_linha').innerText = document.getElementById('pedido_linha').value;
+        document.getElementById('etiqueta_linha').innerText = document.getElementById('pedido_linha').value;
         //document.getElementById('etiqueta_cod_produto').innerText = document.getElementById('cod_produto').value;
         document.getElementById('etiqueta_desc_produto').innerText = document.getElementById('desc_produto').value;
         document.getElementById('etiqueta_quantidade').innerText = document.getElementById('quantidade').value;
@@ -309,7 +309,7 @@
                             height: 58mm !important;
                             margin: 0 !important;
                             padding: 5mm !important;
-                            font-size: 20pt !important;
+                            font-size: 18pt !important;
                             line-height: 1.5 !important;
                             box-sizing: border-box !important;
                             page-break-inside: avoid;

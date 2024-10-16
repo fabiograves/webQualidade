@@ -6664,7 +6664,7 @@ def cadastro_tratamento_superficial():
             'Fosfatizado': 3
         }
 
-        print("Tipo: ", tipo_tratamento)  # Verifique o valor capturado aqui
+        #print("Tipo: ", tipo_tratamento)  # Verifique o valor capturado aqui
 
         # Verificar se o tipo de tratamento existe no mapeamento
         if tipo_tratamento in tratamento_map:
