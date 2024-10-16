@@ -40,15 +40,49 @@
 
 <div class="container-fluid">
     <div class="container-fluid">
+
         <div class="d-flex justify-content-between align-items-center">
             <h1 class="mx-auto">Tratamentos Cadastrados</h1>
             <form method="POST" id="action_form" action="{{ url_for('alterar_estado_tratamento') }}">
                 <button type="button" id="btn_enviar_selecionados" class="btn btn-primary">Marcar Selecionados como Enviado</button>
                 <button type="button" id="btn_exportar_excel" class="btn btn-success">Exportar para Excel</button>
+                <button type="button" id="btn_exportar_pdf" class="btn btn-success">Exportar para PDF</button>
                 <input type="hidden" name="ids_selecionados" id="ids_selecionados">
                 <input type="hidden" name="nf_saida" id="nf_saida_hidden">
             </form>
         </div>
+
+        <form method="POST" action="{{ url_for('lista_tratamentos_cadastrados') }}">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="pedido_cliente" class="form-label">Número do Pedido</label>
+                    <input type="text" class="form-control" id="pedido_cliente" name="pedido_cliente" value="{{ pedido_cliente | default('') }}">
+                </div>
+                <div class="col-md-5">
+                    <label for="tipo_tratamento" class="form-label">Tipo de Tratamento</label>
+                    {% set descricoes = {
+                                1: "Zn Branco", 2: "Zn Preto", 3: "Bicromatizado", 4: "Decapagem", 5: "Fosfato Mn",
+                                6: "Cad Bicro", 7: "Zn Triv Azul", 8: "Zn Triv Branco",
+                                9: "Zn Triv Amarelo", 10: "Organometalico (GEOMET)",
+                                11: "Galvanizado a Fogo", 12: "Oxidado",
+                                13: "Xylan", 14: "Niquel", 15: "Cobre",
+                                16: "Corte", 17: "ZTAM BR 120H VM 144H (C/ Selante)",
+                                18: "Temperado e Revenido", 19: "Preto Oleado",
+                                20: "Fosfatizado"
+                            } %}
+                    <select class="form-control" id="tipo_tratamento" name="tipo_tratamento">
+                        <option value="">Todos</option>
+                        {% for key, value in descricoes.items() %}
+                            <option value="{{ value }}" {% if tipo_tratamento == value %}selected{% endif %}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1 align-self-end">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                </div>
+            </div>
+        </form>
+
     </div>
 
     <!-- Exibir mensagens flash -->
@@ -65,7 +99,7 @@
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th><input type="checkbox" id="select_all"></th> <!-- Checkbox para selecionar todos -->
+                    <th><input type="checkbox" id="select_all"></th>
                     <th>Pedido Cliente</th>
                     <th>Código Produto</th>
                     <th>Descrição Produto</th>
@@ -74,6 +108,7 @@
                     <th>Peso</th>
                     <th>Volume</th>
                     <th>Tipo Tratamento</th>
+                    <th>Dias Extras</th>
                     <th>Responsável</th>
                     <th>Data</th>
                 </tr>
@@ -90,6 +125,9 @@
                         <td>{{ tratamento.peso }}</td>
                         <td>{{ tratamento.volume }}</td>
                         <td>{{ tratamento.tipo_tratamento }}</td>
+                        <td>
+                            <input type="number" id="dias_adicionais_{{ tratamento.id }}" name="dias_adicionais_{{ tratamento.id }}" form="action_form" style="width: 5ch;">
+                        </td>
                         <td>{{ tratamento.responsavel }}</td>
                         <td>{{ tratamento.data_cadastro.strftime('%d/%m/%Y') }}</td>
                     </tr>
@@ -154,6 +192,24 @@
             document.getElementById('ids_selecionados').value = idsSelecionados.join(',');
             // Defina a ação do formulário para exportar o Excel
             document.getElementById('action_form').action = "{{ url_for('export_tratamentos_cadastrados_excel') }}";
+            document.getElementById('action_form').submit();
+        } else {
+            alert('Nenhum tratamento foi selecionado para exportação.');
+        }
+    });
+
+    // Função para exportar para Excel
+    document.getElementById('btn_exportar_pdf').addEventListener('click', function() {
+        var checkboxes = document.querySelectorAll('.checkbox_tratamento:checked');
+        var idsSelecionados = [];
+        checkboxes.forEach(function(checkbox) {
+            idsSelecionados.push(checkbox.value);
+        });
+
+        if (idsSelecionados.length > 0) {
+            document.getElementById('ids_selecionados').value = idsSelecionados.join(',');
+            // Defina a ação do formulário para exportar o Excel
+            document.getElementById('action_form').action = "{{ url_for('export_tratamentos_cadastrados_pdf') }}";
             document.getElementById('action_form').submit();
         } else {
             alert('Nenhum tratamento foi selecionado para exportação.');

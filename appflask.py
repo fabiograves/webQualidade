@@ -15,11 +15,10 @@ import os
 import io
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib.pagesizes import letter, A4
-from reportlab.platypus import Image
-from reportlab.platypus import Spacer
-from reportlab.platypus import Paragraph
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Frame, PageTemplate
+from reportlab.platypus import BaseDocTemplate
+from reportlab.platypus import Image as RLImage
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from collections import defaultdict
@@ -38,14 +37,10 @@ import xml.etree.ElementTree as ET
 from PyPDF2 import PdfReader, PdfWriter
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
-from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
 from datetime import timedelta
 import math
 
 from PIL import Image, ImageDraw, ImageFont
-import barcode
-from barcode.writer import ImageWriter
-
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -262,7 +257,7 @@ def generate_pdf():
                     image_file = image_files[index]
                     if image_file:
                         image_buffer = BytesIO(image_file.read())
-                        img = Image(image_buffer, width=2 * inch, height=1.5 * inch)
+                        img = RLImage(image_buffer, width=2 * inch, height=1.5 * inch)
                         paragraph = Paragraph(text, centered_style)
                         paragraph1 = Paragraph(text_bot, centered_style)
                         cell_content = [paragraph, Spacer(1, 10), img, Spacer(1, 10), paragraph1]
@@ -1406,7 +1401,7 @@ def gerar_pdf():
 
         # Cria a tabela com a imagem e os textos
         data = [
-            [Image(image_path, width=108, height=54), texto_certificado_paragraph, texto_numero_certificado_paragraph]
+            [RLImage(image_path, width=108, height=54), texto_certificado_paragraph, texto_numero_certificado_paragraph]
         ]
 
         table = Table(data, colWidths=[1.5 * inch, 4.5 * inch, 1.5 * inch])
@@ -2121,7 +2116,7 @@ def gerar_pdf():
             imagem_cells = []
 
             for imagem_path in imagens:
-                imagem_cells.append(Image(imagem_path, 2 * inch, 1 * inch))
+                imagem_cells.append(RLImage(imagem_path, 2 * inch, 1 * inch))
 
             imagem_table = Table([imagem_cells], colWidths=effective_page_width / 2)
 
@@ -6754,19 +6749,37 @@ def lista_tratamentos_cadastrados():
         conn = conectar_db()
         cursor = conn.cursor()
 
-        # Selecionar todos os tratamentos com estado "Cadastrado" ordenados pelos mais antigos
-        cursor.execute("""
+        # Obtenha os filtros do formulário
+        pedido_cliente = request.form.get('pedido_cliente', '')
+        tipo_tratamento = request.form.get('tipo_tratamento')
+
+
+        # Crie a query com possíveis filtros
+        query = """
             SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_cadastro, estado, quantidade
             FROM [dbo].[cadastro_tratamento_superficial]
             WHERE estado = 'Cadastrado'
-            ORDER BY data_cadastro ASC
-        """)
+        """
+
+        # Adicione condições de filtro dinamicamente
+        conditions = []
+        if pedido_cliente:
+            conditions.append(f"pedido_cliente = '{pedido_cliente}'")
+        if tipo_tratamento:
+            conditions.append(f"tipo_tratamento = '{tipo_tratamento}'")
+
+        if conditions:
+            query += " AND " + " AND ".join(conditions)
+
+        query += " ORDER BY data_cadastro ASC"
+
+        cursor.execute(query)
         tratamentos = cursor.fetchall()
 
         cursor.close()
         conn.close()
 
-        return render_template('lista_tratamentos_cadastrados.html', tratamentos=tratamentos)
+        return render_template('lista_tratamentos_cadastrados.html', tratamentos=tratamentos, pedido_cliente=pedido_cliente, tipo_tratamento=tipo_tratamento)
 
     except Exception as e:
         flash(f'Erro ao buscar tratamentos: {str(e)}', 'danger')
@@ -6779,7 +6792,6 @@ def alterar_estado_tratamento():
     if not is_logged_in():
         return redirect(url_for('login'))
 
-    # Obter os IDs dos tratamentos selecionados e a nota fiscal de saída
     ids_selecionados = request.form.get('ids_selecionados')
     nf_saida = request.form.get('nf_saida')
     data_envio = datetime.datetime.today().strftime('%Y-%m-%d')
@@ -6821,9 +6833,18 @@ def alterar_estado_tratamento():
             """, (id_tratamento,))
             previsao = cursor.fetchone()[0]
 
-            # Calcular a data de previsão
+            # Obter os dias extras fornecidos no formulário (se houver)
+            dias_extras = request.form.get(f'dias_adicionais_{id_tratamento}', 0)
+            print("Dias EXTRAS: ", dias_extras)
+            try:
+                dias_extras = int(dias_extras)
+            except ValueError:
+                dias_extras = 0  # Se estiver vazio ou não for um número, não adiciona nada
+
+            # Calcular a data de previsão, incluindo os dias extras
             data_atual = datetime.datetime.today()
-            data_previsao = adicionar_dias_uteis(data_atual, previsao).strftime('%Y-%m-%d')
+            total_dias = previsao + dias_extras  # Somar os dias da previsão com os dias extras
+            data_previsao = adicionar_dias_uteis(data_atual, total_dias).strftime('%Y-%m-%d')
 
             # Atualizar o estado, data de envio, data de previsão e nf_saida
             cursor.execute("""
@@ -6861,7 +6882,7 @@ def export_tratamentos_cadastrados_excel():
     try:
         conn = conectar_db()
         query = f"""
-            SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_cadastro, estado, quantidade
+            SELECT id, pedido_cliente, pedido_linha, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_cadastro, estado, quantidade
             FROM [dbo].[cadastro_tratamento_superficial]
             WHERE id IN ({','.join(['?' for _ in ids_list])})
         """
@@ -6878,6 +6899,110 @@ def export_tratamentos_cadastrados_excel():
 
     except Exception as e:
         flash(f"Erro ao gerar o arquivo Excel: {e}", 'danger')
+        return redirect(url_for('lista_tratamentos_cadastrados'))
+
+
+@app.route('/export_tratamentos_cadastrados_pdf', methods=['POST'])
+@requires_privilege(9, 51, 59, 3)
+def export_tratamentos_cadastrados_pdf():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    ids_selecionados = request.form.get('ids_selecionados')
+    if not ids_selecionados:
+        flash('Nenhum tratamento foi selecionado para exportação.', 'danger')
+        return redirect(url_for('lista_tratamentos_cadastrados'))
+
+    ids_list = ids_selecionados.split(',')
+    data_atual = datetime.datetime.today().strftime('%d-%m-%Y')
+
+    try:
+        conn = conectar_db()
+        query = f"""
+            SELECT pedido_cliente, pedido_linha, cod_produto, desc_produto, quantidade, peso, tipo_tratamento
+            FROM [dbo].[cadastro_tratamento_superficial]
+            WHERE id IN ({','.join(['?' for _ in ids_list])})
+        """
+        df = pd.read_sql_query(query, conn, params=ids_list)
+        conn.close()
+
+        # Calcula a somatória dos pesos
+        total_peso = df['peso'].sum()
+
+        output = BytesIO()
+
+        # Create a PDF document using SimpleDocTemplate
+        doc = SimpleDocTemplate(
+            output,
+            pagesize=A4,
+            rightMargin=30,
+            leftMargin=30,
+            topMargin=110,
+            bottomMargin=30,
+        )
+
+        styles = getSampleStyleSheet()
+        elements = []
+
+        # Define the header and footer
+        def add_header_footer(canvas, doc):
+            canvas.saveState()
+            width, height = A4
+
+            # Header
+            logo_path = "static/images/LogoCertificado.png"
+            canvas.drawImage(logo_path, 30, height - 80, width=150, height=60)
+            canvas.setFont("Helvetica-Bold", 20)
+            canvas.drawString(200, height - 55, "Relatório de Tratamentos")
+            canvas.setFont("Helvetica", 10)
+            canvas.drawString(200, height - 75, f"Data: {data_atual}")
+            canvas.line(30, height - 100, width - 30, height - 100)
+
+            canvas.setFont("Helvetica", 8)
+            page_number_text = f"Página {doc.page}"
+            canvas.drawRightString(width - 30, 15, page_number_text)
+
+            canvas.restoreState()
+
+        # Build the table data
+        data = [["Pedido", "Linha", "Cod", "Desc", "Qtd", "Peso", "Tratamento"]]
+        for index, row in df.iterrows():
+            data.append([
+                row['pedido_cliente'],
+                row['pedido_linha'],
+                row['cod_produto'],
+                row['desc_produto'],
+                row['quantidade'],
+                row['peso'],
+                row['tipo_tratamento']
+            ])
+
+        # Add total weight row
+        data.append(["", "", "", "", "Total", f"{total_peso:.2f} kg", ""])
+
+        # Create the table
+        table = Table(data, colWidths=[40, 20, 50, 220, 30, 50, 90])
+
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.gray),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
+        ]))
+
+        elements.append(table)
+
+        # Build the PDF
+        doc.build(elements, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
+
+        output.seek(0)
+        return send_file(output, download_name=f"tratamentos_cadastrados_{data_atual}.pdf", as_attachment=True)
+
+    except Exception as e:
+        flash(f"Erro ao gerar o arquivo PDF: {e}", 'danger')
         return redirect(url_for('lista_tratamentos_cadastrados'))
 
 
