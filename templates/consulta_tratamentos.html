@@ -53,17 +53,50 @@
     .card-body .row:last-child {
         margin-bottom: 0; /* Remove margin from the last row */
     }
+    .badge {
+        color: black;
+    }
+
 
 </style>
 
 <div class="container">
     <h1 class="text-center mb-4">Consulta de Tratamentos</h1>
 
+    <!-- Legenda das cores -->
+    <div class="row mb-4">
+        <div class="col-md-12 text-center">
+            <span class="badge border-red px-3 py-2">Cadastrado</span>
+            <span class="badge border-blue px-3 py-2">Enviado</span>
+            <span class="badge border-green px-3 py-2">Recebido</span>
+        </div>
+    </div>
+
+    <!-- Barra de busca e filtro -->
     <div class="row mb-4">
         <div class="col-md-12">
             <form method="GET" action="{{ url_for('consulta_tratamentos') }}" class="form-inline w-100">
-                <input type="text" name="search" class="form-control mr-2 flex-grow-1" placeholder="Buscar por Pedido, Código, Descrição, Rastreamento, Nota Saída ou Nota Entrada" value="{{ search_query }}">
-                <button type="submit" class="btn btn-primary">Buscar</button>
+                <div class="row w-100">
+                    <!-- Campo de busca -->
+                    <div class="col-md-8">
+                        <input type="text" name="search" class="form-control w-100" placeholder="Buscar por Pedido, Código, Descrição, Rastreamento, Nota Saída ou Nota Entrada" value="{{ search_query }}">
+                    </div>
+
+                    <!-- Select para o filtro de estado -->
+                    <div class="col-md-3">
+                        <select name="estado" class="form-control w-100">
+                            <option value="">Todos</option>
+                            <option value="Cadastrado" {% if estado_filtro == 'Cadastrado' %}selected{% endif %}>Cadastrado</option>
+                            <option value="Enviado" {% if estado_filtro == 'Enviado' %}selected{% endif %}>Enviado</option>
+                            <option value="Recebido" {% if estado_filtro == 'Recebido' %}selected{% endif %}>Recebido</option>
+                        </select>
+                    </div>
+
+                    <!-- Botão de busca -->
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -120,8 +153,10 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6"><strong>NF Saída:</strong> {{ tratamento.nf_saida if tratamento.nf_saida else '' }}</div>
-                            <div class="col-md-6"><strong>NF Entrada:</strong> {{ tratamento.nf_entrada if tratamento.nf_entrada else '' }}</div>
+                            <div class="col-md-3"><strong>NF Saída:</strong> {{ tratamento.nf_saida if tratamento.nf_saida else '' }}</div>
+                            <div class="col-md-3"><strong>NF Entrada:</strong> {{ tratamento.nf_entrada if tratamento.nf_entrada else '' }}</div>
+                            <div class="col-md-3"><strong>Obs. Cad.:</strong> {{ tratamento.observacao_cadastro if tratamento.observacao_cadastro else '' }}</div>
+                            <div class="col-md-3"><strong>Obs. Env.:</strong> {{ tratamento.observacao_envio if tratamento.observacao_envio else '' }}</div>
                         </div>
 
                     </div>

@@ -79,6 +79,16 @@
 
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Tratamento
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{{ url_for('consulta_tratamentos') }}">Consultar Tratamentos</a></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('cadastro_tratamento_superficial') }}">Cadastro Tratamento</a></li>
+                                    </ul>
+                                </li>
+
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Faturamento
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -96,10 +106,10 @@
                                         <li><a class="dropdown-item" href="{{ url_for('rncf') }}">Não Conformidade</a></li>
                                         <li><a class="dropdown-item" href="{{ url_for('get_quantidade_inspecao') }}">Quantidade Inspeção</a></li>
                                         <li><a class="dropdown-item" href="{{ url_for('resumo_trimestral') }}">Resumo Trimestral</a></li>
-
-
                                     </ul>
                                 </li>
+
+
                             </ul>
                         </div>
                     </div>

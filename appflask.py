@@ -15,7 +15,7 @@ import os
 import io
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import letter, A4, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Frame, PageTemplate
 from reportlab.platypus import BaseDocTemplate
 from reportlab.platypus import Image as RLImage
@@ -6619,7 +6619,7 @@ def visualizar_grafico():
 
 
 @app.route('/cadastro_tratamento_superficial', methods=['GET', 'POST'])
-@requires_privilege(9, 51, 59, 3, 58)
+@requires_privilege(9, 51, 59, 3, 58, 21)
 def cadastro_tratamento_superficial():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -6633,12 +6633,13 @@ def cadastro_tratamento_superficial():
         rastreamento = request.form.get('rastreamento', '')
         peso = request.form.get('peso', 0)
         volume = request.form.get('volume', 0)
-        tipo_tratamento = request.form.get('tipo_tratamento').strip()  # Remover espaços em branco extras
+        tipo_tratamento = request.form.get('tipo_tratamento').strip()
         responsavel = session['username']
         data_atual = datetime.datetime.today().strftime('%Y-%m-%d')
         quantidade = request.form.get('quantidade', 0)
         estado = "Cadastrado"
         previsao = 0
+        observacao_cadastro = request.form.get('observacao_cadastro', '')
 
         # Mapeamento de tratamentos baseado no valor real do tipo de tratamento
         tratamento_map = {
@@ -6666,9 +6667,15 @@ def cadastro_tratamento_superficial():
 
         #print("Tipo: ", tipo_tratamento)  # Verifique o valor capturado aqui
 
-        # Verificar se o tipo de tratamento existe no mapeamento
-        if tipo_tratamento in tratamento_map:
-            previsao = tratamento_map[tipo_tratamento]
+        # Normalizar o tratamento removendo espaços extras e convertendo para minúsculas
+        tipo_tratamento = tipo_tratamento.strip().lower()
+
+        # Normalizar também as chaves do tratamento_map para facilitar a comparação
+        tratamento_map_normalized = {k.lower(): v for k, v in tratamento_map.items()}
+
+        # Verificar se o tipo de tratamento existe no mapeamento normalizado
+        if tipo_tratamento in tratamento_map_normalized:
+            previsao = tratamento_map_normalized[tipo_tratamento]
         else:
             tipo_tratamento = 'ERRO'
             previsao = 99
@@ -6690,11 +6697,11 @@ def cadastro_tratamento_superficial():
             # Inserir os dados no banco de dados
             cursor.execute("""
                 INSERT INTO [dbo].[cadastro_tratamento_superficial] 
-                (pedido_cliente, pedido_linha, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_cadastro, estado, quantidade, previsao)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (pedido_cliente, pedido_linha, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_cadastro, estado, quantidade, previsao, observacao_cadastro)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 pedido_cliente, pedido_linha, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento,
-                responsavel, data_atual, estado, quantidade, previsao
+                responsavel, data_atual, estado, quantidade, previsao, observacao_cadastro
             ))
 
             conn.commit()
@@ -6756,7 +6763,7 @@ def lista_tratamentos_cadastrados():
 
         # Crie a query com possíveis filtros
         query = """
-            SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_cadastro, estado, quantidade
+            SELECT id, pedido_cliente, pedido_linha, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento, responsavel, data_cadastro, estado, quantidade, observacao_cadastro
             FROM [dbo].[cadastro_tratamento_superficial]
             WHERE estado = 'Cadastrado'
         """
@@ -6835,7 +6842,7 @@ def alterar_estado_tratamento():
 
             # Obter os dias extras fornecidos no formulário (se houver)
             dias_extras = request.form.get(f'dias_adicionais_{id_tratamento}', 0)
-            print("Dias EXTRAS: ", dias_extras)
+            #print("Dias EXTRAS: ", dias_extras)
             try:
                 dias_extras = int(dias_extras)
             except ValueError:
@@ -6843,15 +6850,16 @@ def alterar_estado_tratamento():
 
             # Calcular a data de previsão, incluindo os dias extras
             data_atual = datetime.datetime.today()
-            total_dias = previsao + dias_extras  # Somar os dias da previsão com os dias extras
+            total_dias = previsao + dias_extras + 1  # Somar os dias da previsão com os dias extras
             data_previsao = adicionar_dias_uteis(data_atual, total_dias).strftime('%Y-%m-%d')
+            observacao_envio = request.form.get(f'observacao_envio_{id_tratamento}', '')
 
-            # Atualizar o estado, data de envio, data de previsão e nf_saida
+            # Atualizar o estado, data de envio, data de previsão, nf_saida e observacao_envio
             cursor.execute("""
-                UPDATE [dbo].[cadastro_tratamento_superficial]
-                SET estado = 'Enviado', data_envio = ?, data_previsao = ?, nf_saida = ?
-                WHERE id = ?
-            """, (data_envio, data_previsao, nf_saida, id_tratamento))
+                    UPDATE [dbo].[cadastro_tratamento_superficial]
+                    SET estado = 'Enviado', data_envio = ?, data_previsao = ?, nf_saida = ?, observacao_envio = ?
+                    WHERE id = ?
+                """, (data_envio, data_previsao, nf_saida, observacao_envio, id_tratamento))
 
         conn.commit()
         cursor.close()
@@ -6909,17 +6917,19 @@ def export_tratamentos_cadastrados_pdf():
         return redirect(url_for('login'))
 
     ids_selecionados = request.form.get('ids_selecionados')
+    observacoes_envio = request.form.get('observacoes_envio')  # Captura as observações de envio
     if not ids_selecionados:
         flash('Nenhum tratamento foi selecionado para exportação.', 'danger')
         return redirect(url_for('lista_tratamentos_cadastrados'))
 
     ids_list = ids_selecionados.split(',')
+    observacoes_envio_dict = json.loads(observacoes_envio)  # Converte de JSON para dicionário
     data_atual = datetime.datetime.today().strftime('%d-%m-%Y')
 
     try:
         conn = conectar_db()
         query = f"""
-            SELECT pedido_cliente, pedido_linha, cod_produto, desc_produto, quantidade, peso, tipo_tratamento
+            SELECT id, pedido_cliente, pedido_linha, cod_produto, desc_produto, quantidade, peso, tipo_tratamento
             FROM [dbo].[cadastro_tratamento_superficial]
             WHERE id IN ({','.join(['?' for _ in ids_list])})
         """
@@ -6931,10 +6941,10 @@ def export_tratamentos_cadastrados_pdf():
 
         output = BytesIO()
 
-        # Create a PDF document using SimpleDocTemplate
+        # Create a PDF document using SimpleDocTemplate with landscape orientation
         doc = SimpleDocTemplate(
             output,
-            pagesize=A4,
+            pagesize=landscape(A4),
             rightMargin=30,
             leftMargin=30,
             topMargin=110,
@@ -6947,7 +6957,7 @@ def export_tratamentos_cadastrados_pdf():
         # Define the header and footer
         def add_header_footer(canvas, doc):
             canvas.saveState()
-            width, height = A4
+            width, height = landscape(A4)
 
             # Header
             logo_path = "static/images/LogoCertificado.png"
@@ -6965,8 +6975,9 @@ def export_tratamentos_cadastrados_pdf():
             canvas.restoreState()
 
         # Build the table data
-        data = [["Pedido", "Linha", "Cod", "Desc", "Qtd", "Peso", "Tratamento"]]
+        data = [["Pedido", "Linha", "Cod", "Desc", "Qtd", "Peso", "Tratamento", "Observação Envio"]]
         for index, row in df.iterrows():
+            observacao_envio = observacoes_envio_dict.get(str(row['id']), '')
             data.append([
                 row['pedido_cliente'],
                 row['pedido_linha'],
@@ -6974,21 +6985,22 @@ def export_tratamentos_cadastrados_pdf():
                 row['desc_produto'],
                 row['quantidade'],
                 row['peso'],
-                row['tipo_tratamento']
+                row['tipo_tratamento'],
+                observacao_envio
             ])
 
         # Add total weight row
-        data.append(["", "", "", "", "Total", f"{total_peso:.2f} kg", ""])
+        data.append(["", "", "", "", "Total", f"{total_peso:.2f} kg", "", ""])
 
         # Create the table
-        table = Table(data, colWidths=[40, 20, 50, 220, 30, 50, 90])
+        table = Table(data, colWidths=[50, 30, 60, 220, 40, 60, 120, 210])
 
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.gray),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 6),
+            ('FONTSIZE', (0, 0), (-1, -1), 7),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
             ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
         ]))
@@ -7061,7 +7073,7 @@ def lista_tratamentos_enviados():
 
 
 @app.route('/confirmar_recebimento_tratamento', methods=['POST'])
-@requires_privilege(9, 51, 59)
+@requires_privilege(9, 51, 59, 3)
 def confirmar_recebimento_tratamento():
     if not is_logged_in():
         return redirect(url_for('login'))
@@ -7109,22 +7121,36 @@ def consulta_tratamentos():
         cursor = conn.cursor()
 
         search_query = request.args.get('search', '')
+        estado_filtro = request.args.get('estado', '')
         page = request.args.get('page', 1, type=int)
         per_page = 20
 
+        # Inicializar a consulta SQL
         sql_query = """
             SELECT id, pedido_cliente, pedido_linha, cod_produto, desc_produto, quantidade, rastreamento,
                    peso, volume, tipo_tratamento, responsavel, data_cadastro, data_envio,
-                   data_previsao, data_recebido, estado, nf_entrada, nf_saida
+                   data_previsao, data_recebido, estado, nf_entrada, nf_saida, observacao_cadastro, observacao_envio
             FROM [dbo].[cadastro_tratamento_superficial]
         """
         params = []
+        filters = []
 
+        # Se houver busca por termo
         if search_query:
-            sql_query += " WHERE pedido_cliente LIKE ? OR cod_produto LIKE ? OR desc_produto LIKE ? OR rastreamento LIKE ? OR nf_entrada LIKE ? OR nf_saida LIKE ?"
+            filters.append("(pedido_cliente LIKE ? OR cod_produto LIKE ? OR desc_produto LIKE ? OR rastreamento LIKE ? OR nf_entrada LIKE ? OR nf_saida LIKE ?)")
             search_param = f"%{search_query}%"
             params.extend([search_param, search_param, search_param, search_param, search_param, search_param])
 
+        # Se houver filtro por estado
+        if estado_filtro:
+            filters.append("estado = ?")
+            params.append(estado_filtro)
+
+        # Se houver filtros (seja de busca ou estado)
+        if filters:
+            sql_query += " WHERE " + " AND ".join(filters)
+
+        # Consulta para contar o número total de registros
         count_query = f"SELECT COUNT(*) FROM ({sql_query}) AS total"
         cursor.execute(count_query, params)
         total_records = cursor.fetchone()[0]
@@ -7132,6 +7158,7 @@ def consulta_tratamentos():
         total_pages = math.ceil(total_records / per_page)
         offset = (page - 1) * per_page
 
+        # Adicionar paginação à consulta
         sql_query += " ORDER BY id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY"
         params.extend([offset, per_page])
 
@@ -7146,7 +7173,8 @@ def consulta_tratamentos():
             tratamentos=tratamentos,
             page=page,
             total_pages=total_pages,
-            search_query=search_query
+            search_query=search_query,
+            estado_filtro=estado_filtro  # Para reter o valor selecionado no filtro
         )
 
     except Exception as e:
@@ -7194,6 +7222,29 @@ def alterar_senha():
                 connection.close()
 
     return render_template('alterar_senha.html')
+
+
+@app.route('/deletar_tratamento', methods=['POST'])
+def deletar_tratamento():
+    data = request.get_json()
+    tratamento_id = data.get('tratamento_id')
+    senha = data.get('senha')
+
+    senha_correta = '57599'
+
+    if senha != senha_correta:
+        return jsonify({'success': False, 'message': 'Senha incorreta.'}), 401
+
+    try:
+        conn = conectar_db()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM cadastro_tratamento_superficial WHERE id = ?", (tratamento_id,))
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 if __name__ == '__main__':
