@@ -65,6 +65,8 @@
     }
 </style>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
 <div class="container-fluid">
     <div class="container-fluid">
 
@@ -91,14 +93,14 @@
                 <div class="col-md-5">
                     <label for="tipo_tratamento" class="form-label">Tipo de Tratamento</label>
                     {% set descricoes = {
-                                1: "Zn Branco", 2: "Zn Preto", 3: "Bicromatizado", 4: "Decapagem", 5: "Fosfato Mn",
-                                6: "Cad Bicro", 7: "Zn Triv Azul", 8: "Zn Triv Branco",
-                                9: "Zn Triv Amarelo", 10: "Organometalico (GEOMET)",
-                                11: "Galvanizado a Fogo", 12: "Oxidado",
-                                13: "Xylan", 14: "Niquel", 15: "Cobre",
-                                16: "Corte", 17: "ZTAM BR 120H VM 144H (C/ Selante)",
-                                18: "Temperado e Revenido", 19: "Preto Oleado",
-                                20: "Fosfatizado"
+                                1: "ZN BRANCO", 2: "ZN PRETO", 3: "BICROMATIZADO", 4: "DECAPAGEM", 5: "FOSFATO MN",
+                                6: "CAD BICRO", 7: "ZN TRIV AZUL", 8: "ZN TRIV BRANCO",
+                                9: "ZN TRIV AMARELO", 10: "ORGANOMETALICO (GEOMET)",
+                                11: "GALVANIZADO A FOGO", 12: "OXIDADO",
+                                13: "XYLAN", 14: "NIQUEL", 15: "COBRE",
+                                16: "CORTE", 17: "ZTAM BR 120H VM 144H (C/ SELANTE)",
+                                18: "TEMPERADO E REVENIDO", 19: "PRETO OLEADO",
+                                20: "FOSFATIZADO", 21: "REPASSE", 22: "JATEAMENTO"
                             } %}
                     <select class="form-control" id="tipo_tratamento" name="tipo_tratamento">
                         <option value="">Todos</option>
@@ -142,9 +144,13 @@
                             <input type="checkbox" class="checkbox_tratamento me-2" value="{{ tratamento.id }}">
                             <strong>Pedido:</strong> {{ tratamento.pedido_cliente }} - {{ tratamento.pedido_linha }}
                         </div>
-                        <div>
-                            <strong>Data:</strong> {{ tratamento.data_cadastro.strftime('%d/%m/%Y') }}
-                            <button type="button" id="btn_apagar_tratamento" class="btn btn-danger">Deletar</button>
+                        <div style="display: flex; align-items: center;">
+                            <strong>Data:</strong>
+                            <span style="margin-right: 20px;">{{ tratamento.data_cadastro.strftime('%d/%m/%Y') }}</span>
+                            <button type="button" id="btn_apagar_tratamento" class="btn btn-danger btn-sm d-flex justify-content-center align-items-center" style="width: 32px; height: 32px;">
+                                '
+                                <i class="fas fa-trash-alt" style="font-size: 16px;"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="card-body">

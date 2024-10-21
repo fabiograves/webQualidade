@@ -5311,72 +5311,78 @@ def cadastro_notas_fiscais():
     cursor = connection.cursor()
 
     if request.method == 'POST':
-        # Coleta os dados do formulário
-        cad_data_emissao_nf = request.form['cad_data_emissao_nf']
-        cad_numero_nota = request.form['cad_numero_nota']
-        cad_data_entrada_ars = request.form['cad_data_entrada_ars']
-        cad_pedido = request.form['cad_pedido']
-        cad_fornecedor = request.form['cad_fornecedor'][:50]
-        cad_volume = request.form['cad_volume']
-        cad_peso = request.form['cad_peso']
-        cad_natureza = request.form.get('cad_natureza', '')[:50]
-        cad_cod_xml = request.form['cad_cod_xml']
-        cad_certificado = request.form['cad_certificado']
-        cad_observacao = request.form['cad_observacao']
-        cad_lancamento = request.form.get('cad_lancamento', '').strip()
-        if not cad_lancamento:
-            cad_lancamento = 'Não'
+        try:
+            # Coleta os dados do formulário
+            cad_data_emissao_nf = request.form['cad_data_emissao_nf']
+            cad_numero_nota = request.form['cad_numero_nota']
+            cad_data_entrada_ars = request.form['cad_data_entrada_ars']
+            cad_pedido = request.form['cad_pedido']
+            cad_fornecedor = request.form['cad_fornecedor'][:50]
+            cad_volume = request.form['cad_volume']
+            cad_peso = request.form['cad_peso']
+            cad_natureza = request.form.get('cad_natureza', '')[:50]
+            cad_cod_xml = request.form['cad_cod_xml']
+            cad_certificado = request.form['cad_certificado']
+            cad_observacao = request.form['cad_observacao']
+            cad_lancamento = request.form.get('cad_lancamento', '').strip()
+            if not cad_lancamento:
+                cad_lancamento = 'Não'
 
-        # Verifica se o código XML já existe
-        cursor.execute("SELECT id FROM dbo.cadastro_notas_fiscais WHERE cad_cod_xml = ?", (cad_cod_xml,))
-        nota_id = cursor.fetchone()
+            # Verifica se o código XML já existe
+            cursor.execute("SELECT id FROM dbo.cadastro_notas_fiscais WHERE cad_cod_xml = ?", (cad_cod_xml,))
+            nota_id = cursor.fetchone()
 
-        # Lida com o upload do arquivo XML
-        cad_arquivo_xml = request.files.get('cad_arquivo_xml')
-        if cad_arquivo_xml and cad_arquivo_xml.filename != '':
-            arquivo_xml_bytes = cad_arquivo_xml.read()  # Lê o novo arquivo como bytes
-            arquivo_xml_present = True
-        else:
-            arquivo_xml_present = False
-
-        if nota_id:
-            # Se existir, faça um UPDATE
-            if arquivo_xml_present:
-                cursor.execute("""
-                    UPDATE dbo.cadastro_notas_fiscais
-                    SET cad_data_emissao_nf = ?, cad_numero_nota = ?, cad_data_entrada_ars = ?, cad_pedido = ?, 
-                        cad_fornecedor = ?, cad_volume = ?, cad_peso = ?, cad_natureza = ?, 
-                        cad_certificado = ?, cad_observacao = ?, cad_arquivo_xml = ?, cad_lancamento = ?
-                    WHERE cad_cod_xml = ?
-                """, (cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
-                      cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, arquivo_xml_bytes,
-                      cad_lancamento, cad_cod_xml))
+            # Lida com o upload do arquivo XML
+            cad_arquivo_xml = request.files.get('cad_arquivo_xml')
+            if cad_arquivo_xml and cad_arquivo_xml.filename != '':
+                arquivo_xml_bytes = cad_arquivo_xml.read()  # Lê o novo arquivo como bytes
+                arquivo_xml_present = True
             else:
+                arquivo_xml_present = False
+
+            if nota_id:
+                # Se existir, faça um UPDATE
+                if arquivo_xml_present:
+                    cursor.execute("""
+                        UPDATE dbo.cadastro_notas_fiscais
+                        SET cad_data_emissao_nf = ?, cad_numero_nota = ?, cad_data_entrada_ars = ?, cad_pedido = ?, 
+                            cad_fornecedor = ?, cad_volume = ?, cad_peso = ?, cad_natureza = ?, 
+                            cad_certificado = ?, cad_observacao = ?, cad_arquivo_xml = ?, cad_lancamento = ?
+                        WHERE cad_cod_xml = ?
+                    """, (cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
+                          cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, arquivo_xml_bytes,
+                          cad_lancamento, cad_cod_xml))
+                else:
+                    cursor.execute("""
+                        UPDATE dbo.cadastro_notas_fiscais
+                        SET cad_data_emissao_nf = ?, cad_numero_nota = ?, cad_data_entrada_ars = ?, cad_pedido = ?, 
+                            cad_fornecedor = ?, cad_volume = ?, cad_peso = ?, cad_natureza = ?, 
+                            cad_certificado = ?, cad_observacao = ?, cad_lancamento = ?
+                        WHERE cad_cod_xml = ?
+                    """, (cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
+                          cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, cad_lancamento, cad_cod_xml))
+
+                flash('Nota Fiscal atualizada com sucesso!', 'success')
+            else:
+                # Caso contrário, insira um novo registro
                 cursor.execute("""
-                    UPDATE dbo.cadastro_notas_fiscais
-                    SET cad_data_emissao_nf = ?, cad_numero_nota = ?, cad_data_entrada_ars = ?, cad_pedido = ?, 
-                        cad_fornecedor = ?, cad_volume = ?, cad_peso = ?, cad_natureza = ?, 
-                        cad_certificado = ?, cad_observacao = ?, cad_lancamento = ?
-                    WHERE cad_cod_xml = ?
+                    INSERT INTO dbo.cadastro_notas_fiscais (
+                        cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
+                        cad_volume, cad_peso, cad_natureza, cad_cod_xml, cad_arquivo_xml,
+                        cad_certificado, cad_observacao, cad_lancamento
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
-                      cad_volume, cad_peso, cad_natureza, cad_certificado, cad_observacao, cad_lancamento, cad_cod_xml))
+                      cad_volume, cad_peso, cad_natureza, cad_cod_xml, arquivo_xml_bytes if arquivo_xml_present else None,
+                      cad_certificado, cad_observacao, cad_lancamento))
+                flash('Nota Fiscal cadastrada com sucesso!', 'success')
 
-            flash('Nota Fiscal atualizada com sucesso!')
-        else:
-            # Caso contrário, insira um novo registro
-            cursor.execute("""
-                INSERT INTO dbo.cadastro_notas_fiscais (
-                    cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
-                    cad_volume, cad_peso, cad_natureza, cad_cod_xml, cad_arquivo_xml,
-                    cad_certificado, cad_observacao, cad_lancamento
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (cad_data_emissao_nf, cad_numero_nota, cad_data_entrada_ars, cad_pedido, cad_fornecedor,
-                  cad_volume, cad_peso, cad_natureza, cad_cod_xml, arquivo_xml_bytes if arquivo_xml_present else None,
-                  cad_certificado, cad_observacao, cad_lancamento))
-            flash('Nota Fiscal cadastrada com sucesso!')
+            connection.commit()
+        except Exception as e:
+            connection.rollback()  # Desfaz a transação em caso de erro
+            flash(f'Ocorreu um erro: {str(e)}', 'danger')
+        finally:
+            connection.close()
 
-        connection.commit()
-        connection.close()
         return redirect(url_for('cadastro_notas_fiscais'))
 
     # Lida com a visualização da lista de notas fiscais
@@ -6643,35 +6649,37 @@ def cadastro_tratamento_superficial():
 
         # Mapeamento de tratamentos baseado no valor real do tipo de tratamento
         tratamento_map = {
-            'Zn Branco': 3,
-            'Zn Preto': 3,
-            'Bicromatizado': 3,
-            'Decapagem': 3,
-            'Fosfato Mn': 5,
-            'Cad Bicro': 5,
-            'Zn Triv Azul': 3,
-            'Zn Triv Branco': 3,
-            'Zn Triv Amarelo': 3,
-            'Organometalico (GEOMET)': 5,
-            'Galvanizado a Fogo': 5,
-            'Oxidado': 5,
-            'Xylan': 5,
-            'Niquel': 5,
-            'Cobre': 5,
-            'Corte': 5,
-            'ZTAM BR 120H VM 144H (C/ Selante)': 3,
-            'Temperado e Revenido': 3,
-            'Preto Oleado': 3,
-            'Fosfatizado': 3
+            'ZN BRANCO': 3,
+            'ZN PRETO': 3,
+            'BICROMATIZADO': 3,
+            'DECAPAGEM': 3,
+            'FOSFATO MN': 5,
+            'CAD BICRO': 5,
+            'ZN TRIV AZUL': 3,
+            'ZN TRIV BRANCO': 3,
+            'ZN TRIV AMARELO': 3,
+            'ORGANOMETALICO (GEOMET)': 5,
+            'GALVANIZADO A FOGO': 5,
+            'OXIDADO': 5,
+            'XYLAN': 5,
+            'NIQUEL': 5,
+            'COBRE': 5,
+            'CORTE': 5,
+            'ZTAM BR 120H VM 144H (C/ SELANTE)': 3,
+            'TEMPERADO E REVENIDO': 3,
+            'PRETO OLEADO': 3,
+            'FOSFATIZADO': 3,
+            'REPASSE': 5,
+            'JATEAMENTO': 5
         }
 
         #print("Tipo: ", tipo_tratamento)  # Verifique o valor capturado aqui
 
         # Normalizar o tratamento removendo espaços extras e convertendo para minúsculas
-        tipo_tratamento = tipo_tratamento.strip().lower()
+        tipo_tratamento = tipo_tratamento.strip().upper()
 
         # Normalizar também as chaves do tratamento_map para facilitar a comparação
-        tratamento_map_normalized = {k.lower(): v for k, v in tratamento_map.items()}
+        tratamento_map_normalized = {k.upper(): v for k, v in tratamento_map.items()}
 
         # Verificar se o tipo de tratamento existe no mapeamento normalizado
         if tipo_tratamento in tratamento_map_normalized:

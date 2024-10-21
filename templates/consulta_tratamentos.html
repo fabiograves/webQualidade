@@ -56,18 +56,25 @@
     .badge {
         color: black;
     }
-
+    .container-fluid {
+        width: 100%; /* Ensure the container takes up full width */
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
 
 </style>
 
-<div class="container">
+<div class="container-fluid">
     <h1 class="text-center mb-4">Consulta de Tratamentos</h1>
 
     <!-- Legenda das cores -->
     <div class="row mb-4">
-        <div class="col-md-12 text-center">
-            <span class="badge border-red px-3 py-2">Cadastrado</span>
-            <span class="badge border-blue px-3 py-2">Enviado</span>
+        <div class="col-md-12 d-flex justify-content-center align-items-center">
+            <h8 class="me-3">Legenda</h8>
+            <span class="badge border-red px-3 py-2 me-2">Cadastrado</span>
+            <span class="badge border-blue px-3 py-2 me-2">Enviado</span>
             <span class="badge border-green px-3 py-2">Recebido</span>
         </div>
     </div>
@@ -170,7 +177,7 @@
         <ul class="pagination justify-content-center">
             {% if page > 1 %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('consulta_tratamentos', page=page-1, search=search_query) }}" aria-label="Anterior">
+                    <a class="page-link" href="{{ url_for('consulta_tratamentos', page=page-1, search=search_query, estado=estado_filtro) }}" aria-label="Anterior">
                         <span aria-hidden="true">&laquo;</span>
                         <span class="sr-only">Anterior</span>
                     </a>
@@ -178,12 +185,12 @@
             {% endif %}
             {% for p in range(1, total_pages + 1) %}
                 <li class="page-item {% if p == page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('consulta_tratamentos', page=p, search=search_query) }}">{{ p }}</a>
+                    <a class="page-link" href="{{ url_for('consulta_tratamentos', page=p, search=search_query, estado=estado_filtro) }}">{{ p }}</a>
                 </li>
             {% endfor %}
             {% if page < total_pages %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('consulta_tratamentos', page=page+1, search=search_query) }}" aria-label="Próximo">
+                    <a class="page-link" href="{{ url_for('consulta_tratamentos', page=page+1, search=search_query, estado=estado_filtro) }}" aria-label="Próximo">
                         <span aria-hidden="true">&raquo;</span>
                         <span class="sr-only">Próximo</span>
                     </a>
@@ -191,6 +198,7 @@
             {% endif %}
         </ul>
     </nav>
+
 </div>
 
 {% endblock %}

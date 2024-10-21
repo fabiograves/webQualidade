@@ -117,7 +117,41 @@
         }
     }
 
+    .btn-group-toggle {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr); /* Adjust the number of columns as needed */
+        gap: 0.3rem;
+        width: 100%;
+    }
 
+    @media (max-width: 768px) {
+        .btn-group-toggle {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    .btn-group-toggle .btn {
+        width: 100%;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 0.2rem;
+        font-size: 14px;
+        border-radius: 5px !important;
+        margin: 0;
+        box-sizing: border-box;
+        white-space: nowrap;
+    }
+
+    .container-fluid {
+        width: 100%; /* Ensure the container takes up full width */
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
 
 </style>
 
@@ -170,30 +204,28 @@
                     </div>
                 </div>
 
-                <!-- Tipo de Tratamento -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                            <!-- Define your descriptions dictionary -->
-                            {% set descricoes = {
-                                1: "Zn Branco", 2: "Zn Preto", 3: "Bicromatizado", 4: "Decapagem", 5: "Fosfato Mn",
-                                6: "Cad Bicro", 7: "Zn Triv Azul", 8: "Zn Triv Branco",
-                                9: "Zn Triv Amarelo", 10: "Organometalico (GEOMET)",
-                                11: "Galvanizado a Fogo", 12: "Oxidado",
-                                13: "Xylan", 14: "Niquel", 15: "Cobre",
-                                16: "Corte", 17: "ZTAM BR 120H VM 144H (C/ Selante)",
-                                18: "Temperado e Revenido", 19: "Preto Oleado",
-                                20: "Fosfatizado"
-                            } %}
+                <!-- Treatment Selection Buttons -->
+                <div class="container-fluid">
+                    <!-- Define your descriptions dictionary -->
+                    {% set descricoes = {
+                        1: "ZN BRANCO", 2: "ZN PRETO", 3: "BICROMATIZADO", 4: "DECAPAGEM", 5: "FOSFATO MN",
+                        6: "CAD BICRO", 7: "ZN TRIV AZUL", 8: "ZN TRIV BRANCO",
+                        9: "ZN TRIV AMARELO", 10: "ORGANOMETALICO (GEOMET)",
+                        11: "GALVANIZADO A FOGO", 12: "OXIDADO",
+                        13: "XYLAN", 14: "NIQUEL", 15: "COBRE",
+                        16: "CORTE", 17: "ZTAM BR 120H VM 144H (C/ SELANTE)",
+                        18: "TEMPERADO E REVENIDO", 19: "PRETO OLEADO",
+                        20: "FOSFATIZADO", 21: "REPASSE", 22: "JATEAMENTO"
+                    } %}
 
-                            <!-- Renderizar os botões com os textos ao carregar -->
-                            {% for i in range(1, 21) %}
-                                <label class="btn btn-secondary" id="label_tratamento_{{ i }}">
-                                    <input type="radio" name="tipo_tratamento" id="tratamento{{ i }}" value="{{ descricoes[i] }}" {% if i == 1 %}required{% endif %} onchange="atualizarEtiqueta()"> {{ descricoes[i] }}
-                                </label>
-                            {% endfor %}
-                        </div>
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        {% for i in range(1, 23) %}
+                            <label class="btn btn-secondary" id="label_tratamento_{{ i }}">
+                                <input type="radio" name="tipo_tratamento" id="tratamento{{ i }}" value="{{ descricoes[i] }}" {% if i == 1 %}required{% endif %} autocomplete="off" onchange="atualizarEtiqueta()"> {{ descricoes[i] }}
+                            </label>
+                        {% endfor %}
                     </div>
+
                 </div>
 
                 <!-- Descrição do Tratamento -->
