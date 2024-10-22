@@ -152,6 +152,51 @@
         }
     });
 
+    function buscarDados() {
+        // Obter os valores dos campos
+        var numeroContrato = document.getElementById('cad_numero_contrato').value;
+        var contratoInterno = document.getElementById('cad_contrato_interno').value;
+        var codigoArs = document.getElementById('cad_codigo_ars').value;
+
+        // Verificar se todos os campos estão preenchidos
+        if (numeroContrato && contratoInterno && codigoArs) {
+            // Fazer a requisição AJAX
+            fetch('/buscar_dados_vendas2', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    numero_contrato: numeroContrato,
+                    contrato_interno: contratoInterno,
+                    cod_ars: codigoArs
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);  // Exibe uma mensagem de erro se não encontrar dados
+                } else {
+                    // Preencher os campos com os dados retornados
+                    document.getElementById('cad_codigo_cliente').value = data.cod_cliente || '';
+                    document.getElementById('cad_desc_cliente').value = data.desc_cliente || '';
+                    document.getElementById('cad_desc_ars').value = data.desc_ars || '';
+                    document.getElementById('cad_preco_ars').value = data.preco_ars || '';
+                    document.getElementById('cad_quantidade').value = data.quantidade || '';
+                    document.getElementById('cad_quantidade_minima').value = data.quantidade_minima || '';
+                }
+            })
+            .catch(error => {
+                console.error('Erro na busca de dados:', error);
+            });
+        }
+    }
+
+    // Adicionar eventos para disparar a busca ao sair dos campos
+    document.getElementById('cad_codigo_ars').addEventListener('blur', buscarDados);
+    document.getElementById('cad_contrato_interno').addEventListener('blur', buscarDados);
+    document.getElementById('cad_numero_contrato').addEventListener('blur', buscarDados);
+
 </script>
 
 {% endblock %}

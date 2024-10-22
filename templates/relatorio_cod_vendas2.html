@@ -106,6 +106,7 @@
                     <th>Quantidade Atual</th>
                     <th>Total Entrada</th>
                     <th>Total Saída</th>
+                    <th>Preço ARS</th>
                 </tr>
             </thead>
             <tbody>
@@ -115,9 +116,10 @@
                     <td>{{ item.cod_ars }}</td>
                     <td>{{ item.desc_ars }}</td>
                     <td>{{ item.cod_cliente }}</td>
-                    <td>{{ item.quantidade }}</td>
+                    <td>{{ item.quantidade_atual }}</td>
                     <td>{{ item.total_entrada }}</td>
                     <td>{{ item.total_saida }}</td>
+                    <td>{{ item.preco_venda_ars }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
