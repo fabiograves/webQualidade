@@ -92,16 +92,17 @@
                 </div>
                 <div class="col-md-5">
                     <label for="tipo_tratamento" class="form-label">Tipo de Tratamento</label>
-                    {% set descricoes = {
-                                1: "ZN BRANCO", 2: "ZN PRETO", 3: "BICROMATIZADO", 4: "DECAPAGEM", 5: "FOSFATO MN",
-                                6: "CAD BICRO", 7: "ZN TRIV AZUL", 8: "ZN TRIV BRANCO",
-                                9: "ZN TRIV AMARELO", 10: "ORGANOMETALICO (GEOMET)",
-                                11: "GALVANIZADO A FOGO", 12: "OXIDADO",
-                                13: "XYLAN", 14: "NIQUEL", 15: "COBRE",
-                                16: "CORTE", 17: "ZTAM BR 120H VM 144H (C/ SELANTE)",
-                                18: "TEMPERADO E REVENIDO", 19: "PRETO OLEADO",
-                                20: "FOSFATIZADO", 21: "REPASSE", 22: "JATEAMENTO"
-                            } %}
+                        {% set descricoes = {
+                            1: "ZN BRANCO", 2: "ZN PRETO", 3: "BICROMATIZADO", 4: "DECAPAGEM", 5: "FOSFATO MN",
+                            6: "CAD BICRO", 7: "ZN TRIV AZUL", 8: "ZN TRIV BRANCO",
+                            9: "ZN TRIV AMARELO", 10: "ORGANOMETALICO (GEOMET)",
+                            11: "GALVANIZADO A FOGO", 12: "OXIDADO",
+                            13: "XYLAN", 14: "NIQUEL", 15: "COBRE",
+                            16: "CORTE", 17: "ZTAM BR 120H VM 144H (C/ SELANTE)",
+                            18: "TEMPERADO E REVENIDO", 19: "PRETO OLEADO",
+                            20: "FOSFATIZADO", 21: "REPASSE", 22: "JATEAMENTO",
+                            23: "NIQUELADO", 24:"TRAVA QUIMICA", 25: "POR NYLLON"
+                        } %}
                     <select class="form-control" id="tipo_tratamento" name="tipo_tratamento">
                         <option value="">Todos</option>
                         {% for key, value in descricoes.items() %}

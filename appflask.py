@@ -6,7 +6,7 @@ import tempfile
 import pyodbc
 import logging
 from datetime import datetime, date
-from flask import Flask, render_template, request, redirect, url_for, flash, session, make_response, jsonify
+from flask import make_response
 from reportlab.pdfgen import canvas
 from werkzeug.utils import secure_filename
 from flask_session import Session
@@ -16,13 +16,13 @@ import io
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, A4, landscape
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Frame, PageTemplate
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Frame, PageTemplate
 from reportlab.platypus import BaseDocTemplate
 from reportlab.platypus import Image as RLImage
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from collections import defaultdict
-from io import BytesIO, StringIO
+from io import BytesIO
 import pdfplumber
 import re
 import zipfile
@@ -39,8 +39,6 @@ from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
 from datetime import timedelta
 import math
-
-from PIL import Image, ImageDraw, ImageFont
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -195,6 +193,7 @@ def home():
 
 @app.route('/relatorio_teste')
 def relatorio_teste():
+    # noinspection PyUnresolvedReferences
     return render_template('/relatorio_teste.html')
 
 
@@ -2495,76 +2494,95 @@ def pesquisar_registro_inspecao():
     if not is_logged_in():
         return redirect(url_for('login'))
 
-    resultados = None
-    if request.method == 'POST':
-        numero_nota = request.form.get('pc_numero_nota')
-        ri_data = request.form.get('ri_data')
-        ri_cod_produto = request.form.get('pc_cod_produto')
+    # Obter parâmetros da URL (ou do formulário se usar POST)
+    numero_nota = request.args.get('pc_numero_nota', '')
+    ri_data = request.args.get('ri_data', '')
+    ri_cod_produto = request.args.get('pc_cod_produto', '')
 
-        # Função que busca os dados pelos parâmetros fornecidos
-        resultados = buscar_registro_inspecao(numero_nota, ri_data, ri_cod_produto)
+    # Obter página atual para a paginação (padrão é 1)
+    page = int(request.args.get('page', 1))
+    per_page = 20  # Número de registros por página
 
-    username = session['username']
-    print(f"Ação realizada por: {username}, Entrou Pesquisa Registro Inspeção")
-    return render_template('pesquisar_registro_inspecao.html', resultados=resultados)
+    # Buscar registros com base nos parâmetros
+    resultados, total_pages = buscar_registro_inspecao(numero_nota, ri_data, ri_cod_produto, page, per_page)
+
+    # Renderizar template passando todas as variáveis necessárias
+    return render_template(
+        'pesquisar_registro_inspecao.html',
+        resultados=resultados,
+        total_pages=total_pages,
+        page=page,
+        pc_numero_nota=numero_nota,
+        ri_data=ri_data,
+        pc_cod_produto=ri_cod_produto
+    )
 
 
-
-def buscar_registro_inspecao(numero_nota, ri_data, ri_cod_produto):
+def buscar_registro_inspecao(numero_nota, ri_data, ri_cod_produto, page=1, per_page=10):
     connection = conectar_db()
+    resultados_agrupados = {}
+    total_pages = 0
+
     try:
-        resultados_agrupados = {}
         cursor = connection.cursor()
 
-        # Verifica quais campos foram preenchidos e ajusta a consulta SQL
+        # Montar a consulta SQL com base nos filtros
         sql = "SELECT * FROM dbo.registro_inspecao WHERE 1=1"
+        count_sql = "SELECT COUNT(*) FROM dbo.registro_inspecao WHERE 1=1"
         params = []
 
         if numero_nota:
             sql += " AND ri_numero_nota = ?"
+            count_sql += " AND ri_numero_nota = ?"
             params.append(numero_nota)
         if ri_data:
             sql += " AND ri_data = ?"
+            count_sql += " AND ri_data = ?"
             params.append(ri_data)
         if ri_cod_produto:
             sql += " AND ri_cod_produto = ?"
+            count_sql += " AND ri_cod_produto = ?"
             params.append(ri_cod_produto)
 
-        cursor.execute(sql, params)
-        cadastros = cursor.fetchall()
+        # Calcular o offset para paginação
+        offset = (page - 1) * per_page
 
-        # Converte manualmente cada linha do resultado em um dicionário
+        # Incluir offset e per_page diretamente na consulta SQL
+        paginated_sql = sql + f" ORDER BY ri_data DESC OFFSET {offset} ROWS FETCH NEXT {per_page} ROWS ONLY"
+
+        # Executar a consulta paginada
+        cursor.execute(paginated_sql, params)
+        cadastros = cursor.fetchall()
         cadastros_dict = [dict_factory(cursor, cadastro) for cadastro in cadastros]
 
+        # Agrupar os resultados (mantendo seu código original)
         for cadastro in cadastros_dict:
             chave = f"{cadastro['ri_numero_nota']}-{cadastro['ri_cod_produto']}-{cadastro['ri_pedido_compra']}"
             if chave not in resultados_agrupados:
                 resultados_agrupados[chave] = {'registro_inspecao': cadastro}
-
-                # Inicializa listas para cada tipo de informação relacionada
                 for tipo in ('ad_porcas', 'ad_pinos', 'ad_parafusos', 'ad_grampos', 'ad_rebite',
                              'ad_prisioneiro_estojo', 'ad_chumbador', 'ad_chaveta', 'ad_arruelas',
                              'ad_anel', 'ad_contrapino', 'ad_especial'):
                     resultados_agrupados[chave][tipo] = []
 
-        # Para cada tipo de dados relacionados, realizar uma busca e organizar os resultados
+        # Para cada tipo de dados relacionados, buscar e organizar resultados
         tipos_relacionados = {
-            'ad_porcas': "SELECT * FROM dbo.ad_porcas WHERE cc_numero_nota IN (?)",
-            'ad_pinos': "SELECT * FROM dbo.ad_pinos WHERE cc_numero_nota IN (?)",
-            'ad_parafusos': "SELECT * FROM dbo.ad_parafusos WHERE cc_numero_nota IN (?)",
-            'ad_grampos': "SELECT * FROM dbo.ad_grampos WHERE cc_numero_nota IN (?)",
-            'ad_rebite': "SELECT * FROM dbo.ad_rebite WHERE cc_numero_nota IN (?)",
-            'ad_prisioneiro_estojo': "SELECT * FROM dbo.ad_prisioneiro_estojo WHERE cc_numero_nota IN (?)",
-            'ad_chumbador': "SELECT * FROM dbo.ad_chumbador WHERE cc_numero_nota IN (?)",
-            'ad_chaveta': "SELECT * FROM dbo.ad_chaveta WHERE cc_numero_nota IN (?)",
-            'ad_arruelas': "SELECT * FROM dbo.ad_arruelas WHERE cc_numero_nota IN (?)",
-            'ad_anel': "SELECT * FROM dbo.ad_anel WHERE cc_numero_nota IN (?)",
-            'ad_contrapino': "SELECT * FROM dbo.ad_contrapino WHERE cc_numero_nota IN (?)",
-            'ad_especial': "SELECT * FROM dbo.ad_especial WHERE cc_numero_nota IN (?)",
+            'ad_porcas': "SELECT * FROM dbo.ad_porcas WHERE cc_numero_nota = ?",
+            'ad_pinos': "SELECT * FROM dbo.ad_pinos WHERE cc_numero_nota = ?",
+            'ad_parafusos': "SELECT * FROM dbo.ad_parafusos WHERE cc_numero_nota = ?",
+            'ad_grampos': "SELECT * FROM dbo.ad_grampos WHERE cc_numero_nota = ?",
+            'ad_rebite': "SELECT * FROM dbo.ad_rebite WHERE cc_numero_nota = ?",
+            'ad_prisioneiro_estojo': "SELECT * FROM dbo.ad_prisioneiro_estojo WHERE cc_numero_nota = ?",
+            'ad_chumbador': "SELECT * FROM dbo.ad_chumbador WHERE cc_numero_nota = ?",
+            'ad_chaveta': "SELECT * FROM dbo.ad_chaveta WHERE cc_numero_nota = ?",
+            'ad_arruelas': "SELECT * FROM dbo.ad_arruelas WHERE cc_numero_nota = ?",
+            'ad_anel': "SELECT * FROM dbo.ad_anel WHERE cc_numero_nota = ?",
+            'ad_contrapino': "SELECT * FROM dbo.ad_contrapino WHERE cc_numero_nota = ?",
+            'ad_especial': "SELECT * FROM dbo.ad_especial WHERE cc_numero_nota = ?",
         }
 
-        for tipo, sql in tipos_relacionados.items():
-            cursor.execute(sql, (numero_nota,))
+        for tipo, tipo_sql in tipos_relacionados.items():
+            cursor.execute(tipo_sql, (numero_nota,))
             itens_relacionados = cursor.fetchall()
             itens_relacionados = [dict_factory(cursor, item) for item in itens_relacionados]
 
@@ -2573,22 +2591,27 @@ def buscar_registro_inspecao(numero_nota, ri_data, ri_cod_produto):
                 if chave in resultados_agrupados:
                     resultados_agrupados[chave][tipo].append(item)
 
+            # Calcular o total de registros para a paginação
+        cursor.execute(count_sql, params)
+        total_records = cursor.fetchone()[0]
+        total_pages = (total_records + per_page - 1) // per_page
+
     except Exception as e:
         print(f"Erro ao buscar registros de inspeção: {e}")
-        resultados_agrupados = None
+        resultados_agrupados = {}
     finally:
         if cursor is not None:
             cursor.close()
         connection.close()
 
-    # Ordenar os resultados agrupados por data de entrada
-    resultados_ordenados = sorted(resultados_agrupados.values(), key=lambda x: x['registro_inspecao']['ri_data'],
-                                  reverse=True)
+        # Ordenar os resultados
+    resultados_ordenados = sorted(
+        resultados_agrupados.values(),
+        key=lambda x: x['registro_inspecao']['ri_data'],
+        reverse=True
+    ) if resultados_agrupados else []
 
-    username = session['username']
-    print(f"Ação realizada por: {username}, Buscou Registro Inspecao NF:{numero_nota} - Data:{ri_data} -"
-          f" Cod: {ri_cod_produto}")
-    return resultados_ordenados
+    return resultados_ordenados, total_pages
 
 
 @app.route('/cadastro_certificados', methods=['GET', 'POST'])
@@ -5454,7 +5477,10 @@ def get_products(nota_id):
             # Se o XML foi armazenado como bytes, precisamos decodificá-lo
             xml_content = row[0]
             if isinstance(xml_content, bytes):
-                xml_content = xml_content.decode('utf-8')  # Ajuste a codificação conforme necessário
+                try:
+                    xml_content = xml_content.decode('utf-8')  # Tenta decodificar como UTF-8
+                except UnicodeDecodeError:
+                    xml_content = xml_content.decode('ISO-8859-1')  # Se falhar, usa ISO-8859-1
 
             # Parse do XML
             root = ET.fromstring(xml_content)
@@ -5822,9 +5848,13 @@ def get_products_com_imposto(nota_id):
 
     if row and row[0]:
         try:
+            # Se o XML foi armazenado como bytes, precisamos decodificá-lo
             xml_content = row[0]
             if isinstance(xml_content, bytes):
-                xml_content = xml_content.decode('utf-8')
+                try:
+                    xml_content = xml_content.decode('utf-8')  # Tenta decodificar como UTF-8
+                except UnicodeDecodeError:
+                    xml_content = xml_content.decode('ISO-8859-1')  # Se falhar, usa ISO-8859-1
 
             root = ET.fromstring(xml_content)
             ns = {'nfe': root.tag.split('}')[0].strip('{')}
@@ -5985,7 +6015,10 @@ def get_products_lista(nota_id):
             # Se o XML foi armazenado como bytes, precisamos decodificá-lo
             xml_content = row[0]
             if isinstance(xml_content, bytes):
-                xml_content = xml_content.decode('utf-8')  # Ajuste a codificação conforme necessário
+                try:
+                    xml_content = xml_content.decode('utf-8')  # Tenta decodificar como UTF-8
+                except UnicodeDecodeError:
+                    xml_content = xml_content.decode('ISO-8859-1')  # Se falhar, usa ISO-8859-1
 
             # Parse do XML
             root = ET.fromstring(xml_content)
@@ -6725,7 +6758,10 @@ def cadastro_tratamento_superficial():
             'PRETO OLEADO': 3,
             'FOSFATIZADO': 3,
             'REPASSE': 5,
-            'JATEAMENTO': 5
+            'JATEAMENTO': 5,
+            'NIQUELADO': 5,
+            'TRAVA QUIMICA': 5,
+            'POR NYLLON': 5
         }
 
         #print("Tipo: ", tipo_tratamento)  # Verifique o valor capturado aqui

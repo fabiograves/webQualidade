@@ -30,10 +30,24 @@
 
 {% block content %}
 
+<style>
+    .pagination {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 10px;
+        display: flex;
+        justify-content: center; /* Center pagination */
+    }
+
+    .pagination .page-item {
+        display: inline-block;
+    }
+</style>
+
 <!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
 <link rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}">
 
-<form method="POST" action="{{url_for('pesquisar_registro_inspecao')}}">
+<form method="GET" action="{{url_for('pesquisar_registro_inspecao')}}">
     <div class="py-5">
         <div class="container">
             <div class="row">
@@ -47,19 +61,19 @@
     <div class="">
         <div class="container">
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="pc_numero_nota">Número da Nota</label>
                         <input type="text" class="form-control" id="pc_numero_nota" name="pc_numero_nota">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="pc_cod_produto">Cód. Produto</label>
                         <input type="text" class="form-control" id="pc_cod_produto" name="pc_cod_produto">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="ri_data">Data de Entrada</label>
                         <input type="date" class="form-control" id="ri_data" name="ri_data">
@@ -73,7 +87,7 @@
 </form>
 
 <!-- Resultados da Pesquisa -->
-<div class="container mt-4">
+<div class="container-fluid mt-4">
     {% if resultados %}
         {% for registro in resultados %}
             {% set cadastro = registro['registro_inspecao'] %}
@@ -514,6 +528,61 @@
                 </div><!--Fecha card Body-->
             </div><!--Fecha card Inteiro-->
         {% endfor %}
+        <!-- Paginação -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <!-- Previous button -->
+                {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('pesquisar_registro_inspecao', page=page-1, pc_numero_nota=pc_numero_nota, ri_data=ri_data, pc_cod_produto=pc_cod_produto) }}" aria-label="Anterior">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <!-- Page numbers -->
+                {% set range_start = max(page - 2, 1) %}
+                {% set range_end = min(page + 2, total_pages) %}
+
+                {% if range_start > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('pesquisar_registro_inspecao', page=1, pc_numero_nota=pc_numero_nota, ri_data=ri_data, pc_cod_produto=pc_cod_produto) }}">1</a>
+                    </li>
+                    {% if range_start > 2 %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">...</a>
+                        </li>
+                    {% endif %}
+                {% endif %}
+
+                {% for p in range(range_start, range_end + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('pesquisar_registro_inspecao', page=p, pc_numero_nota=pc_numero_nota, ri_data=ri_data, pc_cod_produto=pc_cod_produto) }}">{{ p }}</a>
+                    </li>
+                {% endfor %}
+
+                {% if range_end < total_pages %}
+                    {% if range_end < total_pages - 1 %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">...</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('pesquisar_registro_inspecao', page=total_pages, pc_numero_nota=pc_numero_nota, ri_data=ri_data, pc_cod_produto=pc_cod_produto) }}">{{ total_pages }}</a>
+                    </li>
+                {% endif %}
+
+                <!-- Next button -->
+                {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('pesquisar_registro_inspecao', page=page+1, pc_numero_nota=pc_numero_nota, ri_data=ri_data, pc_cod_produto=pc_cod_produto) }}" aria-label="Próximo">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+
     {% else %}
         <p>Nenhum resultado encontrado.</p>
     {% endif %}
