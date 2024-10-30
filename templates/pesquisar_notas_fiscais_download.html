@@ -30,6 +30,14 @@
 
 {% block content %}
 
+
+<style>
+    .custom-modal-width {
+        max-width: 90%; /* Ajusta a largura para 90% da tela */
+    }
+</style>
+
+
 <!-- Inclua seu arquivo de estilos personalizados após o Bootstrap -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
@@ -190,7 +198,7 @@
 
 <!-- Modal para exibir os produtos -->
 <div class="modal fade" id="productsModal" tabindex="-1" role="dialog" aria-labelledby="productsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document"> <!-- Aqui aumenta a largura do modal -->
+    <div class="modal-dialog modal-xl custom-modal-width" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="productsModalLabel">Produtos da Nota Fiscal</h5>
@@ -212,6 +220,7 @@
                             <th>ICMS ST (Valor)</th>
                             <th>IPI (%)</th>
                             <th>IPI (Valor)</th>
+                            <th>NCM</th>
                         </tr>
                     </thead>
                     <tbody id="productsTableBody">
@@ -292,6 +301,10 @@
                                 var ipiValorCell = document.createElement('td');
                                 ipiValorCell.textContent = product.ipi_valor;
                                 row.appendChild(ipiValorCell);
+
+                                var ncmValorCell = document.createElement('td');
+                                ncmValorCell.textContent = product.ncm;
+                                row.appendChild(ncmValorCell);
 
                                 productsTableBody.appendChild(row);
                             });

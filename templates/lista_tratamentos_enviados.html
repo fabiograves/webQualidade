@@ -83,9 +83,9 @@
     {% endwith %}
 
     <!-- Responsive table -->
-    <div class="table-responsive">
+    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
         <table class="table table-bordered">
-            <thead>
+            <thead class="thead-light" style="position: sticky; top: 0; background-color: white; z-index: 1;">
                 <tr>
                     <th><input type="checkbox" id="select_all"></th>
                     <th>Pedido Cliente</th>
@@ -117,6 +117,7 @@
             </tbody>
         </table>
     </div>
+
 </div>
 
 <!-- Modal para confirmação da Nota Fiscal de Entrada -->

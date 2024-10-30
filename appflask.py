@@ -5899,6 +5899,7 @@ def get_products_com_imposto(nota_id):
                         'produto': prod.find('nfe:xProd', ns).text if prod.find('nfe:xProd', ns) is not None else '',
                         'unidade': prod.find('nfe:uCom', ns).text if prod.find('nfe:uCom', ns) is not None else '',
                         'quantidade': prod.find('nfe:qCom', ns).text if prod.find('nfe:qCom', ns) is not None else '',
+                        'ncm': prod.find('nfe:NCM', ns).text if prod.find('nfe:NCM', ns) is not None else '',
                         'valorunitario': valor_unitario_formatado,
                         'cst': icms.find('nfe:CST', ns).text if icms is not None and icms.find(
                             'nfe:CST', ns) is not None else '',
