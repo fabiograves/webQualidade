@@ -40,6 +40,9 @@
     .border-green {
         border: 2px solid #5cd65c; /* Lighter green for better aesthetics */
     }
+    .border-purple {
+        border: 2px solid #810ba3; /* Lighter green for better aesthetics */
+    }
     .card {
         margin-bottom: 20px; /* More spacing between cards */
         border-radius: 8px; /* Rounded corners for a modern look */
@@ -75,6 +78,7 @@
             <h8 class="me-3">Legenda</h8>
             <span class="badge border-red px-3 py-2 me-2">Cadastrado</span>
             <span class="badge border-blue px-3 py-2 me-2">Enviado</span>
+            <span class="badge border-purple px-3 py-2 me-2">Chegou</span>
             <span class="badge border-green px-3 py-2">Recebido</span>
         </div>
     </div>
@@ -95,6 +99,7 @@
                             <option value="">Todos</option>
                             <option value="Cadastrado" {% if estado_filtro == 'Cadastrado' %}selected{% endif %}>Cadastrado</option>
                             <option value="Enviado" {% if estado_filtro == 'Enviado' %}selected{% endif %}>Enviado</option>
+                            <option value="Chegou" {% if estado_filtro == 'Chegou' %}selected{% endif %}>Chegou</option>
                             <option value="Recebido" {% if estado_filtro == 'Recebido' %}selected{% endif %}>Recebido</option>
                         </select>
                     </div>
@@ -123,6 +128,8 @@
                 {% set border_class = 'border-red' %}
             {% elif estado == 'Enviado' %}
                 {% set border_class = 'border-blue' %}
+            {% elif estado == 'Chegou' %}
+                {% set border_class = 'border-purple' %}
             {% elif estado == 'Recebido' %}
                 {% set border_class = 'border-green' %}
             {% else %}
@@ -164,6 +171,10 @@
                             <div class="col-md-3"><strong>NF Entrada:</strong> {{ tratamento.nf_entrada if tratamento.nf_entrada else '' }}</div>
                             <div class="col-md-3"><strong>Obs. Cad.:</strong> {{ tratamento.observacao_cadastro if tratamento.observacao_cadastro else '' }}</div>
                             <div class="col-md-3"><strong>Obs. Env.:</strong> {{ tratamento.observacao_envio if tratamento.observacao_envio else '' }}</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3"><strong>Obs. Rec.:</strong> {{ tratamento.observacao_recebido if tratamento.observacao_recebido else '' }}</div>
                         </div>
 
                     </div>

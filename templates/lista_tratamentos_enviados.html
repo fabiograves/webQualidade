@@ -36,6 +36,9 @@
         margin-left: 0;
         margin-right: 0;
     }
+    #produtosTable tr.highlighted-product td {
+        background-color: #ffff99 !important;
+    }
 </style>
 
 <div class="container-fluid">
@@ -82,7 +85,10 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Responsive table -->
+    {% if error_message %}
+        <div class="alert alert-danger">{{ error_message }}</div>
+    {% endif %}
+
     <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
         <table class="table table-bordered">
             <thead class="thead-light" style="position: sticky; top: 0; background-color: white; z-index: 1;">
@@ -102,16 +108,26 @@
             <tbody>
                 {% for tratamento in tratamentos %}
                     <tr>
-                        <td><input type="checkbox" class="checkbox_tratamento" value="{{ tratamento.id }}"></td>
-                        <td>{{ tratamento.pedido_cliente }}</td>
-                        <td>{{ tratamento.cod_produto }}</td>
-                        <td>{{ tratamento.desc_produto }}</td>
-                        <td>{{ tratamento.quantidade }}</td>
-                        <td>{{ tratamento.peso }}</td>
-                        <td>{{ tratamento.volume }}</td>
-                        <td>{{ tratamento.tipo_tratamento }}</td>
-                        <td>{{ tratamento.nf_saida }}</td>
-                        <td>{{ tratamento.data_envio.strftime('%d/%m/%Y') if tratamento.data_envio else '' }}</td>
+                        <td><input type="checkbox" class="checkbox_tratamento" value="{{ tratamento[0] }}"></td>
+                        <td>{{ tratamento[1] }}</td>
+                        <td>{{ tratamento[2] }}</td>
+                        <td>{{ tratamento[3] }}</td>
+                        <td>{{ tratamento[11] }}</td> <!-- Quantidade -->
+                        <td>{{ tratamento[5] }}</td>
+                        <td>{{ tratamento[6] }}</td>
+                        <td>{{ tratamento[7] }}</td>
+                        <td>
+                            {{ tratamento[8] }}
+                            {% if tratamento[-2] %} <!-- Verifica se show_button é True -->
+                                <button type="button" class="btn btn-secondary btn-sm view-products"
+                                        data-nf-saida="{{ tratamento[8] }}"
+                                        data-cod-produto="{{ tratamento[2] }}"
+                                        data-nf-entrada="{{ tratamento[-1] }}"> <!-- Adiciona nf_entrada aqui -->
+                                    Ver
+                                </button>
+                            {% endif %}
+                        </td>
+                        <td>{{ tratamento[9] }}</td> <!-- Data Envio -->
                     </tr>
                 {% endfor %}
             </tbody>
@@ -131,10 +147,12 @@
                 </div>
                 <div class="modal-body">
                     <p>Digite a nota de entrada para confirmar o recebimento:</p>
-                    <input type="hidden" name="ids_selecionados" id="ids_selecionados_modal"> <!-- Passar ids_selecionados aqui -->
+                    <input type="hidden" name="ids_selecionados" id="ids_selecionados_modal">
                     <div class="form-group">
                         <label for="nf_entrada">Nota Fiscal Entrada:</label>
                         <input type="text" class="form-control" id="nf_entrada" name="nf_entrada" required>
+                        <label for="obs_recebido">Observação recebimento:</label>
+                        <input type="text" class="form-control" id="obs_recebido" name="obs_recebido">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -146,43 +164,148 @@
     </div>
 </div>
 
+<!-- Modal para exibir os produtos -->
+<div class="modal fade" id="produtosModal" tabindex="-1" aria-labelledby="produtosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="produtosModalLabel">Produtos da Nota Fiscal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered" id="produtosTable">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Unidade</th>
+                            <th>Quantidade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="produtosTableBody">
+                        <!-- Os dados dos produtos serão inseridos aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script>
-    document.getElementById('btn_confirmar_recebimento').addEventListener('click', function() {
-        var checkboxes = document.querySelectorAll('.checkbox_tratamento:checked');
-        var idsSelecionados = [];
-        checkboxes.forEach(function(checkbox) {
-            idsSelecionados.push(checkbox.value);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Evento para confirmar o recebimento
+        var btnConfirmarRecebimento = document.getElementById('btn_confirmar_recebimento');
+        if (btnConfirmarRecebimento) {
+            btnConfirmarRecebimento.addEventListener('click', function() {
+                var checkboxes = document.querySelectorAll('.checkbox_tratamento:checked');
+                var idsSelecionados = [];
+                var nfEntrada = '';
+
+                checkboxes.forEach(function(checkbox) {
+                    idsSelecionados.push(checkbox.value);
+                    // Busca o botão correspondente para obter a nf_entrada
+                    var button = document.querySelector(`button.view-products[data-id="${checkbox.value}"]`);
+                    if (button) {
+                        nfEntrada = button.getAttribute('data-nf-entrada') || '';
+                    }
+                });
+
+                if (idsSelecionados.length > 0) {
+                    document.getElementById('ids_selecionados').value = idsSelecionados.join(',');
+                    document.getElementById('ids_selecionados_modal').value = idsSelecionados.join(',');
+                    document.getElementById('nf_entrada').value = nfEntrada; // Preenche automaticamente a nf_entrada
+
+                    var modal = new bootstrap.Modal(document.getElementById('modalRecebimento'), {
+                        keyboard: false
+                    });
+                    modal.show();
+                } else {
+                    alert('Nenhum tratamento foi selecionado.');
+                }
+            });
+        } else {
+            console.error('Element with id "btn_confirmar_recebimento" not found.');
+        }
+
+        // Evento para confirmar o envio no modal
+        var btnConfirmarEnvio = document.getElementById('confirmarEnvio');
+        if (btnConfirmarEnvio) {
+            btnConfirmarEnvio.addEventListener('click', function() {
+                var nf_entrada = document.getElementById('nf_entrada').value;
+                if (nf_entrada) {
+                    document.getElementById('nf_entrada_hidden').value = nf_entrada;
+                    document.getElementById('action_form').submit();
+                } else {
+                    alert('Por favor, insira a Nota Fiscal de Entrada.');
+                }
+            });
+        } else {
+            console.error('Element with id "confirmarEnvio" not found.');
+        }
+
+        // Evento para cada botão "Ver Produtos"
+        document.querySelectorAll('.view-products').forEach(function(button) {
+            button.addEventListener('click', async function() {
+                try {
+                    var nf_saida = this.getAttribute('data-nf-saida');
+                    var cod_produto_tratamento = this.getAttribute('data-cod-produto'); // Captura o código do produto
+
+                    let response = await fetch(`/get_produtos_por_nf_saida/${nf_saida}`);
+                    if (!response.ok) throw new Error('Erro na resposta da requisição');
+
+                    let data = await response.json();
+                    var produtosTableBody = document.getElementById('produtosTableBody');
+                    produtosTableBody.innerHTML = '';
+
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        data.forEach(function(produto) {
+                            var row = document.createElement('tr');
+
+                            // Destaca a linha se o código do produto corresponder
+                            if (produto.codigo === cod_produto_tratamento) {
+                                row.classList.add('highlighted-product');
+                            }
+
+                            row.innerHTML = `
+                                <td>${produto.codigo}</td>
+                                <td>${produto.unidade}</td>
+                                <td>${produto.quantidade}</td>
+                            `;
+                            produtosTableBody.appendChild(row);
+                        });
+
+                        var produtosModalElement = document.getElementById('produtosModal');
+                        if (produtosModalElement) {
+                            var produtosModal = new bootstrap.Modal(produtosModalElement);
+                            produtosModal.show();
+                        } else {
+                            console.error("O modal produtosModal não foi encontrado no DOM.");
+                        }
+                    }
+                } catch (error) {
+                    console.error("Erro ao buscar produtos:", error);
+                }
+            });
         });
 
-        if (idsSelecionados.length > 0) {
-            document.getElementById('ids_selecionados').value = idsSelecionados.join(',');
-            document.getElementById('ids_selecionados_modal').value = idsSelecionados.join(','); // Passar para o modal também
-
-            var modal = new bootstrap.Modal(document.getElementById('modalRecebimento'), {
-                keyboard: false
+        // Evento para o checkbox "Selecionar Todos"
+        var selectAllCheckbox = document.getElementById('select_all');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('click', function() {
+                var checkboxes = document.querySelectorAll('.checkbox_tratamento');
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.checked = selectAllCheckbox.checked;
+                });
             });
-            modal.show();  // Abrir o modal para inserir a nf_entrada
         } else {
-            alert('Nenhum tratamento foi selecionado.');
+            console.error('Element with id "select_all" not found.');
         }
     });
 
-    document.getElementById('select_all').addEventListener('click', function() {
-        var checkboxes = document.querySelectorAll('.checkbox_tratamento');
-        checkboxes.forEach(function(checkbox) {
-            checkbox.checked = this.checked;
-        }.bind(this));
-    });
 
-    document.getElementById('confirmarEnvio').addEventListener('click', function() {
-        var nf_entrada = document.getElementById('nf_entrada').value;
-        if (nf_entrada) {
-            document.getElementById('nf_entrada_hidden').value = nf_entrada;  // Passar nf_entrada como hidden field
-            document.getElementById('action_form').submit();  // Submeter o formulário com os IDs selecionados e nf_entrada
-        } else {
-            alert('Por favor, insira a Nota Fiscal de Entrada.');
-        }
-    });
+
 </script>
 
 {% endblock %}

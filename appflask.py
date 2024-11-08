@@ -7118,60 +7118,6 @@ def export_tratamentos_cadastrados_pdf():
         return redirect(url_for('lista_tratamentos_cadastrados'))
 
 
-@app.route('/lista_tratamentos_enviados', methods=['GET', 'POST'])
-@requires_privilege(9, 51, 59, 3)
-def lista_tratamentos_enviados():
-    if not is_logged_in():
-        return redirect(url_for('login'))
-
-    # Obter os filtros da URL
-    nf_saida_filter = request.args.get('nf_saida_filter')
-    pedido_cliente_filter = request.args.get('pedido_cliente_filter')
-
-    try:
-        conn = conectar_db()
-        cursor = conn.cursor()
-
-        # Iniciar a query base
-        query = """
-            SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento,
-                   nf_saida, data_envio, estado, quantidade
-            FROM [dbo].[cadastro_tratamento_superficial]
-            WHERE estado = 'Enviado'
-        """
-
-        # Lista de parâmetros para os filtros
-        params = []
-
-        # Adicionar condição para nf_saida se o filtro estiver presente
-        if nf_saida_filter:
-            query += " AND nf_saida = ?"
-            params.append(nf_saida_filter)
-
-        # Adicionar condição para pedido_cliente se o filtro estiver presente
-        if pedido_cliente_filter:
-            query += " AND pedido_cliente = ?"
-            params.append(pedido_cliente_filter)
-
-        # Adicionar ordenação padrão
-        query += " ORDER BY data_envio ASC"
-
-        # Executar a query com os parâmetros
-        cursor.execute(query, params)
-
-        tratamentos = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
-
-        # Renderizar a página com os tratamentos filtrados
-        return render_template('lista_tratamentos_enviados.html', tratamentos=tratamentos)
-
-    except Exception as e:
-        flash(f'Erro ao buscar tratamentos: {str(e)}', 'danger')
-        return redirect(url_for('lista_tratamentos_enviados'))
-
-
 @app.route('/confirmar_recebimento_tratamento', methods=['POST'])
 @requires_privilege(9, 51, 59, 3)
 def confirmar_recebimento_tratamento():
@@ -7180,6 +7126,7 @@ def confirmar_recebimento_tratamento():
 
     ids_selecionados = request.form.get('ids_selecionados')
     nf_entrada = request.form.get('nf_entrada')
+    obs_recebido = request.form.get('obs_recebido')
 
     # Verifique se os dados estão sendo capturados corretamente
     if not ids_selecionados or not nf_entrada:
@@ -7195,9 +7142,9 @@ def confirmar_recebimento_tratamento():
         for id_tratamento in ids_list:
             cursor.execute("""
                 UPDATE [dbo].[cadastro_tratamento_superficial]
-                SET estado = 'Recebido', data_recebido = ?, nf_entrada = ?
+                SET estado = 'Recebido', data_recebido = ?, nf_entrada = ?, observacao_recebido = ?
                 WHERE id = ?
-            """, (datetime.datetime.today().strftime('%Y-%m-%d'), nf_entrada, id_tratamento))
+            """, (datetime.datetime.today().strftime('%Y-%m-%d'), nf_entrada, obs_recebido, id_tratamento))
 
         conn.commit()
         cursor.close()
@@ -7229,7 +7176,8 @@ def consulta_tratamentos():
         sql_query = """
             SELECT id, pedido_cliente, pedido_linha, cod_produto, desc_produto, quantidade, rastreamento,
                    peso, volume, tipo_tratamento, responsavel, data_cadastro, data_envio,
-                   data_previsao, data_recebido, estado, nf_entrada, nf_saida, observacao_cadastro, observacao_envio
+                   data_previsao, data_recebido, estado, nf_entrada, nf_saida, observacao_cadastro, observacao_envio,
+                   observacao_recebido
             FROM [dbo].[cadastro_tratamento_superficial]
         """
         params = []
@@ -7345,6 +7293,278 @@ def deletar_tratamento():
         return jsonify({'success': True}), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/cadastro_notas_tratamentos', methods=['GET', 'POST'])
+@requires_privilege(9, 11)
+def cadastro_notas_tratamentos():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    connection = conectar_db()
+    cursor = connection.cursor()
+
+    if request.method == 'POST':
+        try:
+            cad_arquivo_xml = request.files.get('cad_arquivo_xml')
+            if cad_arquivo_xml and cad_arquivo_xml.filename != '':
+                arquivo_xml_bytes = cad_arquivo_xml.read()
+                xml_content = arquivo_xml_bytes.decode('utf-8')  # Supondo que o XML está em UTF-8
+
+                # Parse do XML para obter o nome do fornecedor e o número da nota fiscal de saída
+                root = ET.fromstring(xml_content)
+                ns = {'nfe': root.tag.split('}')[0].strip('{')}
+
+                # Extrai o nome do fornecedor
+                fornecedor = root.find('.//nfe:emit/nfe:xNome', ns).text
+
+                # Extrai o texto de `infCpl` e encontra o número após "Nr.s."
+                inf_cpl_text = root.find('.//nfe:infAdic/nfe:infCpl', ns).text
+                match = re.search(r"Nr\.s\.\s*(\d+)", inf_cpl_text)
+                numero_nota_saida = match.group(1) if match else ''
+                data_registro = datetime.datetime.now()
+
+                # Inserir as informações no banco de dados
+                cursor.execute("""
+                    INSERT INTO dbo.cadastro_notas_tratamentos (fornecedor, numero_nota_saida, arquivo_xml, data_registro)
+                    VALUES (?, ?, ?, ?)
+                """, (fornecedor, numero_nota_saida, arquivo_xml_bytes, data_registro))
+
+                # Comitar a inserção da nova nota
+                connection.commit()
+
+                # Atualizar o estado dos tratamentos que correspondem à nota fiscal de saída e código do produto
+                atualizar_estado_tratamentos_sizelmax(numero_nota_saida, root, ns)
+
+                flash('Nota de retorno de industrialização cadastrada e tratamentos atualizados com sucesso!',
+                      'success')
+            else:
+                flash('Por favor, faça upload de um arquivo XML válido.', 'danger')
+        except Exception as e:
+            connection.rollback()
+            flash(f'Ocorreu um erro: {str(e)}', 'danger')
+        finally:
+            connection.close()
+
+        return redirect(url_for('cadastro_notas_tratamentos'))
+
+    # Consulta e paginação das notas cadastradas
+    search_query = request.args.get('search', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    # Consulta para obter as notas e calcular o total de registros
+    query = """
+        SELECT id, fornecedor, numero_nota_saida, arquivo_xml, data_registro
+        FROM dbo.cadastro_notas_tratamentos 
+        ORDER BY id DESC
+        OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+    """
+    params = (offset, per_page)
+    cursor.execute(query, params)
+    notas_tratamentos = cursor.fetchall()
+
+    # Certifique-se de obter o total de registros para a paginação
+    cursor.execute("SELECT COUNT(*) FROM dbo.cadastro_notas_tratamentos")
+    total_row = cursor.fetchone()
+    total = total_row[0] if total_row else 0  # Se não houver registros, `total` será 0
+
+    connection.close()
+
+    # Renderizar o template com a variável `total` devidamente definida
+    return render_template(
+        'cadastro_notas_tratamentos.html',
+        notas_tratamentos=notas_tratamentos,
+        page=page,
+        search_query=search_query,
+        total=total,
+        per_page=per_page
+    )
+
+
+def atualizar_estado_tratamentos_sizelmax(nf_saida, root, ns):
+    try:
+        conn = conectar_db()
+        cursor = conn.cursor()
+
+        # Extrair o número da NF de entrada (nNF) do XML
+        nf_entrada = root.find('.//nfe:ide/nfe:nNF', ns)
+        nf_entrada_text = nf_entrada.text if nf_entrada is not None else None
+
+        # Extrair todos os códigos de produtos do XML
+        produtos_xml = []
+        for det in root.findall('.//nfe:det', ns):
+            prod = det.find('nfe:prod', ns)
+            if prod is not None:
+                xProd_element = prod.find('nfe:xProd', ns)
+                xProd_text = xProd_element.text if xProd_element is not None else ''
+                codigo_produto = xProd_text.split()[0] if xProd_text else ''
+                produtos_xml.append(codigo_produto)
+
+        # Atualizar tratamentos no banco de dados com base na combinação de nf_saida, cod_produto e nf_entrada
+        for cod_produto in produtos_xml:
+            # Verificar se o estado já está como 'Recebido'
+            cursor.execute("""
+                SELECT estado 
+                FROM dbo.cadastro_tratamento_superficial
+                WHERE nf_saida = ? AND cod_produto = ?
+            """, (nf_saida, cod_produto))
+            estado_atual = cursor.fetchone()
+
+            # Se o estado for 'Recebido', não atualiza
+            if estado_atual and estado_atual[0] == 'Recebido':
+                print(f'Tratamento já marcado como "Recebido" para o produto {cod_produto}.')
+                continue
+
+            # Atualizar o tratamento se o estado não for 'Recebido'
+            cursor.execute("""
+                UPDATE dbo.cadastro_tratamento_superficial
+                SET estado = 'Chegou', data_recebido = ?, nf_entrada = ?
+                WHERE nf_saida = ? AND cod_produto = ? AND estado != 'Chegou'
+            """, (datetime.datetime.today().strftime('%Y-%m-%d'), nf_entrada_text, nf_saida, cod_produto))
+
+        # Confirmar transação
+        conn.commit()
+        cursor.close()
+        conn.close()
+        print("Tratamentos atualizados com sucesso.")
+    except Exception as e:
+        print(f'Erro ao atualizar tratamentos: {str(e)}')
+
+
+@app.route('/lista_tratamentos_enviados', methods=['GET', 'POST'])
+@requires_privilege(9, 51, 59, 3)
+def lista_tratamentos_enviados():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+
+    # Obter filtros da URL
+    nf_saida_filter = request.args.get('nf_saida_filter')
+    pedido_cliente_filter = request.args.get('pedido_cliente_filter')
+
+    try:
+        conn = conectar_db()
+        cursor = conn.cursor()
+
+        # Iniciar a query base para tratamentos
+        query = """
+            SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento,
+                   nf_saida, data_envio, estado, quantidade, nf_entrada
+            FROM dbo.cadastro_tratamento_superficial
+            WHERE estado IN ('Enviado', 'Chegou')
+        """
+        params = []
+
+        # Adicionar filtros se aplicáveis
+        if nf_saida_filter:
+            query += " AND nf_saida = ?"
+            params.append(nf_saida_filter)
+        if pedido_cliente_filter:
+            query += " AND pedido_cliente = ?"
+            params.append(pedido_cliente_filter)
+
+        # Ordenar por data de envio
+        query += " ORDER BY data_envio ASC"
+        cursor.execute(query, params)
+        tratamentos = cursor.fetchall()
+
+        # Carregar as notas fiscais de saída com XML e mapeá-las por numero_nota_saida
+        cursor.execute("SELECT numero_nota_saida, arquivo_xml FROM dbo.cadastro_notas_tratamentos")
+        notas_com_xml = {nf: xml for nf, xml in cursor.fetchall()}
+
+        tratamentos_com_botao = []
+
+        # Processar cada tratamento e verificar se há um XML correspondente
+        for tratamento in tratamentos:
+            show_button = False
+            nf_saida_tratamento = tratamento[8]  # 'nf_saida'
+            cod_produto_tratamento = tratamento[2]  # 'cod_produto'
+            nf_entrada = tratamento[12]  # 'nf_entrada'
+
+            # Checa se o tratamento possui uma nota com XML cadastrado
+            if nf_saida_tratamento in notas_com_xml:
+                xml_content = notas_com_xml[nf_saida_tratamento].decode('utf-8')
+                root = ET.fromstring(xml_content)
+                ns = {'nfe': root.tag.split('}')[0].strip('{')}
+
+                for det in root.findall('.//nfe:det', ns):
+                    prod = det.find('nfe:prod', ns)
+                    if prod is not None:
+                        xProd_element = prod.find('nfe:xProd', ns)
+                        xProd_text = xProd_element.text if xProd_element is not None else ''
+                        codigo_produto = xProd_text.split()[0] if xProd_text else ''
+
+                        if codigo_produto == cod_produto_tratamento:
+                            show_button = True
+                            break
+
+            tratamentos_com_botao.append((*tratamento, show_button, nf_entrada))
+
+        cursor.close()
+        conn.close()
+
+        return render_template('lista_tratamentos_enviados.html', tratamentos=tratamentos_com_botao)
+
+    except Exception as e:
+        flash(f'Erro ao buscar tratamentos: {str(e)}', 'danger')
+        return render_template('lista_tratamentos_enviados.html', tratamentos=[],
+                               error_message=f'Erro ao buscar tratamentos: {str(e)}')
+
+
+@app.route('/get_produtos_por_nf_saida/<nf_saida>', methods=['GET'])
+def get_produtos_por_nf_saida(nf_saida):
+    print("Valor de nf_saida:", nf_saida)
+    try:
+        connection = conectar_db()
+        cursor = connection.cursor()
+
+        # Buscar XML da nota fiscal de saída específica
+        cursor.execute("""
+            SELECT arquivo_xml 
+            FROM dbo.cadastro_notas_tratamentos
+            WHERE numero_nota_saida = ?
+        """, (nf_saida,))
+
+        row = cursor.fetchone()
+        connection.close()
+
+        if not row or not row[0]:
+            return jsonify({'error': 'Nenhum XML encontrado para esta nota fiscal de saída.'}), 404
+
+        # Lê e processa o XML
+        xml_content = row[0].decode('utf-8')
+        root = ET.fromstring(xml_content)
+        ns = {'nfe': 'http://www.portalfiscal.inf.br/nfe'}
+
+        produtos = []
+        # Caminho XPath completo para os elementos 'det'
+        for det in root.findall('.//nfe:det', ns):
+            prod = det.find('nfe:prod', ns)
+            if prod is not None:
+                # Extrai o código do produto a partir de xProd
+                xProd_element = prod.find('nfe:xProd', ns)
+                xProd_text = xProd_element.text if xProd_element is not None else ''
+                codigo_produto = xProd_text.split()[0] if xProd_text else ''
+
+                unidade_element = prod.find('nfe:uCom', ns)
+                unidade = unidade_element.text if unidade_element is not None else ''
+
+                quantidade_element = prod.find('nfe:qCom', ns)
+                quantidade = quantidade_element.text if quantidade_element is not None else ''
+
+                produtos.append({
+                    'codigo': codigo_produto,
+                    'unidade': unidade,
+                    'quantidade': quantidade
+                })
+
+
+        return jsonify(produtos)
+
+    except Exception as e:
+        print("Erro ao processar o XML:", e)
+        return jsonify({'error': f'Erro ao processar o XML: {str(e)}'}), 500
 
 
 if __name__ == '__main__':
