@@ -120,9 +120,10 @@
                             {{ tratamento[8] }}
                             {% if tratamento[-2] %} <!-- Verifica se show_button é True -->
                                 <button type="button" class="btn btn-secondary btn-sm view-products"
+                                        data-id="{{ tratamento[0] }}"
                                         data-nf-saida="{{ tratamento[8] }}"
                                         data-cod-produto="{{ tratamento[2] }}"
-                                        data-nf-entrada="{{ tratamento[-1] }}"> <!-- Adiciona nf_entrada aqui -->
+                                        data-nf-entrada="{{ tratamento[13] }}">
                                     Ver
                                 </button>
                             {% endif %}
@@ -149,7 +150,7 @@
                     <p>Digite a nota de entrada para confirmar o recebimento:</p>
                     <input type="hidden" name="ids_selecionados" id="ids_selecionados_modal">
                     <div class="form-group">
-                        <label for="nf_entrada">Nota Fiscal Entrada:</label>
+                        <label for="nf_entrada">Nota Fiscal Entrada: </label>
                         <input type="text" class="form-control" id="nf_entrada" name="nf_entrada" required>
                         <label for="obs_recebido">Observação recebimento:</label>
                         <input type="text" class="form-control" id="obs_recebido" name="obs_recebido">
@@ -203,6 +204,7 @@
 
                 checkboxes.forEach(function(checkbox) {
                     idsSelecionados.push(checkbox.value);
+
                     // Busca o botão correspondente para obter a nf_entrada
                     var button = document.querySelector(`button.view-products[data-id="${checkbox.value}"]`);
                     if (button) {
@@ -213,7 +215,9 @@
                 if (idsSelecionados.length > 0) {
                     document.getElementById('ids_selecionados').value = idsSelecionados.join(',');
                     document.getElementById('ids_selecionados_modal').value = idsSelecionados.join(',');
-                    document.getElementById('nf_entrada').value = nfEntrada; // Preenche automaticamente a nf_entrada
+
+                    // Preenche automaticamente a nf_entrada, mesmo que vazia
+                    document.getElementById('nf_entrada').value = nfEntrada;
 
                     var modal = new bootstrap.Modal(document.getElementById('modalRecebimento'), {
                         keyboard: false
@@ -224,33 +228,30 @@
                 }
             });
         } else {
-            console.error('Element with id "btn_confirmar_recebimento" not found.');
+            console.error('Elemento com id "btn_confirmar_recebimento" não encontrado.');
         }
 
         // Evento para confirmar o envio no modal
-        var btnConfirmarEnvio = document.getElementById('confirmarEnvio');
-        if (btnConfirmarEnvio) {
-            btnConfirmarEnvio.addEventListener('click', function() {
-                var nf_entrada = document.getElementById('nf_entrada').value;
-                if (nf_entrada) {
-                    document.getElementById('nf_entrada_hidden').value = nf_entrada;
-                    document.getElementById('action_form').submit();
-                } else {
-                    alert('Por favor, insira a Nota Fiscal de Entrada.');
-                }
-            });
-        } else {
-            console.error('Element with id "confirmarEnvio" not found.');
-        }
+        document.getElementById('modalRecebimento').addEventListener('submit', function(event) {
+            var nfEntrada = document.getElementById('nf_entrada').value;
+            if (!nfEntrada) {
+                event.preventDefault(); // Evita o envio do formulário se nf_entrada estiver vazia
+                alert('Por favor, insira a Nota Fiscal de Entrada.');
+            }
+        });
 
         // Evento para cada botão "Ver Produtos"
         document.querySelectorAll('.view-products').forEach(function(button) {
             button.addEventListener('click', async function() {
                 try {
-                    var nf_saida = this.getAttribute('data-nf-saida');
-                    var cod_produto_tratamento = this.getAttribute('data-cod-produto'); // Captura o código do produto
+                    var nfEntrada = this.getAttribute('data-nf-entrada') || '';
+                    var nfSaida = this.getAttribute('data-nf-saida');
+                    var codProdutoTratamento = this.getAttribute('data-cod-produto');
 
-                    let response = await fetch(`/get_produtos_por_nf_saida/${nf_saida}`);
+                    // Preenche automaticamente o campo nf_entrada no modal
+                    document.getElementById('nf_entrada').value = nfEntrada;
+
+                    let response = await fetch(`/get_produtos_por_nf_saida/${nfSaida}`);
                     if (!response.ok) throw new Error('Erro na resposta da requisição');
 
                     let data = await response.json();
@@ -264,7 +265,7 @@
                             var row = document.createElement('tr');
 
                             // Destaca a linha se o código do produto corresponder
-                            if (produto.codigo === cod_produto_tratamento) {
+                            if (produto.codigo === codProdutoTratamento) {
                                 row.classList.add('highlighted-product');
                             }
 
@@ -300,13 +301,11 @@
                 });
             });
         } else {
-            console.error('Element with id "select_all" not found.');
+            console.error('Elemento com id "select_all" não encontrado.');
         }
     });
-
-
-
 </script>
+
 
 {% endblock %}
 

@@ -7203,7 +7203,7 @@ def consulta_tratamentos():
         cursor.execute(count_query, params)
         total_records = cursor.fetchone()[0]
 
-        total_pages = math.ceil(total_records / per_page)
+        total = math.ceil(total_records / per_page)
         offset = (page - 1) * per_page
 
         # Adicionar paginação à consulta
@@ -7220,7 +7220,7 @@ def consulta_tratamentos():
             'consulta_tratamentos.html',
             tratamentos=tratamentos,
             page=page,
-            total_pages=total_pages,
+            total=total,
             search_query=search_query,
             estado_filtro=estado_filtro  # Para reter o valor selecionado no filtro
         )
@@ -7412,6 +7412,13 @@ def atualizar_estado_tratamentos_sizelmax(nf_saida, root, ns):
             """, (nf_saida, cod_produto))
             estado_atual = cursor.fetchone()
 
+            # Update nota fiscal entrada
+            cursor.execute("""
+                UPDATE dbo.cadastro_tratamento_superficial
+                SET nf_entrada = ?
+                WHERE nf_saida = ? AND cod_produto = ?
+                """, (nf_entrada_text, nf_saida, cod_produto))
+
             # Se o estado for 'Recebido', não atualiza
             if estado_atual and estado_atual[0] == 'Recebido':
                 print(f'Tratamento já marcado como "Recebido" para o produto {cod_produto}.')
@@ -7447,10 +7454,10 @@ def lista_tratamentos_enviados():
         conn = conectar_db()
         cursor = conn.cursor()
 
-        # Iniciar a query base para tratamentos
+        # Query principal que busca os tratamentos
         query = """
             SELECT id, pedido_cliente, cod_produto, desc_produto, rastreamento, peso, volume, tipo_tratamento,
-                   nf_saida, data_envio, estado, quantidade, nf_entrada
+                   nf_saida, nf_entrada, data_envio, estado, quantidade, nf_entrada
             FROM dbo.cadastro_tratamento_superficial
             WHERE estado IN ('Enviado', 'Chegou')
         """
@@ -7546,6 +7553,7 @@ def get_produtos_por_nf_saida(nf_saida):
                 xProd_element = prod.find('nfe:xProd', ns)
                 xProd_text = xProd_element.text if xProd_element is not None else ''
                 codigo_produto = xProd_text.split()[0] if xProd_text else ''
+
 
                 unidade_element = prod.find('nfe:uCom', ns)
                 unidade = unidade_element.text if unidade_element is not None else ''
