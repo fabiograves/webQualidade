@@ -7309,7 +7309,7 @@ def cadastro_notas_tratamentos():
             cad_arquivo_xml = request.files.get('cad_arquivo_xml')
             if cad_arquivo_xml and cad_arquivo_xml.filename != '':
                 arquivo_xml_bytes = cad_arquivo_xml.read()
-                xml_content = arquivo_xml_bytes.decode('utf-8')  # Supondo que o XML está em UTF-8
+                xml_content = arquivo_xml_bytes.decode('utf-8')
 
                 # Parse do XML para obter o nome do fornecedor e o número da nota fiscal de saída
                 root = ET.fromstring(xml_content)
@@ -7372,7 +7372,7 @@ def cadastro_notas_tratamentos():
 
     connection.close()
 
-    # Renderizar o template com a variável `total` devidamente definida
+    # Renderizar o template com a variável 'total' devidamente definida
     return render_template(
         'cadastro_notas_tratamentos.html',
         notas_tratamentos=notas_tratamentos,
